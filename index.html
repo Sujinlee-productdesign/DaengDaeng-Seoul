@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>댕댕서울 88 🐾</title>
+
+  <!-- Google Fonts: 나눔고딕 (한글 웹폰트) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+
+  <!--
+    카카오맵 JavaScript SDK
+    ⚠️ YOUR_KAKAO_API_KEY 자리에 카카오 개발자 콘솔에서 발급받은
+       JavaScript 앱 키를 넣어주세요.
+    발급 위치: https://developers.kakao.com → 내 애플리케이션 → 앱 키
+  -->
+  <script type="text/javascript"
+    src="//dapi.kakao.com/v2/maps/sdk.js?appkey=118d64cc92d10f59459a348b6fadb810">
+  </script>
+
+  <!-- 스타일시트 연결 -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- =====================================================
+       상단 헤더 영역
+       - 서비스 로고 & 태그라인
+       - 실시간 미세먼지 배너 (app.js에서 값이 채워짐)
+  ====================================================== -->
+  <header class="header">
+    <div class="header-inner">
+
+      <!-- 로고 + 태그라인 -->
+      <div class="header-title">
+        <h1 class="logo">댕댕서울 88 🐾</h1>
+        <p class="tagline">서울에서 강아지랑 팔팔하게 돌아다니자</p>
+      </div>
+
+      <!--
+        미세먼지 배너
+        id="air-banner"   → 대기질 등급에 따라 클래스 변경 (good/normal/bad/very-bad)
+        id="air-icon"     → 상태 이모지 (😊 / 🙂 / 😷 / 😰)
+        id="air-text"     → 미세먼지 수치 + 한줄 메시지
+      -->
+      <div id="air-banner" class="air-banner">
+        <span id="air-icon">🌀</span>
+        <span id="air-text">대기 정보 불러오는 중...</span>
+      </div>
+
+    </div>
+  </header>
+
+
+  <!-- =====================================================
+       메인 지도 영역
+  ====================================================== -->
+  <main class="map-wrapper">
+
+    <!--
+      로딩 오버레이
+      API 데이터를 가져오는 동안 표시됨
+      데이터 로드 완료 시 app.js에서 .hidden 클래스 추가 → 사라짐
+    -->
+    <div id="loading-overlay" class="loading-overlay">
+      <div class="loading-content">
+        <div class="loading-paw">🐾</div>
+        <p>데이터 불러오는 중...</p>
+      </div>
+    </div>
+
+    <!--
+      카테고리 필터 버튼 바
+      data-category 속성 값으로 app.js에서 필터 처리
+    -->
+    <div class="filter-bar">
+      <button class="filter-btn active" data-category="all">전체</button>
+      <button class="filter-btn" data-category="park">🌳 공원</button>
+      <button class="filter-btn" data-category="restaurant">🍽️ 음식점</button>
+      <button class="filter-btn" data-category="cafe">☕ 카페</button>
+    </div>
+
+    <!--
+      카카오맵이 실제로 그려지는 div
+      app.js의 initMap()이 이 div를 찾아 지도를 렌더링함
+    -->
+    <div id="map"></div>
+
+    <!--
+      현재 화면에 표시된 장소 개수 표시
+      id="place-count-num" → app.js에서 숫자만 업데이트
+    -->
+    <div class="place-count">
+      <strong id="place-count-num">0</strong>곳을 찾았어요 🐶
+    </div>
+
+  </main>
+
+
+  <!--
+    앱 로직 스크립트 (body 맨 아래에 위치해야
+    HTML이 다 로드된 후 실행됨)
+  -->
+  <script src="app.js"></script>
+
+</body>
+</html>
