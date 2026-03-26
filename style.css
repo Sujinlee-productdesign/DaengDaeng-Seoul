@@ -344,12 +344,270 @@ body {
 
 
 /* ---------------------------------------------------------------
+   탭 네비게이션 (헤더 아래 지도 ↔ 대시보드 전환)
+--------------------------------------------------------------- */
+.tab-nav {
+  display: flex;
+  background: white;
+  border-bottom: 2px solid #FFD166;
+  flex-shrink: 0;
+  z-index: 90;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  font-family: 'Nanum Gothic', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #aaa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab-btn:hover { color: #FF8C42; }
+
+.tab-btn.active {
+  color: #FF8C42;
+  border-bottom-color: #FF8C42;
+}
+
+/* 탭 콘텐츠: 기본 숨김, active일 때만 표시 */
+.tab-content {
+  display: none;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-content.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 지도 탭은 map-wrapper 역할 그대로 유지 */
+#tab-map {
+  position: relative;
+  overflow: hidden;
+}
+
+/* 대시보드 탭은 스크롤 가능 */
+#tab-dashboard {
+  overflow-y: auto;
+  background: #FFF3E0;
+}
+
+
+/* ---------------------------------------------------------------
+   대시보드 레이아웃
+--------------------------------------------------------------- */
+.dashboard-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  width: 100%;
+}
+
+/* 상단 통계 카드 3개 */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 16px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+}
+
+.stat-icon  { font-size: 1.8rem; margin-bottom: 6px; }
+.stat-label { font-size: 0.75rem; color: #888; margin-bottom: 6px; }
+.stat-value { font-size: 1rem; font-weight: 800; color: #FF8C42; }
+
+/* 차트 2개 그리드 */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+}
+
+.chart-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.chart-desc {
+  font-size: 0.72rem;
+  color: #aaa;
+  margin-bottom: 14px;
+}
+
+/* 차트 높이 고정 */
+.chart-box {
+  height: 260px;
+  position: relative;
+}
+
+.dashboard-note {
+  font-size: 0.75rem;
+  color: #bbb;
+  text-align: center;
+}
+
+
+/* ---------------------------------------------------------------
+   견종 인식 AI - FAB 버튼 (지도 우측 하단 플로팅)
+--------------------------------------------------------------- */
+.ai-fab {
+  position: absolute;
+  bottom: 70px;   /* place-count 위에 위치 */
+  right: 20px;
+  z-index: 10;
+}
+
+.ai-fab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: white;
+  border: 2px solid #FFD166;
+  border-radius: 16px;
+  padding: 10px 14px;
+  font-size: 1.4rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  transition: all 0.2s ease;
+  font-family: 'Nanum Gothic', sans-serif;
+}
+
+.ai-fab-btn:hover {
+  background: #FFF3E0;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+}
+
+.ai-fab-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.ai-fab-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #FF8C42;
+  display: block;
+}
+
+/* 로딩 스피너 애니메이션 */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+
+/* ---------------------------------------------------------------
+   견종 인식 AI - 결과 팝업
+--------------------------------------------------------------- */
+.ai-result-panel {
+  position: absolute;
+  bottom: 70px;
+  right: 90px;   /* FAB 버튼 왼쪽에 위치 */
+  width: 270px;
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  z-index: 20;
+  animation: slide-in 0.25s ease;
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ai-result-panel.hidden { display: none; }
+
+.ai-result-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #bbb;
+  cursor: pointer;
+}
+
+.ai-result-close:hover { color: #555; }
+
+/* 팝업 헤더: 아이콘 + 이름 */
+.ai-result-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 10px;
+}
+
+.ai-result-icon  { font-size: 2rem; }
+.ai-result-breed { font-size: 1.1rem; font-weight: 800; color: #222; }
+.ai-result-size  { font-size: 0.78rem; font-weight: 700; margin-top: 2px; }
+
+.ai-result-msg {
+  font-size: 0.85rem;
+  color: #444;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.ai-result-filter {
+  background: #FFF3E0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+
+/* ---------------------------------------------------------------
    반응형 - 모바일 (600px 이하)
 --------------------------------------------------------------- */
 @media (max-width: 600px) {
   .logo        { font-size: 1.2rem; }
-  .tagline     { display: none; }   /* 모바일에서 태그라인 숨김 */
+  .tagline     { display: none; }
   .filter-btn  { padding: 6px 10px; font-size: 0.78rem; }
   .air-banner  { font-size: 0.72rem; padding: 5px 10px; }
   .filter-bar  { gap: 5px; padding: 6px 8px; }
+
+  /* 대시보드 모바일: 1열로 변경 */
+  .stat-cards  { grid-template-columns: 1fr; }
+  .charts-grid { grid-template-columns: 1fr; }
+
+  /* AI 팝업 모바일: 전체 너비 */
+  .ai-result-panel {
+    left: 10px;
+    right: 10px;
+    width: auto;
+    bottom: 80px;
+  }
 }
