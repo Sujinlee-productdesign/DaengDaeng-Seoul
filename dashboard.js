@@ -1,17 +1,15 @@
 // ================================================================
-// 댕댕서울 88 - 우리 동네 현황 대시보드
+// 댕댕서울 — 우리 동네 현황 대시보드
 // Chart.js를 이용한 서울시 구별 반려견 통계 시각화
+// 코로플레스 지도: 순수 SVG (카카오맵 의존 없음, 줌/팬 없음)
 // ================================================================
 
 
 // ----------------------------------------------------------------
 // 1. 서울 25개 구 더미 데이터
-//    실제 서울시 반려동물 등록 현황 데이터와 유사한 수치
-//    추후 서울 열린데이터광장 API로 교체 가능
 // ----------------------------------------------------------------
 
 const DISTRICT_DATA = [
-  // { gu: 구 이름, dogs: 등록 반려견 수, parkArea: 공원 면적(㎡) }
   { gu: '강남구',   dogs: 27543, parkArea: 3250000 },
   { gu: '강동구',   dogs: 16234, parkArea: 2180000 },
   { gu: '강북구',   dogs: 11892, parkArea: 4520000 },
@@ -24,17 +22,17 @@ const DISTRICT_DATA = [
   { gu: '도봉구',   dogs: 13678, parkArea: 5230000 },
   { gu: '동대문구', dogs: 12345, parkArea: 1560000 },
   { gu: '동작구',   dogs: 14567, parkArea: 2890000 },
-  { gu: '마포구',   dogs: 18234, parkArea: 7340000 }, // 월드컵공원
+  { gu: '마포구',   dogs: 18234, parkArea: 7340000 },
   { gu: '서대문구', dogs: 13456, parkArea: 3210000 },
   { gu: '서초구',   dogs: 22345, parkArea: 4560000 },
-  { gu: '성동구',   dogs: 15678, parkArea: 3890000 }, // 서울숲
+  { gu: '성동구',   dogs: 15678, parkArea: 3890000 },
   { gu: '성북구',   dogs: 14234, parkArea: 2340000 },
-  { gu: '송파구',   dogs: 24567, parkArea: 8920000 }, // 올림픽공원
+  { gu: '송파구',   dogs: 24567, parkArea: 8920000 },
   { gu: '양천구',   dogs: 16789, parkArea: 2130000 },
   { gu: '영등포구', dogs: 15432, parkArea: 4560000 },
   { gu: '용산구',   dogs: 13456, parkArea: 2670000 },
   { gu: '은평구',   dogs: 17654, parkArea: 3450000 },
-  { gu: '종로구',   dogs:  8765, parkArea: 5670000 }, // 남산
+  { gu: '종로구',   dogs:  8765, parkArea: 5670000 },
   { gu: '중구',     dogs:  6543, parkArea: 2340000 },
   { gu: '중랑구',   dogs: 13234, parkArea: 2890000 },
 ];
@@ -42,7 +40,6 @@ const DISTRICT_DATA = [
 
 // ----------------------------------------------------------------
 // 2. 탭 전환 로직
-//    .tab-btn 클릭 → .tab-content 표시/숨김
 // ----------------------------------------------------------------
 
 function setupTabs() {
@@ -52,7 +49,7 @@ function setupTabs() {
 
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      const target = btn.dataset.tab; // 'map' / 'recommend' / 'dashboard'
+      const target = btn.dataset.tab;
 
       tabBtns.forEach(b => b.classList.remove('active'));
       tabContents.forEach(c => c.classList.remove('active'));
@@ -60,12 +57,10 @@ function setupTabs() {
       btn.classList.add('active');
       document.getElementById(`tab-${target}`).classList.add('active');
 
-      // 사이드바: 지도 탭에서만 표시
       if (sidebar) {
         sidebar.style.display = target === 'map' ? 'flex' : 'none';
       }
 
-      // 대시보드 탭 처음 열 때 차트 초기화
       if (target === 'dashboard' && !dashboardInitialized) {
         initDashboard();
         dashboardInitialized = true;
@@ -74,7 +69,6 @@ function setupTabs() {
   });
 }
 
-// 차트가 이미 그려졌는지 체크 (중복 생성 방지)
 let dashboardInitialized = false;
 
 
@@ -83,25 +77,20 @@ let dashboardInitialized = false;
 // ----------------------------------------------------------------
 
 function updateStatCards() {
-  // 반려견 최다 등록 구
   const topDogs = [...DISTRICT_DATA].sort((a, b) => b.dogs - a.dogs)[0];
   document.getElementById('stat-top-gu').textContent =
     `${topDogs.gu} (${topDogs.dogs.toLocaleString()}마리)`;
 
-  // 1마리당 공원 면적 최대 구
   const topPark = [...DISTRICT_DATA]
     .map(d => ({ ...d, ratio: Math.round(d.parkArea / d.dogs) }))
     .sort((a, b) => b.ratio - a.ratio)[0];
   document.getElementById('stat-top-park').textContent =
     `${topPark.gu} (${topPark.ratio.toLocaleString()}㎡)`;
 
-  // 서울시 총 반려견 수
   const total = DISTRICT_DATA.reduce((sum, d) => sum + d.dogs, 0);
   document.getElementById('stat-total').textContent =
     `${total.toLocaleString()}마리`;
 
-  // 서울시민 N명 중 1명이 반려견 보호자
-  // 서울시 인구 약 9,413,000명 기준 (2023년 주민등록 통계)
   const SEOUL_POP = 9413000;
   const ratio = Math.round(SEOUL_POP / total);
   document.getElementById('stat-ratio').textContent =
@@ -110,32 +99,65 @@ function updateStatCards() {
 
 
 // ----------------------------------------------------------------
-// 4. 차트 공통 색상 팔레트 — 파스텔톤 (빨강/주황/노랑/초록/보라/파랑)
+// 4. 차트 팔레트 — 파스텔톤
 // ----------------------------------------------------------------
 
 function getPalette(count) {
   const pastels = [
-    '#FF8A80', // 파스텔 빨강
-    '#FFAB76', // 파스텔 주황
-    '#FFE082', // 파스텔 노랑
-    '#A5D6A7', // 파스텔 초록
-    '#CE93D8', // 파스텔 보라
-    '#90CAF9', // 파스텔 파랑
-    '#F48FB1', // 파스텔 핑크
-    '#80DEEA', // 파스텔 민트
-    '#B0BEC5', // 파스텔 블루그레이
-    '#BCAAA4', // 파스텔 브라운
+    '#FF8A80', '#FFAB76', '#FFE082', '#A5D6A7',
+    '#CE93D8', '#90CAF9', '#F48FB1', '#80DEEA',
+    '#B0BEC5', '#BCAAA4',
   ];
   return pastels.slice(0, count);
 }
 
 
 // ----------------------------------------------------------------
-// 5. 차트 1: 구별 반려견 등록 수 (Top 10 가로 막대)
+// 5. 차트 인스턴스 (강조 기능 위해 모듈 수준에서 보관)
+// ----------------------------------------------------------------
+
+let chartDogs = null;
+let chartPark = null;
+
+
+// Chart.js 플러그인: 선택된 막대에 그림자 + 확대 효과
+const barHighlightPlugin = {
+  id: 'barHighlight',
+  beforeDatasetsDraw(chart) {
+    const idx = chart._highlightIndex;
+    if (idx == null || idx < 0) return;
+    const ctx  = chart.ctx;
+    const meta = chart.getDatasetMeta(0);
+    const bar  = meta.data[idx];
+    if (!bar) return;
+
+    const props = bar.getProps(['x', 'y', 'base', 'height'], true);
+    const left  = Math.min(props.base, props.x);
+    const right = Math.max(props.base, props.x);
+    const top   = props.y - props.height / 2;
+
+    ctx.save();
+    ctx.shadowColor   = 'rgba(255,140,66,0.50)';
+    ctx.shadowBlur    = 18;
+    ctx.shadowOffsetY = 4;
+    ctx.fillStyle     = '#FF8C42';
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(left - 5, top - 4, (right - left) + 10, props.height + 8, 8);
+    } else {
+      ctx.rect(left - 5, top - 4, (right - left) + 10, props.height + 8);
+    }
+    ctx.fill();
+    ctx.restore();
+  },
+};
+
+
+// ----------------------------------------------------------------
+// 6. 차트 1: 구별 반려견 등록 수 Top 10
 // ----------------------------------------------------------------
 
 function drawDogChart() {
-  // 등록 수 내림차순 Top 10
   const top10 = [...DISTRICT_DATA]
     .sort((a, b) => b.dogs - a.dogs)
     .slice(0, 10);
@@ -144,73 +166,15 @@ function drawDogChart() {
   const values = top10.map(d => d.dogs);
 
   const ctx = document.getElementById('chart-dogs').getContext('2d');
-
-  new Chart(ctx, {
+  chartDogs = new Chart(ctx, {
     type: 'bar',
+    plugins: [barHighlightPlugin],
     data: {
       labels,
       datasets: [{
         label: '반려견 등록 수 (마리)',
         data: values,
         backgroundColor: getPalette(10),
-        borderRadius: 6,     // 막대 모서리 둥글게
-        borderSkipped: false,
-      }],
-    },
-    options: {
-      indexAxis: 'y', // 가로 막대 그래프
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            // 툴팁에 단위 추가
-            label: ctx => ` ${ctx.raw.toLocaleString()}마리`,
-          },
-        },
-      },
-      scales: {
-        x: {
-          grid: { color: 'rgba(0,0,0,0.05)' },
-          ticks: {
-            callback: v => v.toLocaleString(), // 숫자 천단위 콤마
-          },
-        },
-        y: {
-          grid: { display: false },
-          ticks: { font: { family: 'Nanum Gothic', weight: '700' } },
-        },
-      },
-    },
-  });
-}
-
-
-// ----------------------------------------------------------------
-// 6. 차트 2: 강아지 1마리당 공원 면적 (Top 10 가로 막대)
-// ----------------------------------------------------------------
-
-function drawParkChart() {
-  // 1마리당 공원 면적 = 공원 면적(㎡) / 등록 반려견 수
-  const top10 = [...DISTRICT_DATA]
-    .map(d => ({ gu: d.gu, ratio: Math.round(d.parkArea / d.dogs) }))
-    .sort((a, b) => b.ratio - a.ratio)
-    .slice(0, 10);
-
-  const labels = top10.map(d => d.gu);
-  const values = top10.map(d => d.ratio);
-
-  const ctx = document.getElementById('chart-park').getContext('2d');
-
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: '1마리당 공원 면적 (㎡)',
-        data: values,
-        backgroundColor: getPalette(10).reverse(), // 색상 순서 반전
         borderRadius: 6,
         borderSkipped: false,
       }],
@@ -222,21 +186,17 @@ function drawParkChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.raw.toLocaleString()}㎡`,
-          },
+          callbacks: { label: ctx => ` ${ctx.raw.toLocaleString()}마리` },
         },
       },
       scales: {
         x: {
           grid: { color: 'rgba(0,0,0,0.05)' },
-          ticks: {
-            callback: v => `${v.toLocaleString()}㎡`,
-          },
+          ticks: { callback: v => v.toLocaleString() },
         },
         y: {
           grid: { display: false },
-          ticks: { font: { family: 'Nanum Gothic', weight: '700' } },
+          ticks: { font: { family: 'Pretendard, -apple-system, sans-serif', weight: '700' } },
         },
       },
     },
@@ -245,75 +205,121 @@ function drawParkChart() {
 
 
 // ----------------------------------------------------------------
-// 7. 코로플레스 지도: 서울 구별 반려견 수 시각화
-//    - 카카오 지도 + GeoJSON 폴리곤
-//    - 반려견 수 비례 오렌지 색상 강도
-//    - 구 클릭 → 말풍선 툴팁 표시
+// 7. 차트 2: 강아지 1마리당 공원 면적 Top 10
 // ----------------------------------------------------------------
 
-let choroplethMap  = null;  // 대시보드 전용 카카오맵 인스턴스
-let activeDistrictTooltip = null; // 현재 보이는 툴팁 CustomOverlay
+function drawParkChart() {
+  const top10 = [...DISTRICT_DATA]
+    .map(d => ({ gu: d.gu, ratio: Math.round(d.parkArea / d.dogs) }))
+    .sort((a, b) => b.ratio - a.ratio)
+    .slice(0, 10);
 
-// 반려견 수 → 오렌지 계열 색상 (연한 = 적음, 진한 = 많음)
+  const labels = top10.map(d => d.gu);
+  const values = top10.map(d => d.ratio);
+
+  const ctx = document.getElementById('chart-park').getContext('2d');
+  chartPark = new Chart(ctx, {
+    type: 'bar',
+    plugins: [barHighlightPlugin],
+    data: {
+      labels,
+      datasets: [{
+        label: '1마리당 공원 면적 (㎡)',
+        data: values,
+        backgroundColor: getPalette(10).reverse(),
+        borderRadius: 6,
+        borderSkipped: false,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.raw.toLocaleString()}㎡` },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          ticks: { callback: v => `${v.toLocaleString()}㎡` },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { font: { family: 'Pretendard, -apple-system, sans-serif', weight: '700' } },
+        },
+      },
+    },
+  });
+}
+
+
+// ----------------------------------------------------------------
+// 8. 차트 막대 강조 / 해제
+// ----------------------------------------------------------------
+
+function highlightChartBar(guName) {
+  [
+    { chart: chartDogs, origColors: getPalette(10) },
+    { chart: chartPark, origColors: getPalette(10).reverse() },
+  ].forEach(({ chart, origColors }) => {
+    if (!chart) return;
+    const labels = chart.data.labels;
+    const idx    = labels.indexOf(guName);
+
+    // 선택 구 → 브랜드색, 나머지 → 회색
+    chart.data.datasets[0].backgroundColor =
+      labels.map((_, i) => (i === idx ? '#FF8C42' : '#D1D1D6'));
+    chart._highlightIndex = idx >= 0 ? idx : null;
+    chart.update('none');
+  });
+}
+
+function clearChartHighlight() {
+  if (chartDogs) {
+    chartDogs.data.datasets[0].backgroundColor = getPalette(10);
+    chartDogs._highlightIndex = null;
+    chartDogs.update('none');
+  }
+  if (chartPark) {
+    chartPark.data.datasets[0].backgroundColor = getPalette(10).reverse();
+    chartPark._highlightIndex = null;
+    chartPark.update('none');
+  }
+}
+
+
+// ----------------------------------------------------------------
+// 9. 코로플레스 지도 색상 계산
+// ----------------------------------------------------------------
+
 function getDogColor(dogs) {
   const min   = Math.min(...DISTRICT_DATA.map(d => d.dogs));
   const max   = Math.max(...DISTRICT_DATA.map(d => d.dogs));
-  const ratio = (dogs - min) / (max - min); // 0 ~ 1
+  const ratio = (dogs - min) / (max - min);
 
-  // #FFF3E0 (연한) → #E65100 (진한)  오렌지 그라디언트
+  // 연한 살구 → 진한 오렌지
   const r = 255;
-  const g = Math.round(243 - ratio * 180); // 243 → 63
-  const b = Math.round(224 - ratio * 224); // 224 → 0
+  const g = Math.round(243 - ratio * 180);
+  const b = Math.round(224 - ratio * 224);
   return `rgb(${r},${g},${b})`;
 }
 
-// GeoJSON 폴리곤의 시각적 중심점(무게중심) 계산
-function getCentroid(coords) {
-  const lats = coords.map(c => c[1]);
-  const lngs = coords.map(c => c[0]);
-  return {
-    lat: (Math.min(...lats) + Math.max(...lats)) / 2,
-    lng: (Math.min(...lngs) + Math.max(...lngs)) / 2,
-  };
-}
 
-// 구 클릭 시 말풍선 툴팁 생성
-function showDistrictTooltip(guName, dogs, center) {
-  if (activeDistrictTooltip) activeDistrictTooltip.setMap(null);
+// ----------------------------------------------------------------
+// 10. 순수 SVG 코로플레스 지도 (카카오맵 의존 없음, 줌/팬 없음)
+// ----------------------------------------------------------------
 
-  const content = `
-    <div class="district-tooltip">
-      <div class="dt-gu">${guName}</div>
-      <div class="dt-count">${dogs.toLocaleString()}마리</div>
-      <div class="dt-arrow"></div>
-    </div>`;
+let selectedGu   = null;
+let svgTooltipEl = null;
+let svgEl        = null;
 
-  activeDistrictTooltip = new kakao.maps.CustomOverlay({
-    position : new kakao.maps.LatLng(center.lat, center.lng),
-    content,
-    yAnchor  : 1.25,
-    zIndex   : 10,
-  });
-  activeDistrictTooltip.setMap(choroplethMap);
-}
-
-// 메인 코로플레스 지도 그리기
 async function drawChoroplethMap() {
   const container = document.getElementById('district-map');
-  if (!container || !window.kakao) return;
+  if (!container) return;
 
-  // 카카오 지도 초기화 (서울 중심, 레벨 9 = 시 전체)
-  choroplethMap = new kakao.maps.Map(container, {
-    center: new kakao.maps.LatLng(37.5590, 126.9910),
-    level : 9,
-  });
-
-  // 지도 클릭 시 툴팁 닫기
-  kakao.maps.event.addListener(choroplethMap, 'click', () => {
-    if (activeDistrictTooltip) activeDistrictTooltip.setMap(null);
-  });
-
-  // 서울시 구 경계 GeoJSON (공개 데이터 – southkorea/seoul-maps)
   const GEO_URL = 'https://raw.githubusercontent.com/southkorea/seoul-maps/master/kostat/2013/json/seoul_municipalities_geo_simple.json';
   let geoData;
   try {
@@ -321,73 +327,204 @@ async function drawChoroplethMap() {
     geoData = await res.json();
   } catch (e) {
     console.warn('⚠️ 서울 GeoJSON 로드 실패:', e);
+    container.innerHTML = '<p style="padding:20px;color:#888;font-size:0.85rem;">지도 데이터를 불러올 수 없습니다.</p>';
     return;
   }
 
-  // 구 이름 → 반려견 수 빠른 조회 맵
   const dogMap = {};
   DISTRICT_DATA.forEach(d => { dogMap[d.gu] = d.dogs; });
 
-  // GeoJSON feature → Kakao Polygon
+  // 모든 좌표 범위 계산
+  let minLng = Infinity, maxLng = -Infinity;
+  let minLat = Infinity, maxLat = -Infinity;
+  geoData.features.forEach(f => {
+    const rings = f.geometry.type === 'MultiPolygon'
+      ? f.geometry.coordinates.flatMap(p => p)
+      : f.geometry.coordinates;
+    rings.forEach(ring => ring.forEach(([lng, lat]) => {
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+    }));
+  });
+
+  const VW = 600, VH = 420, PAD = 20;
+
+  function project(lng, lat) {
+    const x = PAD + ((lng - minLng) / (maxLng - minLng)) * (VW - PAD * 2);
+    const y = PAD + ((maxLat - lat) / (maxLat - minLat)) * (VH - PAD * 2);
+    return [x, y];
+  }
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${VW} ${VH}`);
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', '100%');
+  svg.style.display = 'block';
+  svgEl = svg;
+
   geoData.features.forEach(feature => {
-    const guName = feature.properties.name; // '강남구'
+    const guName = feature.properties.name;
     const dogs   = dogMap[guName] || 0;
     const color  = getDogColor(dogs);
 
-    // Polygon / MultiPolygon 모두 처리
-    const geom   = feature.geometry;
-    const rings  = geom.type === 'MultiPolygon'
-      ? geom.coordinates.map(p => p[0])   // 각 폴리곤의 외곽선
-      : [geom.coordinates[0]];            // 단일 폴리곤 외곽선
+    const geom  = feature.geometry;
+    const rings = geom.type === 'MultiPolygon'
+      ? geom.coordinates.map(p => p[0])
+      : [geom.coordinates[0]];
+
+    // 구 중심점 (첫 번째 링 무게중심)
+    let sumX = 0, sumY = 0, n = 0;
+    rings[0].forEach(([lng, lat]) => {
+      const [px, py] = project(lng, lat);
+      sumX += px; sumY += py; n++;
+    });
+    const cx = sumX / n;
+    const cy = sumY / n;
+
+    const g = document.createElementNS(NS, 'g');
+    g.dataset.gu   = guName;
+    g.dataset.dogs = dogs;
+    g.dataset.cx   = cx;
+    g.dataset.cy   = cy;
+    g.style.cursor = 'pointer';
 
     rings.forEach(ring => {
-      const path = ring.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng));
-
-      const polygon = new kakao.maps.Polygon({
-        map         : choroplethMap,
-        path,
-        strokeWeight: 1.5,
-        strokeColor : '#ffffff',
-        strokeOpacity: 0.9,
-        fillColor   : color,
-        fillOpacity : 0.72,
-      });
-
-      const centroid = getCentroid(ring);
-
-      // 호버 → 말풍선 표시 + 밝기 강조
-      kakao.maps.event.addListener(polygon, 'mouseover', () => {
-        polygon.setOptions({ fillOpacity: 0.95 });
-        showDistrictTooltip(guName, dogs, centroid);
-      });
-
-      // 호버 아웃 → 말풍선 닫기 + 원래 투명도
-      kakao.maps.event.addListener(polygon, 'mouseout', () => {
-        polygon.setOptions({ fillOpacity: 0.72 });
-        if (activeDistrictTooltip) activeDistrictTooltip.setMap(null);
-      });
+      const pts  = ring.map(([lng, lat]) => project(lng, lat).join(',')).join(' ');
+      const poly = document.createElementNS(NS, 'polygon');
+      poly.setAttribute('points', pts);
+      poly.setAttribute('fill', color);
+      poly.setAttribute('stroke', '#ffffff');
+      poly.setAttribute('stroke-width', '1.5');
+      poly.setAttribute('stroke-linejoin', 'round');
+      poly.dataset.origColor = color;
+      g.appendChild(poly);
     });
+
+    // 구 이름 텍스트 레이블
+    const lbl = document.createElementNS(NS, 'text');
+    lbl.setAttribute('x', cx);
+    lbl.setAttribute('y', cy + 1);
+    lbl.setAttribute('text-anchor', 'middle');
+    lbl.setAttribute('dominant-baseline', 'middle');
+    lbl.setAttribute('font-size', '9.5');
+    lbl.setAttribute('font-family', 'Pretendard, -apple-system, sans-serif');
+    lbl.setAttribute('font-weight', '500');
+    lbl.setAttribute('fill', '#444');
+    lbl.setAttribute('pointer-events', 'none');
+    lbl.textContent = guName.replace('구', '');
+    g.appendChild(lbl);
+
+    g.addEventListener('click', e => {
+      e.stopPropagation();
+      onDistrictClick(guName, dogs, g);
+    });
+
+    svg.appendChild(g);
   });
 
-  console.log('✅ 코로플레스 지도 초기화 완료');
+  // SVG 배경 클릭 → 선택 해제
+  svg.addEventListener('click', () => {
+    deselectDistrict();
+  });
+
+  // 툴팁 div
+  const tooltip = document.createElement('div');
+  tooltip.className  = 'district-tooltip';
+  tooltip.style.display = 'none';
+  svgTooltipEl = tooltip;
+
+  container.innerHTML = '';
+  container.style.position = 'relative';
+  container.appendChild(svg);
+  container.appendChild(tooltip);
+
+  console.log('✅ SVG 코로플레스 지도 초기화 완료');
 }
 
 
 // ----------------------------------------------------------------
-// 8. 서울 공공데이터 API — 반려동물 등록 현황
-//    엔드포인트: 서울 열린데이터광장 동물등록현황
-//    성공 시 DISTRICT_DATA를 실데이터로 교체, 실패 시 더미 유지
+// 11. 구 선택 / 해제 상태 관리
+// ----------------------------------------------------------------
+
+function onDistrictClick(guName, dogs, clickedG) {
+  if (selectedGu === guName) {
+    deselectDistrict();
+    return;
+  }
+  selectedGu = guName;
+
+  // 폴리곤 스타일 업데이트
+  if (svgEl) {
+    svgEl.querySelectorAll('g[data-gu]').forEach(g => {
+      const polys = g.querySelectorAll('polygon');
+      if (g.dataset.gu === guName) {
+        polys.forEach(p => {
+          p.setAttribute('fill', p.dataset.origColor);
+          p.setAttribute('stroke', '#FF8C42');
+          p.setAttribute('stroke-width', '2.5');
+          p.setAttribute('filter', 'drop-shadow(0 3px 10px rgba(255,140,66,0.55))');
+        });
+      } else {
+        polys.forEach(p => {
+          p.setAttribute('fill', '#D1D1D6');
+          p.setAttribute('stroke', '#ffffff');
+          p.setAttribute('stroke-width', '0.8');
+          p.removeAttribute('filter');
+        });
+      }
+    });
+  }
+
+  // 툴팁 위치 (구 중심점 기준 %)
+  if (svgTooltipEl) {
+    const cx = parseFloat(clickedG.dataset.cx);
+    const cy = parseFloat(clickedG.dataset.cy);
+    svgTooltipEl.innerHTML =
+      `<div class="dt-gu">${guName}</div>` +
+      `<div class="dt-count">${parseInt(dogs).toLocaleString()}마리</div>`;
+    svgTooltipEl.style.display = 'block';
+    svgTooltipEl.style.left    = `${(cx / 600) * 100}%`;
+    svgTooltipEl.style.top     = `${(cy / 420) * 100}%`;
+  }
+
+  // 차트 막대 강조
+  highlightChartBar(guName);
+}
+
+function deselectDistrict() {
+  selectedGu = null;
+
+  if (svgEl) {
+    svgEl.querySelectorAll('g[data-gu]').forEach(g => {
+      g.querySelectorAll('polygon').forEach(p => {
+        p.setAttribute('fill', p.dataset.origColor);
+        p.setAttribute('stroke', '#ffffff');
+        p.setAttribute('stroke-width', '1.5');
+        p.removeAttribute('filter');
+      });
+    });
+  }
+
+  if (svgTooltipEl) svgTooltipEl.style.display = 'none';
+
+  clearChartHighlight();
+}
+
+
+// ----------------------------------------------------------------
+// 12. 서울 공공데이터 API — 반려동물 등록 현황
 // ----------------------------------------------------------------
 
 async function fetchDogRegistrationData() {
-  // SEOUL_API_KEY, SEOUL_API_BASE 는 app.js에서 전역 선언됨
   const url = `${SEOUL_API_BASE}/${SEOUL_API_KEY}/json/SDOGANIMALREG/1/100/`;
 
   try {
     const res  = await fetch(url);
     const json = await res.json();
 
-    // 응답 키는 API에 따라 다를 수 있음 — 실제 응답을 보고 조정
     const rows = json?.SDOGANIMALREG?.row
                ?? json?.AnimalRegStat?.row
                ?? json?.row
@@ -395,19 +532,14 @@ async function fetchDogRegistrationData() {
 
     if (!rows || rows.length === 0) throw new Error('반려견 등록 데이터 없음');
 
-    // 구 이름과 등록 수를 DISTRICT_DATA 형식으로 변환
     rows.forEach(r => {
-      // 필드명은 실제 API 응답에 맞게 조정 (일반적 필드명 후보 목록)
       const guName = r.SIGUN_NM ?? r.GU_NM ?? r.CTPV_NM ?? r.LEGALDONG_NM ?? null;
       const count  = parseInt(r.ANIMAL_CNT ?? r.REG_CNT ?? r.TOT_CNT ?? 0, 10);
-
       if (!guName || isNaN(count)) return;
-
       const target = DISTRICT_DATA.find(d => d.gu === guName || guName.includes(d.gu));
       if (target) target.dogs = count;
     });
 
-    // 차트 설명 & 하단 노트 업데이트
     const descEl = document.getElementById('chart-dogs-desc');
     const noteEl = document.getElementById('dashboard-note');
     if (descEl) descEl.textContent = '서울시 반려동물 등록 현황 (공공데이터 실시간)';
@@ -424,13 +556,11 @@ async function fetchDogRegistrationData() {
 
 
 // ----------------------------------------------------------------
-// 9. 대시보드 초기화 (탭 전환 시 최초 1회 실행)
+// 13. 대시보드 초기화
 // ----------------------------------------------------------------
 
 async function initDashboard() {
-  // 실데이터 시도 → DISTRICT_DATA 갱신 → 차트 렌더
   await fetchDogRegistrationData();
-
   updateStatCards();
   drawDogChart();
   drawParkChart();
@@ -440,7 +570,7 @@ async function initDashboard() {
 
 
 // ----------------------------------------------------------------
-// 10. 탭 설정은 DOM 로드 후 바로 실행
+// 14. 탭 설정은 DOM 로드 후 바로 실행
 // ----------------------------------------------------------------
 
 setupTabs();
