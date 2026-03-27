@@ -96,9 +96,11 @@ const DUMMY_AIR_PM10 = 45; // 단위: ㎍/m³
 // 4. 전역 상태 변수
 // ----------------------------------------------------------------
 
-let map;            // 카카오맵 객체 (initMap에서 생성)
-let allMarkers = []; // 전체 마커 목록 { marker, popup, category }
+let map;             // 카카오맵 객체 (initMap에서 생성)
+let allMarkers = [];  // 전체 마커 목록 { marker, popup, category, place }
 let activePopup = null; // 현재 열려 있는 팝업 오버레이 (하나만 유지)
+let sidebarPlaces = []; // 사이드바 리스트용 장소 목록
+let activeListItem = null; // 현재 선택된 사이드바 아이템
 
 
 // ----------------------------------------------------------------
@@ -325,10 +327,10 @@ function buildPopupHTML(place, category, index) {
   // ⚠️ onclick="closePopup()" → 전역 함수 closePopup() 호출
   return `
     <div class="info-popup">
-      <button class="info-close-btn" onclick="closePopup()" title="닫기">✕</button>
+      <button class="info-close-btn" onclick="closePopup()"><img src="icons/close.svg" alt="닫기"></button>
       <div class="info-tag ${category}">${label}</div>
       <div class="info-name">${place.name}</div>
-      <div class="info-addr">📍 ${place.address || '주소 정보 없음'}</div>
+      <div class="info-addr"><img src="icons/location-pin.svg" alt="">${place.address || '주소 정보 없음'}</div>
     </div>
   `;
 }
@@ -399,53 +401,131 @@ function addMarkers(places, category) {
     // popup.setMap(map) 을 하지 않으면 숨겨진 상태
 
     // 전역 배열에 저장 (필터링 및 클릭 이벤트에 사용)
-    allMarkers.push({ marker, popup, category });
+    allMarkers.push({ marker, popup, category, place });
+
+    // 사이드바 리스트에도 저장
+    sidebarPlaces.push({ ...place, category, markerIndex: allMarkers.length - 1 });
   });
 }
 
 
 // ----------------------------------------------------------------
-// 16. 카운트 표시 업데이트
-//     현재 지도에 보이는 마커 수를 헤더에 표시
+// 16. 사이드바 리스트 렌더링
 // ----------------------------------------------------------------
 
-function updateCount() {
-  // setMap(map) 되어 있으면 보이는 마커로 간주
-  const visibleCount = allMarkers.filter(m => m.marker.getMap() !== null).length;
-  document.getElementById('place-count-num').textContent = visibleCount;
+// 카테고리 이모지 반환 (사이드바 아이콘용)
+function getCategoryEmoji(category) {
+  return { park: '🌳', restaurant: '🍽️', cafe: '☕' }[category] || '📍';
+}
+
+// 사이드바 리스트 렌더링
+function renderSidebar(places) {
+  const list  = document.getElementById('place-list');
+  const count = document.getElementById('sidebar-count');
+
+  // 스켈레톤 제거
+  list.innerHTML = '';
+  count.textContent = places.length;
+
+  if (places.length === 0) {
+    list.innerHTML = '<div class="place-empty">검색 결과가 없어요 🐾</div>';
+    return;
+  }
+
+  places.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'place-item';
+    el.dataset.index = item.markerIndex;
+
+    el.innerHTML = `
+      <div class="place-item-icon ${item.category}">
+        ${getCategoryEmoji(item.category)}
+      </div>
+      <div class="place-item-info">
+        <div class="place-item-name">${item.name}</div>
+        <div class="place-item-addr">${item.address || '주소 정보 없음'}</div>
+      </div>
+      <img src="icons/arrow-right.svg" class="place-item-arrow" alt="">
+    `;
+
+    // 리스트 클릭 → 지도 이동 + 팝업 표시
+    el.addEventListener('click', () => {
+      // 이전 선택 아이템 스타일 제거
+      if (activeListItem) activeListItem.classList.remove('active');
+      el.classList.add('active');
+      activeListItem = el;
+
+      // 지도를 해당 위치로 이동
+      const pos = new kakao.maps.LatLng(item.lat, item.lng);
+      map.panTo(pos);
+
+      // 마커 팝업 열기
+      onMarkerClick(item.markerIndex);
+    });
+
+    list.appendChild(el);
+  });
+}
+
+// ----------------------------------------------------------------
+// 17. 카운트 + 사이드바 동기화 업데이트
+// ----------------------------------------------------------------
+
+function updateCount(category = 'all') {
+  const filtered = category === 'all'
+    ? sidebarPlaces
+    : sidebarPlaces.filter(p => p.category === category);
+  renderSidebar(filtered);
 }
 
 
 // ----------------------------------------------------------------
-// 17. 필터 버튼 이벤트 설정
+// 18. 필터 & 검색 이벤트 설정
 // ----------------------------------------------------------------
 
 function setupFilters() {
-  const buttons = document.querySelectorAll('.filter-btn');
+  // 사이드바의 .chip 버튼
+  const chips = document.querySelectorAll('.chip');
+  let currentCategory = 'all';
 
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      // 모든 버튼의 active 클래스 제거
-      buttons.forEach(b => b.classList.remove('active'));
-      // 클릭한 버튼에만 active 추가
-      btn.classList.add('active');
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentCategory = chip.dataset.category;
 
-      const selected = btn.dataset.category; // 'all' / 'park' / 'restaurant' / 'cafe'
-
-      // 열려 있는 팝업 먼저 닫기
       closePopup();
 
-      // 마커 표시/숨김 처리
+      // 마커 표시/숨김
       allMarkers.forEach(({ marker, category }) => {
-        if (selected === 'all' || selected === category) {
-          marker.setMap(map); // 지도에 표시
-        } else {
-          marker.setMap(null); // 지도에서 제거
-        }
+        marker.setMap(currentCategory === 'all' || currentCategory === category ? map : null);
       });
 
-      updateCount();
+      updateCount(currentCategory);
     });
+  });
+
+  // 검색 기능
+  const searchInput = document.getElementById('search-input');
+  const searchClear = document.getElementById('search-clear');
+
+  searchInput.addEventListener('input', () => {
+    const query = searchInput.value.trim().toLowerCase();
+    searchClear.classList.toggle('hidden', query === '');
+
+    const filtered = sidebarPlaces.filter(p => {
+      const matchCategory = currentCategory === 'all' || p.category === currentCategory;
+      const matchName = p.name.toLowerCase().includes(query);
+      return matchCategory && matchName;
+    });
+
+    renderSidebar(filtered);
+  });
+
+  searchClear.addEventListener('click', () => {
+    searchInput.value = '';
+    searchClear.classList.add('hidden');
+    updateCount(currentCategory);
   });
 }
 

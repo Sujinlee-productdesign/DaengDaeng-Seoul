@@ -1,382 +1,149 @@
 /* ================================================================
-   댕댕서울 88 - 스타일시트
-   컬러 팔레트:
-     주황  #FF8C42  (버튼 활성, 강조)
-     노랑  #FFD166  (버튼 테두리, 호버)
-     연살구 #FFF3E0  (배경)
-     흰색  #FFFFFF  (카드, 팝업 배경)
+   댕댕서울 88 - Apple 스타일 화이트 디자인
+   폰트: -apple-system (SF Pro) 우선, 나눔고딕 폴백
+   컬러: iOS 시스템 컬러 기반 + 브랜드 오렌지 #FF8C42
 ================================================================ */
 
-
-/* ---------------------------------------------------------------
-   기본 리셋 & 공통 설정
---------------------------------------------------------------- */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ───────────────────────────────────────
+   CSS 변수 (디자인 토큰)
+─────────────────────────────────────── */
+:root {
+  --bg:           #F2F2F7;   /* iOS 배경 */
+  --surface:      #FFFFFF;   /* 카드/패널 배경 */
+  --surface-2:    #F2F2F7;   /* 중간 배경 */
+  --separator:    #E5E5EA;   /* 구분선 */
+  --text-1:       #1C1C1E;   /* 주 텍스트 */
+  --text-2:       #636366;   /* 보조 텍스트 */
+  --text-3:       #AEAEB2;   /* 힌트 텍스트 */
+  --brand:        #FF8C42;   /* 브랜드 오렌지 */
+  --brand-light:  #FFF3E0;   /* 오렌지 연한 버전 */
+  --park:         #34C759;   /* iOS 초록 */
+  --restaurant:   #FF3B30;   /* iOS 빨강 */
+  --cafe:         #8E6A4B;   /* 브라운 */
+  --radius-sm:    8px;
+  --radius-md:    12px;
+  --radius-lg:    16px;
+  --shadow-sm:    0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:    0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg:    0 8px 32px rgba(0,0,0,0.14);
+  --sidebar-w:    360px;
+  --header-h:     52px;
 }
 
+/* ───────────────────────────────────────
+   기본 리셋
+─────────────────────────────────────── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
 body {
-  font-family: 'Nanum Gothic', sans-serif;
-  background: #FFF3E0;
-  /* 화면 전체 높이 고정 + 세로 방향 배치 */
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
+               'Nanum Gothic', sans-serif;
+  background: var(--bg);
+  color: var(--text-1);
   height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* 지도가 꽉 차도록 스크롤 방지 */
-}
-
-
-/* ---------------------------------------------------------------
-   상단 헤더
---------------------------------------------------------------- */
-.header {
-  /* 오렌지 → 노랑 그라디언트 */
-  background: linear-gradient(135deg, #FF8C42 0%, #FFD166 100%);
-  padding: 10px 20px;
-  box-shadow: 0 2px 10px rgba(255, 140, 66, 0.4);
-  z-index: 100;
-  flex-shrink: 0; /* 헤더가 줄어들지 않게 고정 */
-}
-
-/* 헤더 내부: 로고(왼쪽) + 배너(오른쪽) 가로 배치 */
-.header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-/* 로고와 태그라인 묶음 */
-.header-title {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.logo {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: white;
-  text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.2);
-  white-space: nowrap;
-}
-
-.tagline {
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.88);
-  white-space: nowrap;
-}
-
-
-/* ---------------------------------------------------------------
-   실시간 미세먼지 배너
---------------------------------------------------------------- */
-.air-banner {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  /* 반투명 흰색 배경 (글래스모피즘 느낌) */
-  background: rgba(255, 255, 255, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 20px;
-  padding: 6px 14px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: white;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: background 0.4s ease;
-}
-
-/* 대기질 등급별 배너 색상 (app.js에서 클래스 교체) */
-.air-banner.good     { background: rgba(76,  175, 80,  0.35); } /* 좋음 → 초록 */
-.air-banner.normal   { background: rgba(33,  150, 243, 0.35); } /* 보통 → 파랑 */
-.air-banner.bad      { background: rgba(255, 152, 0,   0.35); } /* 나쁨 → 주황 */
-.air-banner.very-bad { background: rgba(244, 67,  54,  0.40); } /* 매우나쁨 → 빨강 */
-
-
-/* ---------------------------------------------------------------
-   지도 메인 래퍼
-   헤더를 제외한 남은 공간을 모두 차지함
---------------------------------------------------------------- */
-.map-wrapper {
-  flex: 1;           /* 남은 높이 전부 사용 */
-  position: relative; /* 자식의 absolute 기준점 */
   overflow: hidden;
 }
 
-/* 카카오맵이 렌더링되는 div */
-#map {
-  width: 100%;
-  height: 100%;
-}
 
-
-/* ---------------------------------------------------------------
-   로딩 오버레이 (데이터 로딩 중에 지도 위를 덮음)
---------------------------------------------------------------- */
-.loading-overlay {
-  position: absolute;
-  inset: 0; /* top/right/bottom/left 모두 0 */
-  background: rgba(255, 243, 224, 0.93);
-  z-index: 50;
+/* ───────────────────────────────────────
+   헤더
+─────────────────────────────────────── */
+.header {
+  height: var(--header-h);
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--separator);
   display: flex;
   align-items: center;
-  justify-content: center;
+  padding: 0 16px;
+  gap: 20px;
+  flex-shrink: 0;
+  z-index: 100;
 }
 
-.loading-content {
-  text-align: center;
-  color: #FF8C42;
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-/* 발바닥 위아래 통통 애니메이션 */
-.loading-paw {
-  font-size: 2.8rem;
-  animation: paw-bounce 0.7s ease-in-out infinite alternate;
-  margin-bottom: 12px;
-  display: block;
-}
-
-@keyframes paw-bounce {
-  from { transform: translateY(0px);  }
-  to   { transform: translateY(-14px); }
-}
-
-/* 로딩 완료 시 app.js에서 이 클래스를 추가해 숨김 */
-.loading-overlay.hidden {
-  display: none;
-}
-
-
-/* ---------------------------------------------------------------
-   카테고리 필터 버튼 바 (지도 상단에 플로팅)
---------------------------------------------------------------- */
-.filter-bar {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%); /* 수평 가운데 정렬 */
+/* 로고 */
+.header-logo {
   display: flex;
-  gap: 8px;
-  z-index: 10;
-  /* 흰색 알약 모양 컨테이너 */
-  background: white;
-  padding: 7px 12px;
-  border-radius: 50px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  flex-shrink: 0;
 }
 
-/* 개별 필터 버튼 */
-.filter-btn {
-  padding: 7px 16px;
-  border: 2px solid #FFD166;
-  background: white;
-  color: #FF8C42;
-  border-radius: 50px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  font-family: 'Nanum Gothic', sans-serif;
-  cursor: pointer;
-  transition: all 0.18s ease;
+.logo-paw  { font-size: 1.2rem; }
+.logo-text {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--brand);
   white-space: nowrap;
 }
 
-.filter-btn:hover {
-  background: #FFF3E0;
-}
-
-/* 선택된 필터 버튼 */
-.filter-btn.active {
-  background: #FF8C42;
-  color: white;
-  border-color: #FF8C42;
-}
-
-
-/* ---------------------------------------------------------------
-   장소 개수 표시 (지도 하단에 플로팅)
---------------------------------------------------------------- */
-.place-count {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.95);
-  padding: 8px 22px;
-  border-radius: 50px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-  font-size: 0.9rem;
-  color: #555;
-  z-index: 10;
-  white-space: nowrap;
-}
-
-/* 숫자 강조 */
-#place-count-num {
-  color: #FF8C42;
-  font-size: 1.15rem;
-  font-weight: 800;
-}
-
-
-/* ---------------------------------------------------------------
-   커스텀 마커 스타일
-   카카오맵 CustomOverlay의 content 문자열에 사용됨
-   (인라인 HTML이므로 클래스 이름이 전역 CSS와 일치해야 함)
---------------------------------------------------------------- */
-
-/* 공통: 물방울 모양 마커 */
-.custom-marker {
-  width: 40px;
-  height: 40px;
-  /* 물방울 모양: 좌하단만 각짐 */
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);   /* 꼭지점이 아래를 향하도록 회전 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2.5px solid white;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.custom-marker:hover {
-  /* 호버 시 살짝 커짐 (rotate 유지하면서 scale) */
-  transform: rotate(-45deg) scale(1.18);
-  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.35);
-}
-
-/* 마커 안의 이모지: 부모 회전을 상쇄해서 바로 세우기 */
-.custom-marker span {
-  transform: rotate(45deg);
-  font-size: 17px;
-  line-height: 1;
-  display: block;
-}
-
-/* 카테고리별 마커 색상 */
-.custom-marker.park       { background: #43A047; } /* 초록 */
-.custom-marker.restaurant { background: #EF5350; } /* 빨강 */
-.custom-marker.cafe       { background: #8D6E63; } /* 브라운 */
-
-
-/* ---------------------------------------------------------------
-   인포 팝업 (마커 클릭 시 표시되는 말풍선)
-   카카오맵 CustomOverlay의 content에 사용됨
---------------------------------------------------------------- */
-.info-popup {
-  background: white;
-  border-radius: 12px;
-  padding: 14px 16px;
-  min-width: 210px;
-  max-width: 270px;
-  box-shadow: 0 4px 22px rgba(0, 0, 0, 0.17);
-  position: relative;
-  font-family: 'Nanum Gothic', sans-serif;
-}
-
-/* 팝업 닫기(✕) 버튼 */
-.info-close-btn {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 1rem;
-  color: #bbb;
-  cursor: pointer;
-  line-height: 1;
-  padding: 2px;
-}
-
-.info-close-btn:hover { color: #555; }
-
-/* 카테고리 태그 뱃지 */
-.info-tag {
-  display: inline-block;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: white;
-  padding: 2px 9px;
-  border-radius: 10px;
-  margin-bottom: 7px;
-}
-
-.info-tag.park       { background: #43A047; }
-.info-tag.restaurant { background: #EF5350; }
-.info-tag.cafe       { background: #8D6E63; }
-
-/* 장소 이름 */
-.info-name {
-  font-size: 1rem;
-  font-weight: 800;
-  color: #222;
-  margin-bottom: 6px;
-  padding-right: 20px; /* 닫기 버튼과 겹치지 않게 */
-  line-height: 1.3;
-}
-
-/* 주소 */
-.info-addr {
-  font-size: 0.78rem;
-  color: #777;
-  line-height: 1.5;
-}
-
-/* 팝업 아래 꼬리 삼각형 */
-.info-popup::after {
-  content: '';
-  position: absolute;
-  bottom: -9px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-top: 9px solid white;
-}
-
-
-/* ---------------------------------------------------------------
-   탭 네비게이션 (헤더 아래 지도 ↔ 대시보드 전환)
---------------------------------------------------------------- */
+/* 탭 네비게이션 */
 .tab-nav {
   display: flex;
-  background: white;
-  border-bottom: 2px solid #FFD166;
+  gap: 2px;
+  background: var(--surface-2);
+  border-radius: 9px;
+  padding: 2px;
   flex-shrink: 0;
-  z-index: 90;
 }
 
 .tab-btn {
-  flex: 1;
-  padding: 10px;
+  padding: 5px 14px;
   border: none;
   background: transparent;
-  font-family: 'Nanum Gothic', sans-serif;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #aaa;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-2);
   cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
+  transition: all 0.2s;
+  font-family: inherit;
+  white-space: nowrap;
 }
-
-.tab-btn:hover { color: #FF8C42; }
 
 .tab-btn.active {
-  color: #FF8C42;
-  border-bottom-color: #FF8C42;
+  background: var(--surface);
+  color: var(--text-1);
+  box-shadow: var(--shadow-sm);
 }
 
-/* 탭 콘텐츠: 기본 숨김, active일 때만 표시 */
+/* 미세먼지 배너 */
+.air-banner {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface-2);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+.air-banner.good     { background: rgba(52,199,89,0.12);  color: #1A7F37; }
+.air-banner.normal   { background: rgba(0,122,255,0.10);  color: #0040CC; }
+.air-banner.bad      { background: rgba(255,149,0,0.12);  color: #B35900; }
+.air-banner.very-bad { background: rgba(255,59,48,0.12);  color: #CC0000; }
+
+
+/* ───────────────────────────────────────
+   앱 본문 레이아웃 (사이드바 + 메인)
+─────────────────────────────────────── */
+.app-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 탭 콘텐츠 */
 .tab-content {
   display: none;
   flex: 1;
@@ -389,96 +156,371 @@ body {
   flex-direction: column;
 }
 
-/* 지도 탭은 map-wrapper 역할 그대로 유지 */
+.main-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 지도 탭 */
 #tab-map {
   position: relative;
   overflow: hidden;
 }
 
-/* 대시보드 탭은 스크롤 가능 */
+/* 대시보드 탭 */
 #tab-dashboard {
   overflow-y: auto;
-  background: #FFF3E0;
+  background: var(--bg);
 }
 
 
-/* ---------------------------------------------------------------
-   대시보드 레이아웃
---------------------------------------------------------------- */
-.dashboard-wrap {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px 20px 40px;
-  width: 100%;
+/* ───────────────────────────────────────
+   왼쪽 사이드바
+─────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--separator);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 10;
 }
 
-/* 상단 통계 카드 3개 */
-.stat-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin-bottom: 24px;
+/* 검색바 */
+.sidebar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 14px 0;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
 }
 
-.stat-card {
-  background: white;
-  border-radius: 14px;
-  padding: 18px 16px;
-  text-align: center;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+.search-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.4;
+  flex-shrink: 0;
 }
 
-.stat-icon  { font-size: 1.8rem; margin-bottom: 6px; }
-.stat-label { font-size: 0.75rem; color: #888; margin-bottom: 6px; }
-.stat-value { font-size: 1rem; font-weight: 800; color: #FF8C42; }
-
-/* 차트 2개 그리드 */
-.charts-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
+#search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.88rem;
+  color: var(--text-1);
+  font-family: inherit;
+  outline: none;
 }
 
-.chart-card {
-  background: white;
-  border-radius: 14px;
-  padding: 18px 16px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+#search-input::placeholder { color: var(--text-3); }
+
+.search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
 }
 
-.chart-title {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #333;
-  margin-bottom: 4px;
+.search-clear img { width: 14px; height: 14px; opacity: 0.4; }
+.search-clear.hidden { display: none; }
+
+/* 필터 칩 */
+.filter-chips {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
-.chart-desc {
-  font-size: 0.72rem;
-  color: #aaa;
-  margin-bottom: 14px;
+.filter-chips::-webkit-scrollbar { display: none; }
+
+.chip {
+  padding: 5px 12px;
+  border: 1.5px solid var(--separator);
+  background: var(--surface);
+  color: var(--text-2);
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s;
+  font-family: inherit;
 }
 
-/* 차트 높이 고정 */
-.chart-box {
-  height: 260px;
-  position: relative;
+.chip:hover { border-color: var(--brand); color: var(--brand); }
+
+.chip.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: white;
 }
 
-.dashboard-note {
+/* 카운트 행 */
+.sidebar-count-row {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 0 14px 8px;
+  border-bottom: 1px solid var(--separator);
+}
+
+.sidebar-count-label { font-size: 0.78rem; color: var(--text-3); }
+.sidebar-count-num   { font-size: 1rem; font-weight: 800; color: var(--brand); }
+
+/* 장소 리스트 */
+.place-list {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--separator) transparent;
+}
+
+.place-list::-webkit-scrollbar { width: 4px; }
+.place-list::-webkit-scrollbar-thumb { background: var(--separator); border-radius: 4px; }
+
+/* 각 장소 아이템 */
+.place-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--separator);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.place-item:hover  { background: var(--surface-2); }
+.place-item.active { background: var(--brand-light); }
+
+/* 카테고리 아이콘 원 */
+.place-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.place-item-icon.park       { background: rgba(52,199,89,0.12); }
+.place-item-icon.restaurant { background: rgba(255,59,48,0.10); }
+.place-item-icon.cafe       { background: rgba(142,106,75,0.12); }
+
+.place-item-info  { flex: 1; min-width: 0; }
+
+.place-item-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.place-item-addr {
   font-size: 0.75rem;
-  color: #bbb;
+  color: var(--text-3);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.place-item-arrow {
+  width: 14px;
+  height: 14px;
+  opacity: 0.2;
+  flex-shrink: 0;
+}
+
+/* 빈 리스트 메시지 */
+.place-empty {
+  padding: 40px 20px;
   text-align: center;
+  color: var(--text-3);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+/* 스켈레톤 로딩 */
+.skeleton-item {
+  height: 68px;
+  margin: 0 16px 1px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, #EBEBF0 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shine 1.2s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shine {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
 }
 
 
-/* ---------------------------------------------------------------
-   견종 인식 AI - FAB 버튼 (지도 우측 하단 플로팅)
---------------------------------------------------------------- */
+/* ───────────────────────────────────────
+   지도 영역
+─────────────────────────────────────── */
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+/* 로딩 오버레이 */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(242,242,247,0.92);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-content {
+  text-align: center;
+  color: var(--brand);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.loading-paw {
+  font-size: 2.4rem;
+  animation: paw-bounce 0.7s ease-in-out infinite alternate;
+  margin-bottom: 10px;
+  display: block;
+}
+
+@keyframes paw-bounce {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-12px); }
+}
+
+.loading-overlay.hidden { display: none; }
+
+
+/* ───────────────────────────────────────
+   커스텀 마커
+─────────────────────────────────────── */
+.custom-marker {
+  width: 36px;
+  height: 36px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.custom-marker:hover { transform: rotate(-45deg) scale(1.15); }
+
+.custom-marker span {
+  transform: rotate(45deg);
+  font-size: 15px;
+  display: block;
+}
+
+.custom-marker.park       { background: var(--park); }
+.custom-marker.restaurant { background: var(--restaurant); }
+.custom-marker.cafe       { background: var(--cafe); }
+
+
+/* ───────────────────────────────────────
+   인포 팝업 (마커 클릭)
+─────────────────────────────────────── */
+.info-popup {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  min-width: 200px;
+  max-width: 250px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  font-family: inherit;
+}
+
+.info-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--surface-2);
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.info-close-btn img { width: 10px; height: 10px; opacity: 0.5; }
+
+.info-tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-bottom: 6px;
+}
+
+.info-tag.park       { background: var(--park); }
+.info-tag.restaurant { background: var(--restaurant); }
+.info-tag.cafe       { background: var(--cafe); }
+
+.info-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-1);
+  margin-bottom: 5px;
+  padding-right: 18px;
+}
+
+.info-addr {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.info-addr img { width: 12px; margin-top: 1px; opacity: 0.4; }
+
+.info-popup::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid white;
+}
+
+
+/* ───────────────────────────────────────
+   AI FAB 버튼
+─────────────────────────────────────── */
 .ai-fab {
   position: absolute;
-  bottom: 70px;   /* place-count 위에 위치 */
+  bottom: 24px;
   right: 20px;
   z-index: 10;
 }
@@ -489,59 +531,52 @@ body {
   align-items: center;
   gap: 2px;
   background: white;
-  border: 2px solid #FFD166;
-  border-radius: 16px;
+  border: none;
+  border-radius: var(--radius-lg);
   padding: 10px 14px;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-  transition: all 0.2s ease;
-  font-family: 'Nanum Gothic', sans-serif;
+  box-shadow: var(--shadow-md);
+  transition: all 0.2s;
+  font-family: inherit;
 }
 
 .ai-fab-btn:hover {
-  background: #FFF3E0;
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-}
-
-.ai-fab-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+  box-shadow: var(--shadow-lg);
 }
 
 .ai-fab-label {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  color: #FF8C42;
+  color: var(--brand);
   display: block;
 }
 
-/* 로딩 스피너 애니메이션 */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
 
 
-/* ---------------------------------------------------------------
-   견종 인식 AI - 결과 팝업
---------------------------------------------------------------- */
+/* ───────────────────────────────────────
+   AI 결과 팝업
+─────────────────────────────────────── */
 .ai-result-panel {
   position: absolute;
-  bottom: 70px;
-  right: 90px;   /* FAB 버튼 왼쪽에 위치 */
-  width: 270px;
+  bottom: 24px;
+  right: 86px;
+  width: 260px;
   background: white;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 16px;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  box-shadow: var(--shadow-lg);
   z-index: 20;
-  animation: slide-in 0.25s ease;
+  animation: slide-in 0.2s ease;
 }
 
 @keyframes slide-in {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -549,65 +584,117 @@ body {
 
 .ai-result-close {
   position: absolute;
-  top: 8px;
+  top: 10px;
   right: 10px;
-  background: none;
+  background: var(--surface-2);
   border: none;
-  font-size: 1rem;
-  color: #bbb;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
-.ai-result-close:hover { color: #555; }
+.ai-result-close img { width: 11px; opacity: 0.5; }
 
-/* 팝업 헤더: 아이콘 + 이름 */
 .ai-result-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding-bottom: 12px;
+  gap: 10px;
+  padding-bottom: 10px;
   margin-bottom: 10px;
+  border-bottom: 1px solid var(--separator);
 }
 
-.ai-result-icon  { font-size: 2rem; }
-.ai-result-breed { font-size: 1.1rem; font-weight: 800; color: #222; }
-.ai-result-size  { font-size: 0.78rem; font-weight: 700; margin-top: 2px; }
+.ai-result-icon  { font-size: 1.8rem; }
+.ai-result-breed { font-size: 1rem; font-weight: 800; color: var(--text-1); }
+.ai-result-size  { font-size: 0.75rem; font-weight: 600; margin-top: 2px; }
 
 .ai-result-msg {
-  font-size: 0.85rem;
-  color: #444;
+  font-size: 0.82rem;
+  color: var(--text-2);
   line-height: 1.5;
   margin-bottom: 10px;
 }
 
 .ai-result-filter {
-  background: #FFF3E0;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 0.8rem;
-  color: #555;
+  background: var(--brand-light);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  color: var(--text-2);
 }
 
 
-/* ---------------------------------------------------------------
-   반응형 - 모바일 (600px 이하)
---------------------------------------------------------------- */
-@media (max-width: 600px) {
-  .logo        { font-size: 1.2rem; }
-  .tagline     { display: none; }
-  .filter-btn  { padding: 6px 10px; font-size: 0.78rem; }
-  .air-banner  { font-size: 0.72rem; padding: 5px 10px; }
-  .filter-bar  { gap: 5px; padding: 6px 8px; }
+/* ───────────────────────────────────────
+   대시보드
+─────────────────────────────────────── */
+.dashboard-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  width: 100%;
+}
 
-  /* 대시보드 모바일: 1열로 변경 */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-icon  { font-size: 1.6rem; margin-bottom: 6px; }
+.stat-label { font-size: 0.72rem; color: var(--text-3); margin-bottom: 6px; line-height: 1.4; }
+.stat-value { font-size: 0.95rem; font-weight: 800; color: var(--brand); }
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.chart-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-title { font-size: 0.9rem; font-weight: 800; color: var(--text-1); margin-bottom: 3px; }
+.chart-desc  { font-size: 0.7rem; color: var(--text-3); margin-bottom: 12px; }
+.chart-box   { height: 240px; position: relative; }
+
+.dashboard-note { font-size: 0.72rem; color: var(--text-3); text-align: center; }
+
+
+/* ───────────────────────────────────────
+   반응형 (모바일 768px 이하)
+─────────────────────────────────────── */
+@media (max-width: 768px) {
+  :root { --sidebar-w: 100%; }
+
+  /* 모바일: 사이드바는 지도 아래로 내려감 */
+  .app-body    { flex-direction: column; }
+  .sidebar     { width: 100%; height: 45vh; border-right: none; border-top: 1px solid var(--separator); order: 2; }
+  .main-content { flex: 1; order: 1; min-height: 55vh; }
+
+  /* 탭이 있을 때 사이드바 숨김 처리 */
+  #tab-dashboard + .sidebar { display: none; }
+
   .stat-cards  { grid-template-columns: 1fr; }
   .charts-grid { grid-template-columns: 1fr; }
+  .logo-text   { font-size: 0.9rem; }
 
-  /* AI 팝업 모바일: 전체 너비 */
-  .ai-result-panel {
-    left: 10px;
-    right: 10px;
-    width: auto;
-    bottom: 80px;
-  }
+  .ai-result-panel { left: 10px; right: 10px; width: auto; }
 }
