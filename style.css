@@ -261,14 +261,33 @@ body {
 
 .sidebar-count-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
   gap: 3px;
   padding: 0 12px 10px;
   border-bottom: 0.5px solid var(--separator);
 }
 
+.count-left          { display: flex; align-items: baseline; gap: 3px; }
 .sidebar-count-label { font-size: 0.75rem; color: var(--text-4); }
 .sidebar-count-num   { font-size: 0.95rem; font-weight: 800; color: var(--brand); }
+
+.sort-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238E8E93'/%3E%3C/svg%3E") no-repeat right 8px center;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-2);
+  padding: 5px 24px 5px 10px;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.15s;
+}
+.sort-select:hover { background-color: var(--surface-3); }
 
 .place-list {
   flex: 1;

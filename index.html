@@ -91,9 +91,15 @@
       </div>
 
       <div class="sidebar-count-row">
-        <span class="sidebar-count-label">장소</span>
-        <span id="sidebar-count" class="sidebar-count-num">0</span>
-        <span class="sidebar-count-label">곳</span>
+        <div class="count-left">
+          <span class="sidebar-count-label">장소</span>
+          <span id="sidebar-count" class="sidebar-count-num">0</span>
+          <span class="sidebar-count-label">곳</span>
+        </div>
+        <select id="sort-select" class="sort-select">
+          <option value="dist">가까운순</option>
+          <option value="alpha">가나다순</option>
+        </select>
       </div>
 
       <div id="place-list" class="place-list">
