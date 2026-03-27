@@ -590,6 +590,40 @@ body {
 
 .info-addr img { width: 11px; margin-top: 1px; opacity: 0.4; }
 
+.info-btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.info-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.info-btn img { width: 12px; height: 12px; flex-shrink: 0; }
+.info-btn:hover { opacity: 0.82; }
+
+.info-btn-map  {
+  background: var(--brand-light);
+  color: var(--brand-dark);
+}
+.info-btn-map img  { filter: invert(45%) sepia(80%) saturate(700%) hue-rotate(5deg); }
+
+.info-btn-navi {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+/* 기존 단일 버튼 (하위호환) */
 .info-naver-btn {
   display: flex;
   align-items: center;

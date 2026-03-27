@@ -792,15 +792,23 @@ function buildPopupHTML(place, category, index) {
   const label = getCategoryLabel(category);
 
   // ⚠️ onclick="closePopup()" → 전역 함수 closePopup() 호출
+  const kakaoMapUrl  = place.url || `https://map.kakao.com/link/search/${encodeURIComponent(place.name)}`;
+  const kakaoNaviUrl = `https://map.kakao.com/link/to/${encodeURIComponent(place.name)},${place.lat},${place.lng}`;
+
   return `
     <div class="info-popup">
       <button class="info-close-btn" onclick="closePopup()"><img src="icons/close.svg" alt="닫기"></button>
       <div class="info-tag ${category}">${label}</div>
       <div class="info-name">${place.name}</div>
       <div class="info-addr"><img src="icons/location-pin.svg" alt="">${place.address || '주소 정보 없음'}</div>
-      <a class="info-naver-btn" href="${place.url || `https://map.naver.com/p/search/${encodeURIComponent(place.name)}`}" target="_blank" rel="noopener">
-        ${place.url ? '카카오맵에서 보기 →' : '네이버 플레이스에서 보기 →'}
-      </a>
+      <div class="info-btn-row">
+        <a class="info-btn info-btn-map" href="${kakaoMapUrl}" target="_blank" rel="noopener">
+          <img src="icons/location.svg" alt="">카카오맵
+        </a>
+        <a class="info-btn info-btn-navi" href="${kakaoNaviUrl}" target="_blank" rel="noopener">
+          <img src="icons/location-pin.svg" alt="">길찾기
+        </a>
+      </div>
     </div>
   `;
 }
