@@ -3,33 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>댕댕서울 88</title>
+  <title>댕댕서울</title>
 
   <!-- 파비콘 -->
   <link rel="icon" type="image/png" href="img/favicon_daeng_Seoul.png">
 
   <!-- OG / SNS 메타 -->
-  <meta property="og:title"       content="댕댕서울 88 — 서울 반려견 동반 지도">
-  <meta property="og:description" content="서울에서 강아지랑 팔팔하게 돌아다니자 🐾">
+  <meta property="og:title"       content="댕댕서울 — 서울 반려견 동반 지도">
+  <meta property="og:description" content="서울에서 강아지랑 팔팔하게 돌아다니자">
   <meta property="og:image"       content="img/og_img_daeng_Seoul.png">
   <meta property="og:type"        content="website">
   <meta name="twitter:card"       content="summary_large_image">
-  <meta name="twitter:title"      content="댕댕서울 88">
+  <meta name="twitter:title"      content="댕댕서울">
   <meta name="twitter:image"      content="img/og_img_daeng_Seoul.png">
 
-  <!-- 폰트 -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+  <!-- Pretendard 폰트 -->
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 
   <!-- 카카오맵 SDK -->
   <script type="text/javascript"
     src="//dapi.kakao.com/v2/maps/sdk.js?appkey=118d64cc92d10f59459a348b6fadb810">
   </script>
 
-  <!-- Chart.js (대시보드용) -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-  <!-- TensorFlow.js + MobileNet (견종 인식 AI용) -->
+  <!-- TensorFlow.js + MobileNet -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0/dist/mobilenet.min.js"></script>
 
@@ -38,38 +38,29 @@
 <body>
 
   <!-- ═══════════════════════════════════════
-       헤더: 로고 + 탭 + 미세먼지
+       헤더
   ═══════════════════════════════════════ -->
   <header class="header">
     <div class="header-logo">
-      <img src="img/logo_light_daeng_Seoul.png" alt="댕댕서울 88" class="logo-img">
+      <img src="img/logo_light_daeng_Seoul.png" alt="댕댕서울" class="logo-img">
     </div>
 
-    <!-- 탭: 댕댕지도 / 맞춤 추천 / 우리동네 댕댕 -->
     <nav class="tab-nav">
       <button class="tab-btn active" data-tab="map">댕댕지도</button>
       <button class="tab-btn" data-tab="recommend">맞춤 추천</button>
       <button class="tab-btn" data-tab="dashboard">우리동네 댕댕</button>
     </nav>
-
-    <!-- 실시간 미세먼지 배너 -->
-    <div id="air-banner" class="air-banner">
-      <span id="air-text">대기 정보 로딩 중</span>
-    </div>
   </header>
 
 
   <!-- ═══════════════════════════════════════
-       앱 본문: 사이드바 + 메인 콘텐츠
+       앱 본문
   ═══════════════════════════════════════ -->
   <div class="app-body">
 
-    <!-- ─────────────────────────────────────
-         왼쪽 사이드바 (지도 탭에서만 보임)
-    ───────────────────────────────────── -->
+    <!-- 왼쪽 사이드바 -->
     <aside class="sidebar" id="sidebar">
 
-      <!-- 검색바 -->
       <div class="sidebar-search">
         <img src="icons/search.svg" class="search-icon" alt="검색">
         <input type="text" id="search-input" placeholder="장소 이름으로 검색" />
@@ -78,15 +69,12 @@
         </button>
       </div>
 
-      <!-- 구 필터 드롭다운 -->
       <div class="gu-select-wrap">
         <select id="gu-select" class="gu-select">
           <option value="all">서울 전체</option>
-          <!-- app.js에서 동적으로 옵션 추가됨 -->
         </select>
       </div>
 
-      <!-- 카테고리 필터 칩 -->
       <div class="filter-chips">
         <button class="chip active" data-category="all">
           <img src="icons/filter.svg" alt="" class="chip-icon">전체
@@ -102,16 +90,13 @@
         </button>
       </div>
 
-      <!-- 장소 수 카운트 -->
       <div class="sidebar-count-row">
         <span class="sidebar-count-label">장소</span>
         <span id="sidebar-count" class="sidebar-count-num">0</span>
         <span class="sidebar-count-label">곳</span>
       </div>
 
-      <!-- 장소 리스트 (app.js에서 동적 생성) -->
       <div id="place-list" class="place-list">
-        <!-- 로딩 스켈레톤 -->
         <div class="skeleton-item"></div>
         <div class="skeleton-item"></div>
         <div class="skeleton-item"></div>
@@ -121,15 +106,11 @@
     </aside>
 
 
-    <!-- ─────────────────────────────────────
-         메인 콘텐츠
-    ───────────────────────────────────── -->
     <main class="main-content">
 
-      <!-- ───── 탭 1: 지도 ───── -->
+      <!-- 탭 1: 지도 -->
       <section id="tab-map" class="tab-content active">
 
-        <!-- 데이터 로딩 오버레이 -->
         <div id="loading-overlay" class="loading-overlay">
           <div class="loading-content">
             <div class="loading-spinner"></div>
@@ -137,34 +118,25 @@
           </div>
         </div>
 
-        <!-- 카카오맵 렌더링 영역 -->
         <div id="map"></div>
 
-        <!-- 견종 인식 AI FAB 버튼 -->
-        <div class="ai-fab">
-          <input type="file" id="ai-file-input" accept="image/*" hidden>
-          <button id="ai-fab-btn" class="ai-fab-btn" title="강아지 사진으로 견종 인식">
-            <img src="icons/search.svg" alt="" class="ai-fab-icon">
-            <span class="ai-fab-label">견종 인식</span>
-          </button>
+        <!-- 지도 우측 하단 로고 워터마크 -->
+        <div class="map-watermark">
+          <img src="img/white_outline_logo.png" alt="댕댕서울" class="map-watermark-img">
         </div>
 
-        <!-- AI 결과 팝업 -->
-        <div id="ai-result-panel" class="ai-result-panel hidden">
-          <button class="ai-result-close" onclick="closeAiResult()">
-            <img src="icons/close.svg" alt="닫기">
-          </button>
-          <div id="ai-result-content"></div>
+        <!-- 미세먼지 플로팅 카드 (지도 우측 상단) -->
+        <div id="air-banner" class="air-banner">
+          <span id="air-text">대기 정보 로딩 중</span>
         </div>
 
       </section>
 
 
-      <!-- ───── 탭 2: 맞춤 장소 추천 ───── -->
+      <!-- 탭 2: 맞춤 추천 -->
       <section id="tab-recommend" class="tab-content">
         <div class="recommend-wrap">
 
-          <!-- 사진 업로드 영역 -->
           <div class="ai-upload-zone" id="ai-upload-zone">
             <input type="file" id="ai-file-input-tab" accept="image/*" hidden>
             <div class="ai-upload-inner" id="ai-upload-inner">
@@ -177,7 +149,6 @@
             </div>
           </div>
 
-          <!-- 견종 인식 결과 (처음엔 숨김) -->
           <div id="recommend-result" class="recommend-result hidden">
             <div id="recommend-breed-card" class="breed-card"></div>
             <h3 class="recommend-list-title">추천 장소</h3>
@@ -187,42 +158,33 @@
         </div>
       </section>
 
-      <!-- ───── 탭 3: 우리동네 댕댕 ───── -->
+      <!-- 탭 3: 우리동네 댕댕 -->
       <section id="tab-dashboard" class="tab-content">
         <div class="dashboard-wrap">
 
           <div class="stat-cards">
             <div class="stat-card">
-              <div class="stat-icon">
-                <img src="icons/heart.svg" alt="">
-              </div>
+              <div class="stat-icon"><img src="icons/heart.svg" alt=""></div>
               <div class="stat-label">반려견 최다 등록 구</div>
               <div class="stat-value" id="stat-top-gu">-</div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon">
-                <img src="icons/location.svg" alt="">
-              </div>
+              <div class="stat-icon"><img src="icons/location.svg" alt=""></div>
               <div class="stat-label">강아지 1마리당 공원 최대 구</div>
               <div class="stat-value" id="stat-top-park">-</div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon">
-                <img src="icons/heart.svg" alt="">
-              </div>
+              <div class="stat-icon"><img src="icons/heart.svg" alt=""></div>
               <div class="stat-label">서울시 총 반려견 수</div>
               <div class="stat-value" id="stat-total">-</div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon">
-                <img src="icons/bookmark.svg" alt="">
-              </div>
+              <div class="stat-icon"><img src="icons/bookmark.svg" alt=""></div>
               <div class="stat-label">서울시민 몇 명 중 1명이 반려견 보호자</div>
               <div class="stat-value" id="stat-ratio">-</div>
             </div>
           </div>
 
-          <!-- 구별 반려견 코로플레스 지도 -->
           <div class="chart-card choropleth-card">
             <h3 class="chart-title">구별 반려견 등록 현황 지도</h3>
             <p class="chart-desc">구를 클릭하면 등록 마릿수가 표시돼요 · 색이 진할수록 많아요</p>
@@ -232,7 +194,7 @@
           <div class="charts-grid">
             <div class="chart-card">
               <h3 class="chart-title">구별 반려견 등록 수 Top 10</h3>
-              <p class="chart-desc">서울시 반려동물 등록 현황 기반 (더미 데이터)</p>
+              <p class="chart-desc" id="chart-dogs-desc">서울시 반려동물 등록 현황 기반</p>
               <div class="chart-box"><canvas id="chart-dogs"></canvas></div>
             </div>
             <div class="chart-card">
@@ -242,8 +204,8 @@
             </div>
           </div>
 
-          <p class="dashboard-note">
-            현재 더미 데이터 기반입니다. 서울시 공공데이터 API 연결 후 실제 수치로 교체될 예정입니다.
+          <p class="dashboard-note" id="dashboard-note">
+            서울시 공공데이터 API 연결 중입니다...
           </p>
         </div>
       </section>

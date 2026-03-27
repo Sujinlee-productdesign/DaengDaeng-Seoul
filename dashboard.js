@@ -110,17 +110,23 @@ function updateStatCards() {
 
 
 // ----------------------------------------------------------------
-// 4. 차트 공통 색상 팔레트 (오렌지/노랑 테마)
+// 4. 차트 공통 색상 팔레트 — 파스텔톤 (빨강/주황/노랑/초록/보라/파랑)
 // ----------------------------------------------------------------
 
 function getPalette(count) {
-  // 오렌지 계열 그라디언트 색상 생성
-  const base = [
-    '#FF8C42', '#FFD166', '#FF6B6B', '#FFA94D',
-    '#FFE66D', '#FF7043', '#FFCA28', '#FF5722',
-    '#FFB300', '#F57C00',
+  const pastels = [
+    '#FF8A80', // 파스텔 빨강
+    '#FFAB76', // 파스텔 주황
+    '#FFE082', // 파스텔 노랑
+    '#A5D6A7', // 파스텔 초록
+    '#CE93D8', // 파스텔 보라
+    '#90CAF9', // 파스텔 파랑
+    '#F48FB1', // 파스텔 핑크
+    '#80DEEA', // 파스텔 민트
+    '#B0BEC5', // 파스텔 블루그레이
+    '#BCAAA4', // 파스텔 브라운
   ];
-  return base.slice(0, count);
+  return pastels.slice(0, count);
 }
 
 
@@ -368,20 +374,73 @@ async function drawChoroplethMap() {
 
 
 // ----------------------------------------------------------------
-// 8. 대시보드 초기화 (탭 전환 시 최초 1회 실행)
+// 8. 서울 공공데이터 API — 반려동물 등록 현황
+//    엔드포인트: 서울 열린데이터광장 동물등록현황
+//    성공 시 DISTRICT_DATA를 실데이터로 교체, 실패 시 더미 유지
 // ----------------------------------------------------------------
 
-function initDashboard() {
-  updateStatCards();
-  drawDogChart();
-  drawParkChart();
-  drawChoroplethMap(); // 구별 반려견 지도
-  console.log('✅ 대시보드 차트 초기화 완료');
+async function fetchDogRegistrationData() {
+  // SEOUL_API_KEY, SEOUL_API_BASE 는 app.js에서 전역 선언됨
+  const url = `${SEOUL_API_BASE}/${SEOUL_API_KEY}/json/SDOGANIMALREG/1/100/`;
+
+  try {
+    const res  = await fetch(url);
+    const json = await res.json();
+
+    // 응답 키는 API에 따라 다를 수 있음 — 실제 응답을 보고 조정
+    const rows = json?.SDOGANIMALREG?.row
+               ?? json?.AnimalRegStat?.row
+               ?? json?.row
+               ?? null;
+
+    if (!rows || rows.length === 0) throw new Error('반려견 등록 데이터 없음');
+
+    // 구 이름과 등록 수를 DISTRICT_DATA 형식으로 변환
+    rows.forEach(r => {
+      // 필드명은 실제 API 응답에 맞게 조정 (일반적 필드명 후보 목록)
+      const guName = r.SIGUN_NM ?? r.GU_NM ?? r.CTPV_NM ?? r.LEGALDONG_NM ?? null;
+      const count  = parseInt(r.ANIMAL_CNT ?? r.REG_CNT ?? r.TOT_CNT ?? 0, 10);
+
+      if (!guName || isNaN(count)) return;
+
+      const target = DISTRICT_DATA.find(d => d.gu === guName || guName.includes(d.gu));
+      if (target) target.dogs = count;
+    });
+
+    // 차트 설명 & 하단 노트 업데이트
+    const descEl = document.getElementById('chart-dogs-desc');
+    const noteEl = document.getElementById('dashboard-note');
+    if (descEl) descEl.textContent = '서울시 반려동물 등록 현황 (공공데이터 실시간)';
+    if (noteEl) noteEl.textContent = '서울시 공공데이터 API 기반 실시간 데이터입니다.';
+
+    console.log('✅ 반려견 등록 실데이터 로드 완료');
+
+  } catch (err) {
+    console.warn('⚠️ 반려견 등록 API 실패, 더미 데이터 사용:', err.message);
+    const noteEl = document.getElementById('dashboard-note');
+    if (noteEl) noteEl.textContent = '현재 더미 데이터 기반입니다. 서울시 공공데이터 API 연결 후 실제 수치로 교체됩니다.';
+  }
 }
 
 
 // ----------------------------------------------------------------
-// 9. 탭 설정은 DOM 로드 후 바로 실행
+// 9. 대시보드 초기화 (탭 전환 시 최초 1회 실행)
+// ----------------------------------------------------------------
+
+async function initDashboard() {
+  // 실데이터 시도 → DISTRICT_DATA 갱신 → 차트 렌더
+  await fetchDogRegistrationData();
+
+  updateStatCards();
+  drawDogChart();
+  drawParkChart();
+  drawChoroplethMap();
+  console.log('✅ 대시보드 초기화 완료');
+}
+
+
+// ----------------------------------------------------------------
+// 10. 탭 설정은 DOM 로드 후 바로 실행
 // ----------------------------------------------------------------
 
 setupTabs();
