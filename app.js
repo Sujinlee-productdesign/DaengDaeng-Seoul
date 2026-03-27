@@ -924,7 +924,6 @@ function sortPlaces(places) {
 function getUserLocation() {
   if (!navigator.geolocation) {
     console.warn('이 브라우저는 Geolocation을 지원하지 않습니다.');
-    currentSort = 'alpha';
     return;
   }
 
@@ -943,12 +942,8 @@ function getUserLocation() {
       if (applyFiltersRef) applyFiltersRef();
     },
     err => {
-      console.warn('⚠️ 위치 정보 없음, 가나다순으로 표시:', err.message);
-      // 위치 획득 실패 → 가나다순 fallback
-      currentSort = 'alpha';
-      const sortSelect = document.getElementById('sort-select');
-      if (sortSelect) sortSelect.value = 'alpha';
-      if (applyFiltersRef) applyFiltersRef();
+      console.warn('⚠️ 위치 정보 없음:', err.message);
+      // 드롭다운은 가까운순 유지 — sortPlaces()가 위치 없을 때 자동으로 가나다순 적용
     },
     { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
   );
