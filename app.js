@@ -341,6 +341,9 @@ function buildPopupHTML(place, category, index) {
       <div class="info-tag ${category}">${label}</div>
       <div class="info-name">${place.name}</div>
       <div class="info-addr"><img src="icons/location-pin.svg" alt="">${place.address || '주소 정보 없음'}</div>
+      <a class="info-naver-btn" href="https://map.naver.com/p/search/${encodeURIComponent(place.name)}" target="_blank" rel="noopener">
+        네이버 플레이스에서 보기 →
+      </a>
     </div>
   `;
 }

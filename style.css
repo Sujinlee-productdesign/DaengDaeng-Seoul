@@ -503,6 +503,22 @@ body {
 
 .info-addr img { width: 12px; margin-top: 1px; opacity: 0.4; }
 
+.info-naver-btn {
+  display: block;
+  margin-top: 10px;
+  padding: 8px 0;
+  text-align: center;
+  background: #03C75A;
+  color: white;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.info-naver-btn:hover { opacity: 0.85; }
+
 .info-popup::after {
   content: '';
   position: absolute;
