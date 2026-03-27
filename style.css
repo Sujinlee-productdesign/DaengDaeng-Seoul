@@ -671,9 +671,11 @@ body {
 .ai-upload-btn:hover { opacity: 0.88; }
 
 .ai-upload-preview {
-  width: 100%;
-  max-height: 240px;
-  object-fit: cover;
+  width: 580px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
   border-radius: calc(var(--radius-xl) - 1.5px);
 }
 
@@ -820,14 +822,20 @@ body {
 .chart-desc  { font-size: 0.70rem; color: var(--text-4); margin-bottom: 12px; }
 .chart-box   { height: 240px; position: relative; }
 
-.choropleth-card { margin-bottom: 0; }
+/* 코로플레스 지도 — 카드 없이 배경 위에 직접 노출 */
+.choropleth-section {
+  margin-bottom: 4px;
+  padding: 0 4px;
+}
+.choropleth-section .chart-title { margin-bottom: 4px; }
+.choropleth-section .chart-desc  { margin-bottom: 10px; }
 
 .district-map-box {
-  height: 440px;
+  height: 460px;
   position: relative;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  background: #EBF4FB;
+  border-radius: var(--radius-lg);
+  overflow: visible;
+  background: transparent;
 }
 
 .dashboard-note { font-size: 0.70rem; color: var(--text-4); text-align: center; margin-top: 4px; }

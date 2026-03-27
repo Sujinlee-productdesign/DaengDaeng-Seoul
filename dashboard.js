@@ -119,6 +119,11 @@ function getPalette(count) {
 let chartDogs = null;
 let chartPark = null;
 
+// chartjs-plugin-datalabels 전역 등록 (CDN 로드 시 ChartDataLabels 전역 노출)
+if (typeof ChartDataLabels !== 'undefined') {
+  Chart.register(ChartDataLabels);
+}
+
 
 // Chart.js 플러그인: 선택된 막대에 그림자 + 확대 효과
 const barHighlightPlugin = {
@@ -153,6 +158,35 @@ const barHighlightPlugin = {
 };
 
 
+// 공통 datalabels 옵션 생성 (차트별 suffix 설정)
+function makeDatalabelsOptions(suffix) {
+  return {
+    anchor: 'end',
+    align: 'end',
+    clamp: true,
+    formatter: (value, ctx) => {
+      const idx = ctx.chart._highlightIndex;
+      return value.toLocaleString() + suffix;
+    },
+    font: (ctx) => {
+      const idx = ctx.chart._highlightIndex;
+      const isSelected = idx != null && ctx.dataIndex === idx;
+      return {
+        family: 'Pretendard, -apple-system, sans-serif',
+        weight: isSelected ? '900' : '500',
+        size:   isSelected ? 12 : 10,
+      };
+    },
+    color: (ctx) => {
+      const idx = ctx.chart._highlightIndex;
+      if (idx == null) return '#8E8E93';
+      return ctx.dataIndex === idx ? '#FF8C42' : '#AEAEB2';
+    },
+    padding: { left: 4 },
+  };
+}
+
+
 // ----------------------------------------------------------------
 // 6. 차트 1: 구별 반려견 등록 수 Top 10
 // ----------------------------------------------------------------
@@ -183,11 +217,13 @@ function drawDogChart() {
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { right: 72 } }, // datalabels 공간 확보
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: { label: ctx => ` ${ctx.raw.toLocaleString()}마리` },
         },
+        datalabels: makeDatalabelsOptions('마리'),
       },
       scales: {
         x: {
@@ -196,7 +232,24 @@ function drawDogChart() {
         },
         y: {
           grid: { display: false },
-          ticks: { font: { family: 'Pretendard, -apple-system, sans-serif', weight: '700' } },
+          ticks: {
+            font: (ctx) => {
+              const chart = ctx.chart;
+              const idx   = chart._highlightIndex;
+              const isSel = idx != null && ctx.index === idx;
+              return {
+                family: 'Pretendard, -apple-system, sans-serif',
+                weight: isSel ? '900' : '600',
+                size:   isSel ? 13 : 12,
+              };
+            },
+            color: (ctx) => {
+              const chart = ctx.chart;
+              const idx   = chart._highlightIndex;
+              if (idx == null) return '#48484A';
+              return ctx.index === idx ? '#FF8C42' : '#AEAEB2';
+            },
+          },
         },
       },
     },
@@ -235,11 +288,13 @@ function drawParkChart() {
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { right: 80 } }, // datalabels 공간 확보
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: { label: ctx => ` ${ctx.raw.toLocaleString()}㎡` },
         },
+        datalabels: makeDatalabelsOptions('㎡'),
       },
       scales: {
         x: {
@@ -248,7 +303,24 @@ function drawParkChart() {
         },
         y: {
           grid: { display: false },
-          ticks: { font: { family: 'Pretendard, -apple-system, sans-serif', weight: '700' } },
+          ticks: {
+            font: (ctx) => {
+              const chart = ctx.chart;
+              const idx   = chart._highlightIndex;
+              const isSel = idx != null && ctx.index === idx;
+              return {
+                family: 'Pretendard, -apple-system, sans-serif',
+                weight: isSel ? '900' : '600',
+                size:   isSel ? 13 : 12,
+              };
+            },
+            color: (ctx) => {
+              const chart = ctx.chart;
+              const idx   = chart._highlightIndex;
+              if (idx == null) return '#48484A';
+              return ctx.index === idx ? '#FF8C42' : '#AEAEB2';
+            },
+          },
         },
       },
     },
@@ -403,19 +475,40 @@ async function drawChoroplethMap() {
       g.appendChild(poly);
     });
 
-    // 구 이름 텍스트 레이블
+    // 구 이름 텍스트 레이블 (white halo + shadow for readability)
     const lbl = document.createElementNS(NS, 'text');
     lbl.setAttribute('x', cx);
     lbl.setAttribute('y', cy + 1);
     lbl.setAttribute('text-anchor', 'middle');
     lbl.setAttribute('dominant-baseline', 'middle');
-    lbl.setAttribute('font-size', '9.5');
+    lbl.setAttribute('font-size', '12');
     lbl.setAttribute('font-family', 'Pretendard, -apple-system, sans-serif');
-    lbl.setAttribute('font-weight', '500');
-    lbl.setAttribute('fill', '#444');
+    lbl.setAttribute('font-weight', '700');
+    lbl.setAttribute('fill', '#1C1C1E');
+    lbl.setAttribute('paint-order', 'stroke');
+    lbl.setAttribute('stroke', 'rgba(255,255,255,0.85)');
+    lbl.setAttribute('stroke-width', '3.5');
+    lbl.setAttribute('stroke-linejoin', 'round');
     lbl.setAttribute('pointer-events', 'none');
     lbl.textContent = guName.replace('구', '');
     g.appendChild(lbl);
+
+    // 호버 효과
+    g.addEventListener('mouseenter', () => {
+      if (selectedGu === guName) return;
+      g.querySelectorAll('polygon').forEach(p => {
+        const isGrayed = selectedGu !== null; // 다른 구가 선택된 상태
+        p.style.filter = isGrayed ? 'brightness(1.1)' : 'brightness(0.88)';
+        p.setAttribute('stroke-width', '2');
+      });
+    });
+    g.addEventListener('mouseleave', () => {
+      if (selectedGu === guName) return;
+      g.querySelectorAll('polygon').forEach(p => {
+        p.style.filter = '';
+        p.setAttribute('stroke-width', selectedGu ? '0.8' : '1.5');
+      });
+    });
 
     g.addEventListener('click', e => {
       e.stopPropagation();

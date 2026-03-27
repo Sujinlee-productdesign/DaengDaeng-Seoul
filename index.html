@@ -26,8 +26,9 @@
     src="//dapi.kakao.com/v2/maps/sdk.js?appkey=118d64cc92d10f59459a348b6fadb810&libraries=services">
   </script>
 
-  <!-- Chart.js -->
+  <!-- Chart.js + datalabels 플러그인 -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
   <!-- TensorFlow.js + MobileNet -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
@@ -47,7 +48,7 @@
 
     <nav class="tab-nav">
       <button class="tab-btn active" data-tab="map">댕댕지도</button>
-      <button class="tab-btn" data-tab="recommend">맞춤 추천</button>
+      <button class="tab-btn" data-tab="recommend">맞춤 추천 장소</button>
       <button class="tab-btn" data-tab="dashboard">우리동네 댕댕</button>
     </nav>
   </header>
@@ -194,7 +195,7 @@
             </div>
           </div>
 
-          <div class="chart-card choropleth-card">
+          <div class="choropleth-section">
             <h3 class="chart-title">구별 반려견 등록 현황 지도</h3>
             <p class="chart-desc">구를 클릭하면 등록 마릿수가 표시돼요 · 색이 진할수록 많아요</p>
             <div id="district-map" class="district-map-box"></div>
