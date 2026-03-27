@@ -342,17 +342,16 @@ async function drawChoroplethMap() {
 
       const centroid = getCentroid(ring);
 
-      // 클릭 → 말풍선 표시
-      kakao.maps.event.addListener(polygon, 'click', () => {
+      // 호버 → 말풍선 표시 + 밝기 강조
+      kakao.maps.event.addListener(polygon, 'mouseover', () => {
+        polygon.setOptions({ fillOpacity: 0.95 });
         showDistrictTooltip(guName, dogs, centroid);
       });
 
-      // 호버 밝기 효과
-      kakao.maps.event.addListener(polygon, 'mouseover', () => {
-        polygon.setOptions({ fillOpacity: 0.95 });
-      });
+      // 호버 아웃 → 말풍선 닫기 + 원래 투명도
       kakao.maps.event.addListener(polygon, 'mouseout', () => {
         polygon.setOptions({ fillOpacity: 0.72 });
+        if (activeDistrictTooltip) activeDistrictTooltip.setMap(null);
       });
     });
   });
