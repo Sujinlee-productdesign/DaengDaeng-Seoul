@@ -230,6 +230,35 @@ body {
 .search-clear img { width: 14px; height: 14px; opacity: 0.4; }
 .search-clear.hidden { display: none; }
 
+/* 구 드롭다운 */
+.gu-select-wrap {
+  padding: 0 14px 8px;
+}
+
+.gu-select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--separator);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-1);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23AEAEB2' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  transition: border-color 0.18s;
+}
+
+.gu-select:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
 /* 필터 칩 */
 .filter-chips {
   display: flex;
@@ -753,7 +782,7 @@ body {
    대시보드
 ─────────────────────────────────────── */
 .dashboard-wrap {
-  max-width: 900px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 24px 20px 40px;
   width: 100%;
@@ -797,6 +826,56 @@ body {
 .chart-box   { height: 240px; position: relative; }
 
 .dashboard-note { font-size: 0.72rem; color: var(--text-3); text-align: center; }
+
+/* 코로플레스 지도 카드 */
+.choropleth-card {
+  grid-column: 1 / -1;  /* 전체 너비 */
+  margin-bottom: 0;
+}
+
+.district-map-box {
+  height: 440px;
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #e8f4f8;
+}
+
+/* 구 클릭 툴팁 */
+.district-tooltip {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 10px 16px 6px;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  font-family: -apple-system, 'Nanum Gothic', sans-serif;
+  min-width: 110px;
+  pointer-events: none;
+}
+
+.district-tooltip .dt-gu {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-1);
+  margin-bottom: 3px;
+}
+
+.district-tooltip .dt-count {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--brand);
+  margin-bottom: 6px;
+}
+
+.district-tooltip .dt-arrow {
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 7px solid white;
+  margin: 0 auto;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+}
 
 
 /* ───────────────────────────────────────

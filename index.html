@@ -68,6 +68,14 @@
         </button>
       </div>
 
+      <!-- 구 필터 드롭다운 -->
+      <div class="gu-select-wrap">
+        <select id="gu-select" class="gu-select">
+          <option value="all">📍 서울 전체</option>
+          <!-- app.js에서 동적으로 옵션 추가됨 -->
+        </select>
+      </div>
+
       <!-- 카테고리 필터 칩 -->
       <div class="filter-chips">
         <button class="chip active" data-category="all">전체</button>
@@ -179,6 +187,13 @@
               <div class="stat-label">서울시 총 반려견 수</div>
               <div class="stat-value" id="stat-total">-</div>
             </div>
+          </div>
+
+          <!-- 구별 반려견 코로플레스 지도 -->
+          <div class="chart-card choropleth-card">
+            <h3 class="chart-title">🗺️ 구별 반려견 등록 현황 지도</h3>
+            <p class="chart-desc">* 구를 클릭하면 등록 마릿수가 표시돼요 · 색이 진할수록 많아요</p>
+            <div id="district-map" class="district-map-box"></div>
           </div>
 
           <div class="charts-grid">

@@ -232,19 +232,150 @@ function drawParkChart() {
 
 
 // ----------------------------------------------------------------
-// 7. 대시보드 초기화 (탭 전환 시 최초 1회 실행)
+// 7. 코로플레스 지도: 서울 구별 반려견 수 시각화
+//    - 카카오 지도 + GeoJSON 폴리곤
+//    - 반려견 수 비례 오렌지 색상 강도
+//    - 구 클릭 → 말풍선 툴팁 표시
+// ----------------------------------------------------------------
+
+let choroplethMap  = null;  // 대시보드 전용 카카오맵 인스턴스
+let activeDistrictTooltip = null; // 현재 보이는 툴팁 CustomOverlay
+
+// 반려견 수 → 오렌지 계열 색상 (연한 = 적음, 진한 = 많음)
+function getDogColor(dogs) {
+  const min   = Math.min(...DISTRICT_DATA.map(d => d.dogs));
+  const max   = Math.max(...DISTRICT_DATA.map(d => d.dogs));
+  const ratio = (dogs - min) / (max - min); // 0 ~ 1
+
+  // #FFF3E0 (연한) → #E65100 (진한)  오렌지 그라디언트
+  const r = 255;
+  const g = Math.round(243 - ratio * 180); // 243 → 63
+  const b = Math.round(224 - ratio * 224); // 224 → 0
+  return `rgb(${r},${g},${b})`;
+}
+
+// GeoJSON 폴리곤의 시각적 중심점(무게중심) 계산
+function getCentroid(coords) {
+  const lats = coords.map(c => c[1]);
+  const lngs = coords.map(c => c[0]);
+  return {
+    lat: (Math.min(...lats) + Math.max(...lats)) / 2,
+    lng: (Math.min(...lngs) + Math.max(...lngs)) / 2,
+  };
+}
+
+// 구 클릭 시 말풍선 툴팁 생성
+function showDistrictTooltip(guName, dogs, center) {
+  if (activeDistrictTooltip) activeDistrictTooltip.setMap(null);
+
+  const content = `
+    <div class="district-tooltip">
+      <div class="dt-gu">${guName}</div>
+      <div class="dt-count">🐾 ${dogs.toLocaleString()}마리</div>
+      <div class="dt-arrow"></div>
+    </div>`;
+
+  activeDistrictTooltip = new kakao.maps.CustomOverlay({
+    position : new kakao.maps.LatLng(center.lat, center.lng),
+    content,
+    yAnchor  : 1.25,
+    zIndex   : 10,
+  });
+  activeDistrictTooltip.setMap(choroplethMap);
+}
+
+// 메인 코로플레스 지도 그리기
+async function drawChoroplethMap() {
+  const container = document.getElementById('district-map');
+  if (!container || !window.kakao) return;
+
+  // 카카오 지도 초기화 (서울 중심, 레벨 9 = 시 전체)
+  choroplethMap = new kakao.maps.Map(container, {
+    center: new kakao.maps.LatLng(37.5590, 126.9910),
+    level : 9,
+  });
+
+  // 지도 클릭 시 툴팁 닫기
+  kakao.maps.event.addListener(choroplethMap, 'click', () => {
+    if (activeDistrictTooltip) activeDistrictTooltip.setMap(null);
+  });
+
+  // 서울시 구 경계 GeoJSON (공개 데이터 – southkorea/seoul-maps)
+  const GEO_URL = 'https://raw.githubusercontent.com/southkorea/seoul-maps/master/kostat/2013/json/seoul_municipalities_geo_simple.json';
+  let geoData;
+  try {
+    const res = await fetch(GEO_URL);
+    geoData = await res.json();
+  } catch (e) {
+    console.warn('⚠️ 서울 GeoJSON 로드 실패:', e);
+    return;
+  }
+
+  // 구 이름 → 반려견 수 빠른 조회 맵
+  const dogMap = {};
+  DISTRICT_DATA.forEach(d => { dogMap[d.gu] = d.dogs; });
+
+  // GeoJSON feature → Kakao Polygon
+  geoData.features.forEach(feature => {
+    const guName = feature.properties.name; // '강남구'
+    const dogs   = dogMap[guName] || 0;
+    const color  = getDogColor(dogs);
+
+    // Polygon / MultiPolygon 모두 처리
+    const geom   = feature.geometry;
+    const rings  = geom.type === 'MultiPolygon'
+      ? geom.coordinates.map(p => p[0])   // 각 폴리곤의 외곽선
+      : [geom.coordinates[0]];            // 단일 폴리곤 외곽선
+
+    rings.forEach(ring => {
+      const path = ring.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng));
+
+      const polygon = new kakao.maps.Polygon({
+        map         : choroplethMap,
+        path,
+        strokeWeight: 1.5,
+        strokeColor : '#ffffff',
+        strokeOpacity: 0.9,
+        fillColor   : color,
+        fillOpacity : 0.72,
+      });
+
+      const centroid = getCentroid(ring);
+
+      // 클릭 → 말풍선 표시
+      kakao.maps.event.addListener(polygon, 'click', () => {
+        showDistrictTooltip(guName, dogs, centroid);
+      });
+
+      // 호버 밝기 효과
+      kakao.maps.event.addListener(polygon, 'mouseover', () => {
+        polygon.setOptions({ fillOpacity: 0.95 });
+      });
+      kakao.maps.event.addListener(polygon, 'mouseout', () => {
+        polygon.setOptions({ fillOpacity: 0.72 });
+      });
+    });
+  });
+
+  console.log('✅ 코로플레스 지도 초기화 완료');
+}
+
+
+// ----------------------------------------------------------------
+// 8. 대시보드 초기화 (탭 전환 시 최초 1회 실행)
 // ----------------------------------------------------------------
 
 function initDashboard() {
   updateStatCards();
   drawDogChart();
   drawParkChart();
+  drawChoroplethMap(); // 구별 반려견 지도
   console.log('✅ 대시보드 차트 초기화 완료');
 }
 
 
 // ----------------------------------------------------------------
-// 8. 탭 설정은 DOM 로드 후 바로 실행
+// 9. 탭 설정은 DOM 로드 후 바로 실행
 // ----------------------------------------------------------------
 
 setupTabs();
