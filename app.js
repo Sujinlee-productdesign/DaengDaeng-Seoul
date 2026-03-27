@@ -1000,6 +1000,15 @@ function renderSidebar(places) {
     el.className = 'place-item';
     el.dataset.index = item.markerIndex;
 
+    // 현재 위치로부터 거리 계산
+    let distLabel = '';
+    if (userLocation) {
+      const km = calcDistance(userLocation.lat, userLocation.lng, item.lat, item.lng);
+      distLabel = km < 1
+        ? `${Math.round(km * 1000)}m`
+        : `${km.toFixed(1)}km`;
+    }
+
     el.innerHTML = `
       <div class="place-item-icon ${item.category}">
         <img src="${getCategoryIconSrc(item.category)}" alt="${getCategoryLabel(item.category)}">
@@ -1008,6 +1017,7 @@ function renderSidebar(places) {
         <div class="place-item-name">${item.name}</div>
         <div class="place-item-addr">${item.address || '주소 정보 없음'}</div>
       </div>
+      ${distLabel ? `<span class="place-item-dist">${distLabel}</span>` : ''}
       <img src="icons/arrow-right.svg" class="place-item-arrow" alt="">
     `;
 

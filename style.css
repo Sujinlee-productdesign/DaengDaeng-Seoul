@@ -357,6 +357,17 @@ body {
   text-overflow: ellipsis;
 }
 
+.place-item-dist {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--brand);
+  background: var(--brand-light);
+  border-radius: 20px;
+  padding: 2px 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .place-item-arrow { width: 13px; height: 13px; opacity: 0.18; flex-shrink: 0; }
 
 .place-empty {
