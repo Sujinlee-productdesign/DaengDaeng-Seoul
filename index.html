@@ -34,10 +34,11 @@
       <span class="logo-text">댕댕서울 88</span>
     </div>
 
-    <!-- 탭: 지도 ↔ 우리 동네 현황 -->
+    <!-- 탭: 댕댕지도 / 맞춤 장소 추천 / 우리동네 댕댕 -->
     <nav class="tab-nav">
-      <button class="tab-btn active" data-tab="map">지도</button>
-      <button class="tab-btn" data-tab="dashboard">우리 동네 현황</button>
+      <button class="tab-btn active" data-tab="map">🗺️ 댕댕지도</button>
+      <button class="tab-btn" data-tab="recommend">🐶 맞춤 장소 추천</button>
+      <button class="tab-btn" data-tab="dashboard">📊 우리동네 댕댕</button>
     </nav>
 
     <!-- 실시간 미세먼지 배너 -->
@@ -133,7 +134,32 @@
       </section>
 
 
-      <!-- ───── 탭 2: 우리 동네 현황 ───── -->
+      <!-- ───── 탭 2: 맞춤 장소 추천 ───── -->
+      <section id="tab-recommend" class="tab-content">
+        <div class="recommend-wrap">
+
+          <!-- 사진 업로드 영역 -->
+          <div class="ai-upload-zone" id="ai-upload-zone">
+            <input type="file" id="ai-file-input" accept="image/*" hidden>
+            <div class="ai-upload-inner" id="ai-upload-inner">
+              <div class="ai-upload-icon">🐶</div>
+              <p class="ai-upload-title">강아지 사진을 업로드해주세요</p>
+              <p class="ai-upload-sub">클릭하거나 사진을 드래그하세요</p>
+              <button class="ai-upload-btn">사진 선택</button>
+            </div>
+          </div>
+
+          <!-- 견종 인식 결과 (처음엔 숨김) -->
+          <div id="recommend-result" class="recommend-result hidden">
+            <div id="recommend-breed-card" class="breed-card"></div>
+            <h3 class="recommend-list-title">추천 장소</h3>
+            <div id="recommend-place-list" class="recommend-place-list"></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ───── 탭 3: 우리 동네 댕댕 ───── -->
       <section id="tab-dashboard" class="tab-content">
         <div class="dashboard-wrap">
 

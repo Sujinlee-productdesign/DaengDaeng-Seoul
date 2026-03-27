@@ -46,20 +46,24 @@ const DISTRICT_DATA = [
 // ----------------------------------------------------------------
 
 function setupTabs() {
-  const tabBtns    = document.querySelectorAll('.tab-btn');
+  const tabBtns     = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
+  const sidebar     = document.getElementById('sidebar');
 
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      const target = btn.dataset.tab; // 'map' 또는 'dashboard'
+      const target = btn.dataset.tab; // 'map' / 'recommend' / 'dashboard'
 
-      // 모든 버튼/섹션 비활성화
       tabBtns.forEach(b => b.classList.remove('active'));
       tabContents.forEach(c => c.classList.remove('active'));
 
-      // 클릭한 탭 활성화
       btn.classList.add('active');
       document.getElementById(`tab-${target}`).classList.add('active');
+
+      // 사이드바: 지도 탭에서만 표시
+      if (sidebar) {
+        sidebar.style.display = target === 'map' ? 'flex' : 'none';
+      }
 
       // 대시보드 탭 처음 열 때 차트 초기화
       if (target === 'dashboard' && !dashboardInitialized) {

@@ -629,6 +629,111 @@ body {
 
 
 /* ───────────────────────────────────────
+   맞춤 장소 추천 탭
+─────────────────────────────────────── */
+.recommend-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 20px 40px;
+  width: 100%;
+}
+
+/* 업로드 영역 */
+.ai-upload-zone {
+  background: var(--surface);
+  border: 2px dashed var(--separator);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 24px;
+}
+
+.ai-upload-zone:hover,
+.ai-upload-zone.drag-over {
+  border-color: var(--brand);
+  background: var(--brand-light);
+}
+
+.ai-upload-inner {
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.ai-upload-icon  { font-size: 3rem; margin-bottom: 12px; }
+.ai-upload-title { font-size: 1rem; font-weight: 700; color: var(--text-1); margin-bottom: 6px; }
+.ai-upload-sub   { font-size: 0.82rem; color: var(--text-3); margin-bottom: 16px; }
+
+.ai-upload-btn {
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 10px 24px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* 업로드된 이미지 미리보기 */
+.ai-upload-preview {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: calc(var(--radius-lg) - 2px);
+  display: block;
+}
+
+/* 견종 결과 카드 */
+.recommend-result { }
+.recommend-result.hidden { display: none; }
+
+.breed-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.breed-card-icon  { font-size: 2.8rem; flex-shrink: 0; }
+.breed-card-name  { font-size: 1.2rem; font-weight: 800; color: var(--text-1); }
+.breed-card-size  { font-size: 0.82rem; font-weight: 600; margin-top: 4px; }
+.breed-card-msg   { font-size: 0.85rem; color: var(--text-2); margin-top: 6px; line-height: 1.5; }
+
+.recommend-list-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-1);
+  margin-bottom: 12px;
+}
+
+.recommend-place-list { display: flex; flex-direction: column; gap: 10px; }
+
+.recommend-place-item {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.recommend-place-item:hover { transform: translateX(4px); }
+
+.recommend-place-item .place-item-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+.recommend-place-item .place-item-info { flex: 1; min-width: 0; }
+.recommend-place-item .place-item-name { font-size: 0.88rem; font-weight: 700; }
+.recommend-place-item .place-item-addr { font-size: 0.75rem; color: var(--text-3); margin-top: 2px; }
+
+
+/* ───────────────────────────────────────
    대시보드
 ─────────────────────────────────────── */
 .dashboard-wrap {

@@ -295,30 +295,121 @@ function showAiError() {
 // 10. 이벤트 연결: 버튼 클릭 → 파일 선택 → 인식 실행
 // ----------------------------------------------------------------
 
-// DOM이 준비된 후 이벤트 연결
+// ----------------------------------------------------------------
+// 10. 맞춤 추천 탭 - 견종 인식 결과 표시
+// ----------------------------------------------------------------
+
+function showRecommendResult(breed) {
+  const config  = SIZE_CONFIG[breed.size];
+  const result  = document.getElementById('recommend-result');
+  const breedCard = document.getElementById('recommend-breed-card');
+  const placeList = document.getElementById('recommend-place-list');
+
+  // 견종 카드
+  breedCard.innerHTML = `
+    <div class="breed-card-icon">${config.icon}</div>
+    <div>
+      <div class="breed-card-name">${breed.ko}</div>
+      <div class="breed-card-size" style="color:${config.color}">${config.label} · 인식 정확도 ${breed.confidence}%</div>
+      <div class="breed-card-msg">${config.msg}</div>
+    </div>
+  `;
+
+  // sidebarPlaces에서 추천 카테고리 장소 필터링
+  const recommended = (window.sidebarPlaces || [])
+    .filter(p => config.filter === 'all' || p.category === config.filter)
+    .slice(0, 8);
+
+  placeList.innerHTML = recommended.length === 0
+    ? '<p style="color:var(--text-3);font-size:0.85rem;">추천 장소를 불러오는 중이에요...</p>'
+    : recommended.map(p => `
+        <div class="recommend-place-item">
+          <div class="place-item-icon ${p.category}">${{ park:'🌳', restaurant:'🍽️', cafe:'☕' }[p.category]}</div>
+          <div class="place-item-info">
+            <div class="place-item-name">${p.name}</div>
+            <div class="place-item-addr">${p.address || '주소 정보 없음'}</div>
+          </div>
+        </div>
+      `).join('');
+
+  result.classList.remove('hidden');
+}
+
+// ----------------------------------------------------------------
+// 11. 이벤트 연결: 맞춤 추천 탭 업로드 영역 + 파일 선택
+// ----------------------------------------------------------------
+
 document.addEventListener('DOMContentLoaded', () => {
-  const fabBtn   = document.getElementById('ai-fab-btn');
-  const fileInput = document.getElementById('ai-file-input');
+  const fileInput  = document.getElementById('ai-file-input');
+  const uploadZone = document.getElementById('ai-upload-zone');
+  const uploadBtn  = uploadZone?.querySelector('.ai-upload-btn');
 
-  // FAB 버튼 클릭 → 파일 선택 다이얼로그 열기
-  fabBtn.addEventListener('click', () => {
-    fileInput.click();
-  });
+  function handleFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
 
-  // 파일 선택 완료 → 인식 실행
-  fileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    // 업로드 영역에 이미지 미리보기
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const inner = document.getElementById('ai-upload-inner');
+      if (inner) {
+        inner.innerHTML = `<img src="${e.target.result}" class="ai-upload-preview" alt="업로드 이미지">`;
+      }
+    };
+    reader.readAsDataURL(file);
 
-    // 이미지 파일인지 확인
-    if (!file.type.startsWith('image/')) {
-      alert('이미지 파일만 업로드해주세요 🐾');
-      return;
-    }
-
-    runBreedDetection(file);
-
-    // 같은 파일 재선택 가능하도록 input 초기화
+    // 견종 인식 실행
+    runBreedDetectionForTab(file);
     fileInput.value = '';
+  }
+
+  // 버튼 클릭 → 파일 선택
+  if (uploadBtn) uploadBtn.addEventListener('click', () => fileInput.click());
+  if (uploadZone) uploadZone.addEventListener('click', (e) => {
+    if (e.target === uploadZone || e.target.id === 'ai-upload-inner') fileInput.click();
   });
+
+  // 드래그앤드롭
+  if (uploadZone) {
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('drag-over');
+    });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('drag-over');
+      handleFile(e.dataTransfer.files[0]);
+    });
+  }
+
+  // 파일 선택 완료
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+  }
 });
+
+// 맞춤 추천 탭용 인식 (결과를 탭 내부에 표시)
+async function runBreedDetectionForTab(file) {
+  try {
+    if (!mobilenetModel) mobilenetModel = await mobilenet.load();
+    const imgEl      = await fileToImage(file);
+    const predictions = await mobilenetModel.classify(imgEl, 5);
+    const breed       = matchBreed(predictions);
+
+    if (breed) {
+      showRecommendResult(breed);
+    } else {
+      const result = document.getElementById('recommend-result');
+      document.getElementById('recommend-breed-card').innerHTML = `
+        <div class="breed-card-icon">🤔</div>
+        <div>
+          <div class="breed-card-name">견종을 인식하지 못했어요</div>
+          <div class="breed-card-msg" style="color:var(--text-3)">강아지 얼굴이 잘 보이는 사진을 써주세요</div>
+        </div>`;
+      document.getElementById('recommend-place-list').innerHTML = '';
+      result.classList.remove('hidden');
+    }
+  } catch (err) {
+    console.error('견종 인식 오류:', err);
+  }
+}

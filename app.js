@@ -202,13 +202,23 @@ async function fetchAirQuality() {
     if (!rows || rows.length === 0) throw new Error('대기 데이터가 비어 있음');
 
     // 서울 전체 측정소 PM10 평균값 계산
+    // PM10이 "-" 또는 음수로 올 수 있으므로 양수만 필터링
+    console.log('대기질 API 응답 샘플:', rows[0]);
     const validValues = rows
       .map(r => parseFloat(r.PM10))
-      .filter(v => !isNaN(v) && v >= 0);
+      .filter(v => !isNaN(v) && v > 0);
 
-    const avgPm10 = Math.round(
-      validValues.reduce((sum, v) => sum + v, 0) / validValues.length
-    );
+    let avgPm10;
+    if (validValues.length > 0) {
+      avgPm10 = Math.round(validValues.reduce((s, v) => s + v, 0) / validValues.length);
+    } else {
+      // PM10이 모두 없으면 통합대기환경지수(IDEX_MVL)로 대체
+      const idxValues = rows
+        .map(r => parseFloat(r.IDEX_MVL))
+        .filter(v => !isNaN(v) && v > 0);
+      if (idxValues.length === 0) throw new Error('유효한 대기질 데이터 없음');
+      avgPm10 = Math.round(idxValues.reduce((s, v) => s + v, 0) / idxValues.length);
+    }
 
     updateAirBanner(avgPm10);
     console.log(`✅ 대기질 로드 완료: 서울 평균 PM10 ${avgPm10}㎍`);
@@ -395,7 +405,7 @@ function addMarkers(places, category) {
     const popup = new kakao.maps.CustomOverlay({
       position,
       content:  buildPopupHTML(place, category, index),
-      yAnchor:  2.6, // 마커 위쪽에 팝업이 뜨도록 높게 설정
+      yAnchor:  1.45, // 마커에서 10px 위에 팝업이 뜨도록
       zIndex:   5,
     });
     // popup.setMap(map) 을 하지 않으면 숨겨진 상태
