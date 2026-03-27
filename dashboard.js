@@ -278,7 +278,7 @@ function showDistrictTooltip(guName, dogs, center) {
   const content = `
     <div class="district-tooltip">
       <div class="dt-gu">${guName}</div>
-      <div class="dt-count">🐾 ${dogs.toLocaleString()}마리</div>
+      <div class="dt-count">${dogs.toLocaleString()}마리</div>
       <div class="dt-arrow"></div>
     </div>`;
 

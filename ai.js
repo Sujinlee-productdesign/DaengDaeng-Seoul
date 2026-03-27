@@ -72,28 +72,31 @@ const BREED_MAP = {
 
 const SIZE_CONFIG = {
   small: {
-    label:    '소형견',
-    icon:     '🐩',
-    msg:      '소형견이군요! 반려견 카페에서 편하게 쉬어가세요.',
-    filter:   'cafe',   // 지도 필터 자동 전환 카테고리
-    filterLabel: '☕ 카페',
-    color:    '#8D6E63',
+    label:       '소형견',
+    iconSrc:     'icons/location-pin.svg',
+    iconClass:   'size-small',
+    msg:         '소형견이군요! 반려견 카페에서 편하게 쉬어가세요.',
+    filter:      'cafe',
+    filterLabel: '카페',
+    color:       '#8D6E63',
   },
   medium: {
-    label:    '중형견',
-    icon:     '🐕',
-    msg:      '중형견이군요! 공원도 카페도 모두 즐겨요.',
-    filter:   'all',
+    label:       '중형견',
+    iconSrc:     'icons/location.svg',
+    iconClass:   'size-medium',
+    msg:         '중형견이군요! 공원도 카페도 모두 즐겨요.',
+    filter:      'all',
     filterLabel: '전체',
-    color:    '#FF8C42',
+    color:       '#FF8C42',
   },
   large: {
-    label:    '대형견',
-    icon:     '🐕‍🦺',
-    msg:      '대형견이군요! 넓은 공원에서 마음껏 뛰어요.',
-    filter:   'park',
-    filterLabel: '🌳 공원',
-    color:    '#43A047',
+    label:       '대형견',
+    iconSrc:     'icons/location.svg',
+    iconClass:   'size-large',
+    msg:         '대형견이군요! 넓은 공원에서 마음껏 뛰어요.',
+    filter:      'park',
+    filterLabel: '공원',
+    color:       '#34C759',
   },
 };
 
@@ -144,8 +147,10 @@ function showAiResult(breed) {
 
   // 팝업 내용 HTML 생성
   content.innerHTML = `
-    <div class="ai-result-header" style="border-bottom:3px solid ${config.color}">
-      <span class="ai-result-icon">${config.icon}</span>
+    <div class="ai-result-header">
+      <div class="ai-result-icon ${config.iconClass}">
+        <img src="${config.iconSrc}" alt="" class="ai-icon-img">
+      </div>
       <div>
         <div class="ai-result-breed">${breed.ko}</div>
         <div class="ai-result-size" style="color:${config.color}">${config.label} · 인식 정확도 ${breed.confidence}%</div>
@@ -177,10 +182,10 @@ function closeAiResult() {
 function showAiLoading(on) {
   const btn = document.getElementById('ai-fab-btn');
   if (on) {
-    btn.innerHTML = '<span style="animation:spin 1s linear infinite;display:inline-block">🌀</span><span class="ai-fab-label">인식 중...</span>';
+    btn.innerHTML = '<div class="btn-spinner"></div><span class="ai-fab-label">인식 중...</span>';
     btn.disabled = true;
   } else {
-    btn.innerHTML = '🐶<span class="ai-fab-label">견종 인식</span>';
+    btn.innerHTML = '<img src="icons/search.svg" alt="" class="ai-fab-icon"><span class="ai-fab-label">견종 인식</span>';
     btn.disabled = false;
   }
 }
@@ -260,13 +265,15 @@ function showAiUnknown(rawName) {
 
   content.innerHTML = `
     <div class="ai-result-header">
-      <span class="ai-result-icon">🤔</span>
+      <div class="ai-result-icon">
+        <img src="icons/search.svg" alt="" class="ai-icon-img">
+      </div>
       <div>
         <div class="ai-result-breed">견종을 인식하지 못했어요</div>
-        <div class="ai-result-size" style="color:#999">강아지 얼굴이 잘 보이는 사진을 써보세요</div>
+        <div class="ai-result-size" style="color:#8E8E93">강아지 얼굴이 잘 보이는 사진을 써보세요</div>
       </div>
     </div>
-    <p class="ai-result-msg" style="color:#999">인식된 내용: ${rawName}</p>
+    <p class="ai-result-msg" style="color:#8E8E93">인식된 내용: ${rawName}</p>
   `;
 
   panel.classList.remove('hidden');
@@ -279,10 +286,12 @@ function showAiError() {
 
   content.innerHTML = `
     <div class="ai-result-header">
-      <span class="ai-result-icon">😵</span>
+      <div class="ai-result-icon">
+        <img src="icons/close.svg" alt="" class="ai-icon-img">
+      </div>
       <div>
         <div class="ai-result-breed">오류가 발생했어요</div>
-        <div class="ai-result-size" style="color:#999">잠시 후 다시 시도해주세요</div>
+        <div class="ai-result-size" style="color:#8E8E93">잠시 후 다시 시도해주세요</div>
       </div>
     </div>
   `;
@@ -299,6 +308,13 @@ function showAiError() {
 // 10. 맞춤 추천 탭 - 견종 인식 결과 표시
 // ----------------------------------------------------------------
 
+// 카테고리별 아이콘 경로 (추천 탭용)
+const CATEGORY_ICON_SRC = {
+  park:       'icons/location.svg',
+  restaurant: 'icons/location-pin.svg',
+  cafe:       'icons/location-pin.svg',
+};
+
 function showRecommendResult(breed) {
   const config  = SIZE_CONFIG[breed.size];
   const result  = document.getElementById('recommend-result');
@@ -307,7 +323,9 @@ function showRecommendResult(breed) {
 
   // 견종 카드
   breedCard.innerHTML = `
-    <div class="breed-card-icon">${config.icon}</div>
+    <div class="breed-card-icon">
+      <img src="${config.iconSrc}" alt="" style="width:28px;height:28px;opacity:0.7;">
+    </div>
     <div>
       <div class="breed-card-name">${breed.ko}</div>
       <div class="breed-card-size" style="color:${config.color}">${config.label} · 인식 정확도 ${breed.confidence}%</div>
@@ -324,7 +342,9 @@ function showRecommendResult(breed) {
     ? '<p style="color:var(--text-3);font-size:0.85rem;">추천 장소를 불러오는 중이에요...</p>'
     : recommended.map(p => `
         <div class="recommend-place-item">
-          <div class="place-item-icon ${p.category}">${{ park:'🌳', restaurant:'🍽️', cafe:'☕' }[p.category]}</div>
+          <div class="place-item-icon ${p.category}">
+            <img src="${CATEGORY_ICON_SRC[p.category] || 'icons/location-pin.svg'}" alt="">
+          </div>
           <div class="place-item-info">
             <div class="place-item-name">${p.name}</div>
             <div class="place-item-addr">${p.address || '주소 정보 없음'}</div>
@@ -340,7 +360,7 @@ function showRecommendResult(breed) {
 // ----------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-  const fileInput  = document.getElementById('ai-file-input');
+  const fileInput  = document.getElementById('ai-file-input-tab');
   const uploadZone = document.getElementById('ai-upload-zone');
   const uploadBtn  = uploadZone?.querySelector('.ai-upload-btn');
 
@@ -401,7 +421,9 @@ async function runBreedDetectionForTab(file) {
     } else {
       const result = document.getElementById('recommend-result');
       document.getElementById('recommend-breed-card').innerHTML = `
-        <div class="breed-card-icon">🤔</div>
+        <div class="breed-card-icon">
+          <img src="icons/search.svg" alt="" style="width:28px;height:28px;opacity:0.5;">
+        </div>
         <div>
           <div class="breed-card-name">견종을 인식하지 못했어요</div>
           <div class="breed-card-msg" style="color:var(--text-3)">강아지 얼굴이 잘 보이는 사진을 써주세요</div>

@@ -166,24 +166,22 @@ function initMap() {
 // PM10 수치 → 등급 정보 반환
 // 기준: 환경부 대기질 통합지수 (CAI) PM10 구간
 function getAirGrade(pm10) {
-  if (pm10 <= 30)  return { cls: 'good',     icon: '😊', msg: `산책하기 완벽해요! 🐾` };
-  if (pm10 <= 80)  return { cls: 'normal',   icon: '🙂', msg: `산책하기 좋아요` };
-  if (pm10 <= 150) return { cls: 'bad',      icon: '😷', msg: `짧게만 산책해요` };
-  return               { cls: 'very-bad', icon: '😰', msg: `오늘은 집에서 쉬어요` };
+  if (pm10 <= 30)  return { cls: 'good',     msg: `산책하기 완벽해요` };
+  if (pm10 <= 80)  return { cls: 'normal',   msg: `산책하기 좋아요` };
+  if (pm10 <= 150) return { cls: 'bad',      msg: `짧게만 산책해요` };
+  return               { cls: 'very-bad', msg: `오늘은 집에서 쉬어요` };
 }
 
 // 배너 DOM 업데이트
 function updateAirBanner(pm10) {
   const banner = document.getElementById('air-banner');
-  const icon   = document.getElementById('air-icon');
   const text   = document.getElementById('air-text');
 
   const info = getAirGrade(pm10);
 
   // 이전 클래스 제거 후 새 등급 클래스 적용
   banner.className = `air-banner ${info.cls}`;
-  icon.textContent = info.icon;
-  text.textContent = `미세먼지 ${pm10}㎍ · ${info.msg}`;
+  text.textContent = `미세먼지 ${pm10}㎍/m³ · ${info.msg}`;
 }
 
 
@@ -311,7 +309,6 @@ async function fetchRestaurants() {
 
 function buildMarkerHTML(category, index) {
   const color = getCategoryColor(category);
-  const icon  = getCategoryIcon(category);
 
   return `
     <div
@@ -320,7 +317,7 @@ function buildMarkerHTML(category, index) {
       onclick="onMarkerClick(${index})"
       title="${getCategoryLabel(category)} 마커"
     >
-      <span>${icon}</span>
+      <img src="icons/location-pin.svg" alt="" class="marker-icon">
     </div>
   `;
 }
@@ -423,12 +420,38 @@ function addMarkers(places, category) {
 
 
 // ----------------------------------------------------------------
+// 16-0. 주소에서 구(區) 이름 추출
+// ----------------------------------------------------------------
+
+function extractGu(address) {
+  const match = (address || '').match(/([가-힣]+구)/);
+  return match ? match[1] : null;
+}
+
+// 로드된 장소 데이터에서 구 목록 추출 → 드롭다운 옵션 생성
+function populateGuDropdown() {
+  const gus = [...new Set(
+    sidebarPlaces.map(p => extractGu(p.address)).filter(Boolean)
+  )].sort();
+
+  const select = document.getElementById('gu-select');
+  gus.forEach(gu => {
+    const opt = document.createElement('option');
+    opt.value = gu;
+    opt.textContent = gu;
+    select.appendChild(opt);
+  });
+}
+
+
+// ----------------------------------------------------------------
 // 16. 사이드바 리스트 렌더링
 // ----------------------------------------------------------------
 
-// 카테고리 이모지 반환 (사이드바 아이콘용)
-function getCategoryEmoji(category) {
-  return { park: '🌳', restaurant: '🍽️', cafe: '☕' }[category] || '📍';
+// 카테고리별 아이콘 이미지 경로 반환 (사이드바용)
+function getCategoryIconSrc(category) {
+  const map = { park: 'icons/location.svg', restaurant: 'icons/location-pin.svg', cafe: 'icons/location-pin.svg' };
+  return map[category] || 'icons/location-pin.svg';
 }
 
 // 사이드바 리스트 렌더링
@@ -441,7 +464,7 @@ function renderSidebar(places) {
   count.textContent = places.length;
 
   if (places.length === 0) {
-    list.innerHTML = '<div class="place-empty">검색 결과가 없어요 🐾</div>';
+    list.innerHTML = '<div class="place-empty">검색 결과가 없어요</div>';
     return;
   }
 
@@ -452,7 +475,7 @@ function renderSidebar(places) {
 
     el.innerHTML = `
       <div class="place-item-icon ${item.category}">
-        ${getCategoryEmoji(item.category)}
+        <img src="${getCategoryIconSrc(item.category)}" alt="${getCategoryLabel(item.category)}">
       </div>
       <div class="place-item-info">
         <div class="place-item-name">${item.name}</div>
@@ -497,48 +520,69 @@ function updateCount(category = 'all') {
 // ----------------------------------------------------------------
 
 function setupFilters() {
-  // 사이드바의 .chip 버튼
-  const chips = document.querySelectorAll('.chip');
-  let currentCategory = 'all';
+  const chips       = document.querySelectorAll('.chip');
+  const guSelect    = document.getElementById('gu-select');
+  const searchInput = document.getElementById('search-input');
+  const searchClear = document.getElementById('search-clear');
 
+  let currentCategory = 'all';
+  let currentGu       = 'all';
+  let currentQuery    = '';
+
+  // 현재 필터 조건에 맞는 장소 반환
+  function getFiltered() {
+    return sidebarPlaces.filter(p => {
+      const matchCat   = currentCategory === 'all' || p.category === currentCategory;
+      const matchGu    = currentGu === 'all' || extractGu(p.address) === currentGu;
+      const matchName  = p.name.toLowerCase().includes(currentQuery);
+      return matchCat && matchGu && matchName;
+    });
+  }
+
+  // 필터 적용: 사이드바 + 지도 마커 동기화
+  function applyFilters() {
+    closePopup();
+    const filtered = getFiltered();
+
+    // 마커 표시/숨김
+    allMarkers.forEach(({ marker, category, place }) => {
+      const matchCat  = currentCategory === 'all' || category === currentCategory;
+      const matchGu   = currentGu === 'all' || extractGu(place.address) === currentGu;
+      const matchName = place.name.toLowerCase().includes(currentQuery);
+      marker.setMap(matchCat && matchGu && matchName ? map : null);
+    });
+
+    renderSidebar(filtered);
+  }
+
+  // 카테고리 칩
   chips.forEach(chip => {
     chip.addEventListener('click', () => {
       chips.forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
       currentCategory = chip.dataset.category;
-
-      closePopup();
-
-      // 마커 표시/숨김
-      allMarkers.forEach(({ marker, category }) => {
-        marker.setMap(currentCategory === 'all' || currentCategory === category ? map : null);
-      });
-
-      updateCount(currentCategory);
+      applyFilters();
     });
   });
 
-  // 검색 기능
-  const searchInput = document.getElementById('search-input');
-  const searchClear = document.getElementById('search-clear');
+  // 구 드롭다운
+  guSelect.addEventListener('change', () => {
+    currentGu = guSelect.value;
+    applyFilters();
+  });
 
+  // 검색
   searchInput.addEventListener('input', () => {
-    const query = searchInput.value.trim().toLowerCase();
-    searchClear.classList.toggle('hidden', query === '');
-
-    const filtered = sidebarPlaces.filter(p => {
-      const matchCategory = currentCategory === 'all' || p.category === currentCategory;
-      const matchName = p.name.toLowerCase().includes(query);
-      return matchCategory && matchName;
-    });
-
-    renderSidebar(filtered);
+    currentQuery = searchInput.value.trim().toLowerCase();
+    searchClear.classList.toggle('hidden', currentQuery === '');
+    applyFilters();
   });
 
   searchClear.addEventListener('click', () => {
     searchInput.value = '';
+    currentQuery = '';
     searchClear.classList.add('hidden');
-    updateCount(currentCategory);
+    applyFilters();
   });
 }
 
