@@ -447,14 +447,17 @@ async function drawChoroplethMap() {
       ? geom.coordinates.map(p => p[0])
       : [geom.coordinates[0]];
 
-    // 구 중심점 (첫 번째 링 무게중심)
-    let sumX = 0, sumY = 0, n = 0;
+    // 구 중심점 — 바운딩박스 중심 (정점 평균보다 시각적으로 정확)
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     rings[0].forEach(([lng, lat]) => {
       const [px, py] = project(lng, lat);
-      sumX += px; sumY += py; n++;
+      if (px < minX) minX = px;
+      if (px > maxX) maxX = px;
+      if (py < minY) minY = py;
+      if (py > maxY) maxY = py;
     });
-    const cx = sumX / n;
-    const cy = sumY / n;
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
 
     const g = document.createElementNS(NS, 'g');
     g.dataset.gu   = guName;
@@ -571,7 +574,7 @@ function onDistrictClick(guName, dogs, clickedG) {
     });
   }
 
-  // 툴팁 위치 (구 중심점 기준 %)
+  // 툴팁 위치 — 구 바운딩박스 중심 기준, 좌우 끝 클램핑
   if (svgTooltipEl) {
     const cx = parseFloat(clickedG.dataset.cx);
     const cy = parseFloat(clickedG.dataset.cy);
@@ -579,8 +582,20 @@ function onDistrictClick(guName, dogs, clickedG) {
       `<div class="dt-gu">${guName}</div>` +
       `<div class="dt-count">${parseInt(dogs).toLocaleString()}마리</div>`;
     svgTooltipEl.style.display = 'block';
-    svgTooltipEl.style.left    = `${(cx / 600) * 100}%`;
-    svgTooltipEl.style.top     = `${(cy / 420) * 100}%`;
+
+    // 퍼센트 위치 계산
+    const leftPct = (cx / 600) * 100;
+    const topPct  = (cy / 420) * 100;
+
+    // 툴팁 너비(~130px) 고려해 SVG 영역 밖으로 나가지 않도록 클램핑
+    const container    = svgTooltipEl.parentElement;
+    const containerW   = container ? container.offsetWidth : 600;
+    const tipW         = 130;
+    const halfPct      = (tipW / 2 / containerW) * 100;
+    const clampedLeft  = Math.min(Math.max(leftPct, halfPct), 100 - halfPct);
+
+    svgTooltipEl.style.left = `${clampedLeft}%`;
+    svgTooltipEl.style.top  = `${topPct}%`;
   }
 
   // 차트 막대 강조
