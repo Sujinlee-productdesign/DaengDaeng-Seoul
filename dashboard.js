@@ -99,6 +99,13 @@ function updateStatCards() {
   const total = DISTRICT_DATA.reduce((sum, d) => sum + d.dogs, 0);
   document.getElementById('stat-total').textContent =
     `${total.toLocaleString()}마리`;
+
+  // 서울시민 N명 중 1명이 반려견 보호자
+  // 서울시 인구 약 9,413,000명 기준 (2023년 주민등록 통계)
+  const SEOUL_POP = 9413000;
+  const ratio = Math.round(SEOUL_POP / total);
+  document.getElementById('stat-ratio').textContent =
+    `약 ${ratio.toLocaleString()}명 중 1명`;
 }
 
 
