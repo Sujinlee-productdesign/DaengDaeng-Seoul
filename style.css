@@ -29,6 +29,8 @@
   --restaurant-bg:rgba(255,59,48,0.10);
   --cafe:         #8E6A4B;
   --cafe-bg:      rgba(142,106,75,0.10);
+  --pf-cafe:      #5856D6;
+  --pf-cafe-bg:   rgba(88,86,214,0.10);
 
   --radius-xs:    6px;
   --radius-sm:    10px;
@@ -325,12 +327,14 @@ body {
 .place-item-icon.park       { background: var(--park-bg); }
 .place-item-icon.restaurant { background: var(--restaurant-bg); }
 .place-item-icon.cafe       { background: var(--cafe-bg); }
+.place-item-icon.pf-cafe    { background: var(--pf-cafe-bg); }
 
 .place-item-icon img { width: 17px; height: 17px; }
 
 .place-item-icon.park       img { filter: invert(56%) sepia(60%) saturate(500%) hue-rotate(88deg) brightness(88%); }
 .place-item-icon.restaurant img { filter: invert(28%) sepia(90%) saturate(2000%) hue-rotate(344deg); }
 .place-item-icon.cafe       img { filter: invert(40%) sepia(20%) saturate(800%) hue-rotate(10deg) brightness(70%); }
+.place-item-icon.pf-cafe    img { filter: invert(29%) sepia(80%) saturate(1500%) hue-rotate(228deg) brightness(90%); }
 
 .place-item-info { flex: 1; min-width: 0; }
 
@@ -502,6 +506,7 @@ body {
 .custom-marker.park       { background: var(--park); }
 .custom-marker.restaurant { background: var(--restaurant); }
 .custom-marker.cafe       { background: var(--cafe); }
+.custom-marker.pf-cafe    { background: var(--pf-cafe); }
 
 .custom-marker .marker-icon { width: 14px; height: 14px; filter: brightness(0) invert(1); }
 
@@ -552,6 +557,7 @@ body {
 .info-tag.park       { background: var(--park); }
 .info-tag.restaurant { background: var(--restaurant); }
 .info-tag.cafe       { background: var(--cafe); }
+.info-tag.pf-cafe    { background: var(--pf-cafe); }
 
 .info-name {
   font-size: 0.92rem;

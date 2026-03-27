@@ -21,9 +21,9 @@
   <link rel="stylesheet" as="style" crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 
-  <!-- 카카오맵 SDK -->
+  <!-- 카카오맵 SDK (services: 장소 검색 라이브러리 포함) -->
   <script type="text/javascript"
-    src="//dapi.kakao.com/v2/maps/sdk.js?appkey=118d64cc92d10f59459a348b6fadb810">
+    src="//dapi.kakao.com/v2/maps/sdk.js?appkey=118d64cc92d10f59459a348b6fadb810&libraries=services">
   </script>
 
   <!-- Chart.js -->
@@ -86,7 +86,10 @@
           <img src="icons/location-pin.svg" alt="" class="chip-icon">음식점
         </button>
         <button class="chip" data-category="cafe">
-          <img src="icons/location-pin.svg" alt="" class="chip-icon">카페
+          <img src="icons/location-pin.svg" alt="" class="chip-icon">애견카페/운동장
+        </button>
+        <button class="chip" data-category="pf-cafe">
+          <img src="icons/location-pin.svg" alt="" class="chip-icon">애견동반 카페
         </button>
       </div>
 
