@@ -522,7 +522,7 @@ body {
 }
 
 .map-watermark-img {
-  height: 200px;
+  height: 100px;
   width: auto;
   object-fit: contain;
   opacity: 0.85;
@@ -1476,7 +1476,7 @@ body {
   .charts-grid    { grid-template-columns: 1fr; }
   .insights-list  { grid-template-columns: 1fr; }
 
-  .map-watermark-img { height: 120px; }
+  .map-watermark-img { height: 67px; }
 
   .header-auth { display: none; }
   .auth-modal-box { width: calc(100vw - 32px); max-height: 90dvh; overflow-y: auto; }
