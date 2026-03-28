@@ -738,57 +738,109 @@ function drawInsights() {
 
 
 // ----------------------------------------------------------------
-// 14. 입양 연계 섹션 — 서울동물복지지원센터
+// 14. 입양 연계 섹션 — 공공데이터포털 유기동물 API (포인핸드 동일 소스)
 // ----------------------------------------------------------------
+
+// 성별 코드 → 한국어
+function sexLabel(cd) {
+  return cd === 'M' ? '수컷' : cd === 'F' ? '암컷' : '미상';
+}
+
+// 중성화 코드 → 한국어
+function neuterLabel(yn) {
+  return yn === 'Y' ? '중성화 완료' : yn === 'N' ? '중성화 미완료' : '';
+}
+
+// 나이 문자열 정리 (예: "2023(년생)" → "2023년생")
+function cleanAge(age) {
+  return (age || '').replace(/\(년생\)/, '년생').trim();
+}
+
+// 견종 문자열 정리 (예: "[개] 믹스견" → "믹스견")
+function cleanBreed(kind) {
+  return (kind || '').replace(/^\[개\]\s*/, '').trim();
+}
 
 async function loadAdoptionSection() {
   const listEl = document.getElementById('adoption-list');
   if (!listEl) return;
 
-  // 더미 입양 대기 동물 데이터 (API 응답 실패 시 사용)
   const DUMMY_ANIMALS = [
-    { name: '콩이', info: '믹스견 · 수컷 · 2살 추정', center: '서울동물복지지원센터 마포' },
-    { name: '하루', info: '말티즈 믹스 · 암컷 · 1살 추정', center: '서울동물복지지원센터 동대문' },
-    { name: '뭉치', info: '포메라니안 믹스 · 중성화 완료 · 4살', center: '서울동물복지지원센터 강동' },
+    {
+      photo: null,
+      name:  '콩이',
+      breed: '믹스견',
+      sex:   '수컷',
+      age:   '2살 추정',
+      neuter:'',
+      care:  '서울동물복지지원센터 마포',
+    },
+    {
+      photo: null,
+      name:  '하루',
+      breed: '말티즈 믹스',
+      sex:   '암컷',
+      age:   '1살 추정',
+      neuter:'',
+      care:  '서울동물복지지원센터 동대문',
+    },
+    {
+      photo: null,
+      name:  '뭉치',
+      breed: '포메라니안 믹스',
+      sex:   '수컷',
+      age:   '4살',
+      neuter:'중성화 완료',
+      care:  '서울동물복지지원센터 강동',
+    },
   ];
 
-  try {
-    // 서울 유기동물 입양 대기 API 시도
-    const url = `${SEOUL_API_BASE}/${SEOUL_API_KEY}/json/TbAdpWaitAnimalView/1/5/`;
-    const res  = await fetch(url);
-    const json = await res.json();
-
-    const rows = json?.TbAdpWaitAnimalView?.row ?? null;
-
-    if (rows && rows.length > 0) {
-      listEl.innerHTML = rows.slice(0, 4).map(r => `
+  function renderCards(animals) {
+    listEl.innerHTML = animals.map(a => {
+      const photoHTML = a.photo
+        ? `<img src="${a.photo}" alt="${a.breed}" class="adoption-card-photo" loading="lazy"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+        : '';
+      const iconHTML = `
+        <div class="adoption-card-icon" ${a.photo ? 'style="display:none"' : ''}>
+          <img src="icons/heart.svg" alt="">
+        </div>`;
+      const sub = [a.breed, a.sex, a.age, a.neuter].filter(Boolean).join(' · ');
+      return `
         <div class="adoption-card">
-          <div class="adoption-card-icon">
-            <img src="icons/heart.svg" alt="">
-          </div>
+          ${photoHTML}${iconHTML}
           <div class="adoption-card-info">
-            <div class="adoption-card-name">${r.NM || '이름 미확인'}</div>
-            <div class="adoption-card-sub">${r.BREED_NM || '견종 미확인'} · ${r.SEX_NM || ''} · ${r.CENTER_NM || ''}</div>
+            <div class="adoption-card-name">${a.name || '이름 미확인'}</div>
+            <div class="adoption-card-sub">${sub}</div>
+            <div class="adoption-card-care">${a.care || ''}</div>
           </div>
-        </div>
-      `).join('');
-      return;
-    }
-    throw new Error('데이터 없음');
+        </div>`;
+    }).join('');
+  }
+
+  try {
+    const res  = await fetch('/adopt-api');
+    const json = await res.json();
+    const items = json?.items ?? [];
+
+    if (items.length === 0) throw new Error('데이터 없음');
+
+    const animals = items.slice(0, 6).map(item => ({
+      photo:  item.popfile || item.filename || null,
+      name:   item.noticeNo ? `공고 ${item.noticeNo.split('-').pop()}` : '보호 중',
+      breed:  cleanBreed(item.kindCd),
+      sex:    sexLabel(item.sexCd),
+      age:    cleanAge(item.age),
+      neuter: neuterLabel(item.neuterYn),
+      care:   item.careNm || '',
+    }));
+
+    renderCards(animals);
+    console.log(`✅ 입양 대기 동물 ${animals.length}마리 로드`);
 
   } catch (e) {
-    // fallback: 더미 카드 + 안내 메시지
-    listEl.innerHTML = DUMMY_ANIMALS.map(a => `
-      <div class="adoption-card">
-        <div class="adoption-card-icon">
-          <img src="icons/heart.svg" alt="">
-        </div>
-        <div class="adoption-card-info">
-          <div class="adoption-card-name">${a.name}</div>
-          <div class="adoption-card-sub">${a.info} · ${a.center}</div>
-        </div>
-      </div>
-    `).join('');
+    console.warn('⚠️ 유기동물 API 실패, 더미 사용:', e.message);
+    renderCards(DUMMY_ANIMALS);
   }
 }
 

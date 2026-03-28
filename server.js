@@ -30,6 +30,42 @@ app.get('/seoul-api/*', async (req, res) => {
 });
 
 // ----------------------------------------------------------------
+// 2. 공공데이터포털 유기동물 API 프록시 (사진 포함)
+//    출처: 농림축산식품부 동물보호관리시스템 (포인핸드 등 동일 소스)
+//    환경변수: ADOPT_API_KEY (Railway Variables에서 설정)
+//    미설정 시 빈 배열 반환 → 프론트 더미 fallback 처리
+// ----------------------------------------------------------------
+app.get('/adopt-api', async (req, res) => {
+  const serviceKey = process.env.ADOPT_API_KEY;
+  if (!serviceKey) {
+    return res.json({ items: [] });
+  }
+
+  const params = new URLSearchParams({
+    serviceKey,
+    upkind:     '417000',  // 개
+    upr_cd:     '6110000', // 서울특별시
+    state:      'notice',  // 공고 중 (입양 가능)
+    numOfRows:  '6',
+    pageNo:     '1',
+    _type:      'json',
+  });
+
+  const url = `https://apis.data.go.kr/1543061/abandonmentPublicService/abandonmentPublic?${params}`;
+
+  try {
+    const response = await fetch(url);
+    const json     = await response.json();
+    const items    = json?.response?.body?.items?.item ?? [];
+    // 배열 보정 (결과 1개면 객체로 오는 경우 대비)
+    res.json({ items: Array.isArray(items) ? items : [items] });
+  } catch (err) {
+    console.error('유기동물 API 프록시 오류:', err.message);
+    res.json({ items: [] });
+  }
+});
+
+// ----------------------------------------------------------------
 // 2. 정적 파일 서빙 (HTML, CSS, JS, 이미지 등)
 //    현재 폴더의 모든 파일을 그대로 제공
 // ----------------------------------------------------------------
