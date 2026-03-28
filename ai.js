@@ -356,18 +356,29 @@ function showRecommendResult(breed) {
 }
 
 // ----------------------------------------------------------------
-// 11. 이벤트 연결: 맞춤 추천 탭 업로드 영역 + 파일 선택
+// 11. 이벤트 연결: 맞춤 추천 탭 업로드 영역 + "맞춤 분석 받기" 버튼
+//
+// 흐름:
+//   ① 사진 선택 → 미리보기 표시 + 백그라운드 AI 인식 → #dog-breed-input 자동 채움
+//   ② "맞춤 분석 받기" 클릭 → 견종+체중+중성화 읽기 → 산책시간 계산 → 결과 표시
 // ----------------------------------------------------------------
 
-document.addEventListener('DOMContentLoaded', () => {
-  const fileInput  = document.getElementById('ai-file-input-tab');
-  const uploadZone = document.getElementById('ai-upload-zone');
-  const uploadBtn  = uploadZone?.querySelector('.ai-upload-btn');
+let detectedBreed = null; // AI가 인식한 견종 (백그라운드 저장용)
 
+document.addEventListener('DOMContentLoaded', () => {
+  const fileInput   = document.getElementById('ai-file-input-tab');
+  const uploadZone  = document.getElementById('ai-upload-zone');
+  const uploadBtn   = uploadZone?.querySelector('.ai-upload-btn');
+  const submitBtn   = document.getElementById('analyzer-submit');
+  const hintEl      = document.getElementById('analyzer-photo-hint');
+
+  // ── 사진 처리: 미리보기 + 백그라운드 AI ──────────────────────
   function handleFile(file) {
     if (!file || !file.type.startsWith('image/')) return;
 
-    // 업로드 영역에 이미지 미리보기
+    detectedBreed = null; // 이전 결과 초기화
+
+    // 미리보기
     const reader = new FileReader();
     reader.onload = (e) => {
       const inner = document.getElementById('ai-upload-inner');
@@ -377,18 +388,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     reader.readAsDataURL(file);
 
-    // 견종 인식 실행
-    runBreedDetectionForTab(file);
-    fileInput.value = '';
+    // 힌트 텍스트: 인식 중
+    if (hintEl) hintEl.textContent = '견종 인식 중...';
+
+    // 백그라운드 AI 인식 → breed 입력창 자동 채움
+    runBreedDetectionBackground(file);
+
+    if (fileInput) fileInput.value = '';
   }
 
-  // 버튼 클릭 → 파일 선택
-  if (uploadBtn) uploadBtn.addEventListener('click', () => fileInput.click());
-  if (uploadZone) uploadZone.addEventListener('click', (e) => {
-    if (e.target === uploadZone || e.target.id === 'ai-upload-inner') fileInput.click();
+  // ── 업로드 영역 이벤트 ────────────────────────────────────────
+  if (uploadBtn) uploadBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fileInput.click();
   });
+  if (uploadZone) uploadZone.addEventListener('click', () => fileInput.click());
 
-  // 드래그앤드롭
   if (uploadZone) {
     uploadZone.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -402,36 +417,158 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 파일 선택 완료
-  if (fileInput) {
-    fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+  if (fileInput) fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+  // ── "맞춤 분석 받기" 버튼 클릭 ───────────────────────────────
+  if (submitBtn) {
+    submitBtn.addEventListener('click', () => {
+      const breedVal   = (document.getElementById('dog-breed-input')?.value || '').trim();
+      const weightVal  = parseFloat(document.getElementById('dog-weight-input')?.value);
+      const neuteredEl = document.querySelector('input[name="dog-neuter"]:checked');
+      const neutered   = neuteredEl ? neuteredEl.value : 'no';
+
+      // 체중 필수 입력 체크
+      if (!weightVal || weightVal <= 0 || weightVal > 100) {
+        const wInput = document.getElementById('dog-weight-input');
+        if (wInput) { wInput.focus(); wInput.style.outline = '2px solid var(--accent)'; }
+        return;
+      }
+      document.getElementById('dog-weight-input').style.outline = '';
+
+      // breed 결과 객체 구성 (AI 인식 결과 or 직접 입력 기반)
+      const breedObj = detectedBreed && (!breedVal || breedVal === detectedBreed.ko)
+        ? detectedBreed
+        : buildManualBreedObj(breedVal, weightVal);
+
+      showUnifiedResult(breedObj, weightVal, neutered);
+    });
   }
 });
 
-// 맞춤 추천 탭용 인식 (결과를 탭 내부에 표시)
-async function runBreedDetectionForTab(file) {
+
+// ----------------------------------------------------------------
+// 12. 백그라운드 AI 견종 인식 → 입력창 자동 채움
+// ----------------------------------------------------------------
+
+async function runBreedDetectionBackground(file) {
+  const breedInput = document.getElementById('dog-breed-input');
+  const hintEl     = document.getElementById('analyzer-photo-hint');
+
   try {
     if (!mobilenetModel) mobilenetModel = await mobilenet.load();
-    const imgEl      = await fileToImage(file);
+    const imgEl       = await fileToImage(file);
     const predictions = await mobilenetModel.classify(imgEl, 5);
     const breed       = matchBreed(predictions);
 
     if (breed) {
-      showRecommendResult(breed);
+      detectedBreed = breed;
+      // 입력창이 비어있을 때만 자동 채움
+      if (breedInput && !breedInput.value.trim()) {
+        breedInput.value = breed.ko;
+      }
+      if (hintEl) hintEl.textContent = `AI 인식: ${breed.ko} (정확도 ${breed.confidence}%)`;
     } else {
-      const result = document.getElementById('recommend-result');
-      document.getElementById('recommend-breed-card').innerHTML = `
-        <div class="breed-card-icon">
-          <img src="icons/search.svg" alt="" style="width:28px;height:28px;opacity:0.5;">
-        </div>
-        <div>
-          <div class="breed-card-name">견종을 인식하지 못했어요</div>
-          <div class="breed-card-msg" style="color:var(--text-3)">강아지 얼굴이 잘 보이는 사진을 써주세요</div>
-        </div>`;
-      document.getElementById('recommend-place-list').innerHTML = '';
-      result.classList.remove('hidden');
+      detectedBreed = null;
+      if (hintEl) hintEl.textContent = '견종을 인식하지 못했어요. 직접 입력해주세요';
     }
   } catch (err) {
     console.error('견종 인식 오류:', err);
+    detectedBreed = null;
+    if (hintEl) hintEl.textContent = '';
   }
+}
+
+
+// ----------------------------------------------------------------
+// 13. 직접 입력 견종 → breed 객체 변환 (AI 매핑 없을 때)
+// ----------------------------------------------------------------
+
+function buildManualBreedObj(breedName, weightKg) {
+  const size = typeof getSizeByWeight === 'function' ? getSizeByWeight(weightKg) : 'medium';
+  return {
+    ko:         breedName || '알 수 없음',
+    size:       size,
+    confidence: null, // 직접 입력이므로 정확도 없음
+    rawName:    breedName,
+  };
+}
+
+
+// ----------------------------------------------------------------
+// 14. 통합 결과 표시: 견종 카드 + 산책 시간 카드 + 추천 장소
+// ----------------------------------------------------------------
+
+function showUnifiedResult(breed, weightKg, neutered) {
+  const config    = SIZE_CONFIG[breed.size] || SIZE_CONFIG['medium'];
+  const result    = document.getElementById('recommend-result');
+  const breedCard = document.getElementById('recommend-breed-card');
+  const walkCard  = document.getElementById('walk-result-card');
+  const placeList = document.getElementById('recommend-place-list');
+
+  // ── 견종 카드 ────────────────────────────────────────────────
+  const confidenceText = breed.confidence !== null
+    ? ` · AI 인식 정확도 ${breed.confidence}%`
+    : ' · 직접 입력';
+
+  breedCard.innerHTML = `
+    <div class="breed-card-icon">
+      <img src="${config.iconSrc}" alt="" style="width:28px;height:28px;opacity:0.7;">
+    </div>
+    <div>
+      <div class="breed-card-name">${breed.ko}</div>
+      <div class="breed-card-size" style="color:${config.color}">${config.label}${confidenceText}</div>
+      <div class="breed-card-msg">${config.msg}</div>
+    </div>
+  `;
+
+  // ── 산책 시간 카드 ────────────────────────────────────────────
+  if (typeof calcBaseWalkTime === 'function') {
+    const pm10    = (typeof currentPm10 !== 'undefined' && currentPm10 !== null)
+                    ? currentPm10
+                    : (typeof DUMMY_AIR_PM10 !== 'undefined' ? DUMMY_AIR_PM10 : 50);
+    const base    = calcBaseWalkTime(weightKg, breed.ko, neutered);
+    const multi   = getAirMultiplier(pm10);
+    const minutes = Math.max(5, Math.round(base * multi));
+    const size    = getSizeByWeight(weightKg);
+    const energy  = getBreedEnergyLevel(breed.ko);
+    const grade   = getAirGrade(pm10);
+    const tips    = getWalkTips(pm10, size, energy, neutered);
+    const sizeLabel = { small: '소형견', medium: '중형견', large: '대형견' }[size];
+
+    const tipsHtml = tips.map(t => `<div class="wmr-tip">${t}</div>`).join('');
+    const airNote  = grade.cls === 'good'
+      ? '오늘 미세먼지 좋음 — 최적의 산책 날씨예요!'
+      : `오늘 미세먼지 ${grade.label} (PM10 ${pm10}㎍/m³) 기준 조정`;
+
+    walkCard.innerHTML = `
+      <div class="wmr-head">${sizeLabel} · 체중 ${weightKg}kg · 중성화 ${neutered === 'yes' ? '완료' : '미완료'}</div>
+      <div class="wmr-time">${minutes}</div>
+      <div class="wmr-unit">분 / 일 권장 산책 시간</div>
+      <div class="wmr-tips">${tipsHtml}</div>
+      <div class="wmr-air-note">${airNote}</div>
+    `;
+    walkCard.classList.remove('hidden');
+  }
+
+  // ── 추천 장소 ────────────────────────────────────────────────
+  const recommended = (window.sidebarPlaces || [])
+    .filter(p => config.filter === 'all' || p.category === config.filter)
+    .slice(0, 8);
+
+  placeList.innerHTML = recommended.length === 0
+    ? '<p style="color:var(--text-3);font-size:0.85rem;">추천 장소를 불러오는 중이에요...</p>'
+    : recommended.map(p => `
+        <div class="recommend-place-item">
+          <div class="place-item-icon ${p.category}">
+            <img src="${CATEGORY_ICON_SRC[p.category] || 'icons/location-pin.svg'}" alt="">
+          </div>
+          <div class="place-item-info">
+            <div class="place-item-name">${p.name}</div>
+            <div class="place-item-addr">${p.address || '주소 정보 없음'}</div>
+          </div>
+        </div>
+      `).join('');
+
+  result.classList.remove('hidden');
+  result.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }

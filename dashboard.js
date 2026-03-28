@@ -226,6 +226,13 @@ function drawDogChart() {
       responsive: true,
       maintainAspectRatio: false,
       layout: { padding: { right: 72 } }, // datalabels 공간 확보
+      onClick: (evt, elements) => {
+        if (elements.length > 0) {
+          const idx = elements[0].index;
+          const gu  = labels[idx];
+          selectDistrictByName(gu);
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -296,6 +303,13 @@ function drawParkChart() {
       responsive: true,
       maintainAspectRatio: false,
       layout: { padding: { right: 80 } }, // datalabels 공간 확보
+      onClick: (evt, elements) => {
+        if (elements.length > 0) {
+          const idx = elements[0].index;
+          const gu  = labels[idx];
+          selectDistrictByName(gu);
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -341,14 +355,14 @@ function drawParkChart() {
 
 function highlightChartBar(guName) {
   [
-    { chart: chartDogs, origColors: getPalette(10) },
-    { chart: chartPark, origColors: getPalette(10).reverse() },
-  ].forEach(({ chart, origColors }) => {
+    { chart: chartDogs, rev: false },
+    { chart: chartPark, rev: true  },
+  ].forEach(({ chart, rev }) => {
     if (!chart) return;
     const labels = chart.data.labels;
+    const n      = labels.length;
     const idx    = labels.indexOf(guName);
 
-    // 선택 구 → 브랜드색, 나머지 → 회색
     chart.data.datasets[0].backgroundColor =
       labels.map((_, i) => (i === idx ? '#FF8C42' : '#D1D1D6'));
     chart._highlightIndex = idx >= 0 ? idx : null;
@@ -358,14 +372,29 @@ function highlightChartBar(guName) {
 
 function clearChartHighlight() {
   if (chartDogs) {
-    chartDogs.data.datasets[0].backgroundColor = getPalette(10);
+    chartDogs.data.datasets[0].backgroundColor = getPalette(chartDogs.data.labels.length);
     chartDogs._highlightIndex = null;
     chartDogs.update('none');
   }
   if (chartPark) {
-    chartPark.data.datasets[0].backgroundColor = getPalette(10).reverse();
+    chartPark.data.datasets[0].backgroundColor = getPalette(chartPark.data.labels.length).reverse();
     chartPark._highlightIndex = null;
     chartPark.update('none');
+  }
+}
+
+// 구 이름으로 코로플레스 선택 (차트 → 지도 방향)
+function selectDistrictByName(guName) {
+  if (!svgEl) return;
+  const g = svgEl.querySelector(`g[data-gu="${guName}"]`);
+  if (!g) return;
+
+  const dogs = g.dataset.dogs || 0;
+
+  if (selectedGu === guName) {
+    deselectDistrict();
+  } else {
+    onDistrictClick(guName, dogs, g);
   }
 }
 

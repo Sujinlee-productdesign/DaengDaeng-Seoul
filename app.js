@@ -697,6 +697,116 @@ function setupWalkModal() {
 
 
 // ----------------------------------------------------------------
+// 8-0. 날씨 API (Open-Meteo — API 키 불필요)
+//      강아지 산책 적정 기온: 7~25°C (수의학 기준)
+// ----------------------------------------------------------------
+
+// WMO 날씨 코드 → 비/눈 여부
+function isRainCode(code) {
+  // 51-67 드리즐/비, 71-77 눈, 80-82 소나기, 85-86 눈소나기, 95-99 뇌우
+  return (code >= 51 && code <= 67)
+      || (code >= 71 && code <= 77)
+      || (code >= 80 && code <= 82)
+      || (code >= 85 && code <= 86)
+      || (code >= 95 && code <= 99);
+}
+
+// WMO 날씨 코드 → 이모지+설명
+function weatherCodeLabel(code) {
+  if (code >= 95) return { emoji: '⛈', text: '뇌우' };
+  if (code >= 85) return { emoji: '🌨', text: '눈' };
+  if (code >= 80) return { emoji: '🌧', text: '소나기' };
+  if (code >= 71) return { emoji: '❄️', text: '눈' };
+  if (code >= 61) return { emoji: '🌧', text: '비' };
+  if (code >= 51) return { emoji: '🌦', text: '이슬비' };
+  return null;
+}
+
+// 날씨 배너 라인 업데이트
+function updateWeatherLine(weatherData) {
+  const lineEl = document.getElementById('weather-line');
+  if (!lineEl || !weatherData) return;
+
+  const { temp, feelsLike, weatherCode, precipProb } = weatherData;
+  const rain = isRainCode(weatherCode) || precipProb >= 50;
+
+  // 산책 온도 기준 (수의학 권장)
+  // < 0°C: 영하 위험  /  0~7°C: 쌀쌀 주의  /  25~32°C: 더위 주의  /  ≥ 32°C: 폭염 위험
+  const tooHot  = temp >= 32;
+  const warmish = temp >= 25 && temp < 32;
+  const cold    = temp > 0  && temp <= 7;
+  const tooCold = temp <= 0;
+
+  let cls = '', msg = '';
+
+  if (rain) {
+    cls = 'rain';
+    const wl = weatherCodeLabel(weatherCode);
+    msg = `${wl ? wl.emoji : '🌧'} ${wl ? wl.text : '비'} 예보 · 실내에서 많이 놀아주세요`;
+  } else if (tooHot) {
+    cls = 'hot';
+    msg = `🌡 ${Math.round(temp)}°C · 폭염 위험 · 이른 아침·저녁 산책 추천`;
+  } else if (warmish) {
+    cls = 'hot';
+    msg = `☀️ ${Math.round(temp)}°C · 아스팔트 화상 주의 · 그늘 산책하세요`;
+  } else if (tooCold) {
+    cls = 'cold';
+    msg = `🥶 ${Math.round(temp)}°C · 영하 날씨 · 방한용품 필수`;
+  } else if (cold) {
+    cls = 'cold';
+    msg = `🧥 ${Math.round(temp)}°C · 소형견은 옷을 입혀주세요`;
+  }
+
+  if (msg) {
+    lineEl.className = `weather-line ${cls}`;
+    lineEl.textContent = msg;
+  } else {
+    // 적정 날씨: 기온만 표시, 경고 없음
+    lineEl.className = 'weather-line hidden';
+  }
+
+  // 산책 가능도 카드에도 기온 정보 반영
+  const walkSub = document.getElementById('walk-index-sub');
+  if (walkSub && msg) {
+    const existing = walkSub.textContent;
+    // 날씨 주의가 있으면 앞에 붙이기 (air quality 메시지 유지)
+    walkSub.textContent = msg.replace(/^[^\s]+\s/, '') + ' · ' + existing;
+  }
+}
+
+async function fetchWeather() {
+  try {
+    const params = new URLSearchParams({
+      latitude:    37.5665,
+      longitude:   126.9780,
+      current:     'temperature_2m,precipitation,weathercode,apparent_temperature',
+      hourly:      'precipitation_probability',
+      timezone:    'Asia/Seoul',
+      forecast_days: 1,
+    });
+    const res  = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+    const data = await res.json();
+
+    // 현재 시각 기준 앞 6시간의 최대 강수 확률
+    const now   = new Date();
+    const hour  = now.getHours();
+    const probs = (data.hourly?.precipitation_probability || []).slice(hour, hour + 6);
+    const precipProb = probs.length > 0 ? Math.max(...probs) : 0;
+
+    return {
+      temp:        data.current.temperature_2m,
+      feelsLike:   data.current.apparent_temperature,
+      precip:      data.current.precipitation,
+      weatherCode: data.current.weathercode,
+      precipProb,
+    };
+  } catch (e) {
+    console.warn('⚠️ 날씨 API 실패:', e.message);
+    return null;
+  }
+}
+
+// ----------------------------------------------------------------
 // 8. 서울 실시간 대기환경 API 호출
 // ----------------------------------------------------------------
 
@@ -976,28 +1086,63 @@ function buildMarkerHTML(category, index) {
 //     마커 클릭 시 마커 위에 뜨는 말풍선
 // ----------------------------------------------------------------
 
+// 구별 주요 도로 (교통 혼잡도 표시용)
+const GU_MAJOR_ROADS = {
+  '강남구':  ['강남대로', '테헤란로'],   '강동구':  ['천호대로', '올림픽로'],
+  '강북구':  ['도봉로', '미아로'],       '강서구':  ['공항대로', '강서로'],
+  '관악구':  ['남부순환로', '관악로'],   '광진구':  ['천호대로', '능동로'],
+  '구로구':  ['경인로', '구로디지털로'], '금천구':  ['시흥대로', '독산로'],
+  '노원구':  ['동일로', '노원로'],       '도봉구':  ['도봉로', '방학로'],
+  '동대문구':['천호대로', '답십리로'],   '동작구':  ['동작대로', '노들로'],
+  '마포구':  ['마포대로', '서강대로'],   '서대문구':['통일로', '연세로'],
+  '서초구':  ['강남대로', '반포대로'],   '성동구':  ['왕십리로', '성수일로'],
+  '성북구':  ['동소문로', '정릉로'],     '송파구':  ['올림픽로', '위례성대로'],
+  '양천구':  ['목동로', '신월로'],       '영등포구':['여의대로', '영등포로'],
+  '용산구':  ['이태원로', '원효로'],     '은평구':  ['통일로', '연서로'],
+  '종로구':  ['종로', '율곡로'],         '중구':    ['퇴계로', '을지로'],
+  '중랑구':  ['망우로', '중랑천로'],
+};
+
+function getTrafficInfo(address) {
+  const h = new Date().getHours();
+  let label, color;
+  if ((h >= 7 && h < 9) || (h >= 18 && h < 20)) { label = '혼잡'; color = '#FF3B30'; }
+  else if ((h >= 9 && h < 11) || (h >= 16 && h < 18)) { label = '서행'; color = '#FF9500'; }
+  else { label = '원활'; color = '#34C759'; }
+  const roads = GU_MAJOR_ROADS[extractGu(address)] || [];
+  return { label, color, roads };
+}
+
 function buildPopupHTML(place, category, index) {
   const label = getCategoryLabel(category);
 
-  // place.url = kakao place_url → 상세 페이지 (https://place.map.kakao.com/{id})
-  const kakaoMapUrl  = place.url || `https://map.kakao.com/link/map/${encodeURIComponent(place.name)},${place.lat},${place.lng}`;
+  // 정보보기: Kakao 상세 페이지 (place_url 우선, 없으면 검색)
+  const infoUrl      = place.url || `https://map.kakao.com/?q=${encodeURIComponent(place.name)}`;
   const kakaoNaviUrl = `https://map.kakao.com/link/to/${encodeURIComponent(place.name)},${place.lat},${place.lng}`;
+
+  // 북마크 상태
+  const bmed    = (typeof currentUser !== 'undefined' && currentUser && typeof isBookmarked === 'function')
+                  ? isBookmarked(place.name) : false;
+  const escaped = place.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
   // 카테고리별 추가 HTML
   let extraHTML = '';
 
-  // 공원: 구별 공원면적 / 등록견 수 통계 표시
+  // 공원: 전체 공원 면적 표시
   if (category === 'park') {
     const gu = extractGu(place.address);
-    const districtStats = window.DISTRICT_DATA
-      ? window.DISTRICT_DATA.find(d => d.gu === gu)
-      : null;
-    if (districtStats) {
-      const ratio = Math.round(districtStats.parkArea / districtStats.dogs);
+    const ds = window.DISTRICT_DATA ? window.DISTRICT_DATA.find(d => d.gu === gu) : null;
+    if (ds) {
+      const totalArea  = ds.parkArea;
+      const pyeong     = Math.round(totalArea / 3.30579);
+      const areaText   = totalArea >= 10000
+        ? `${(totalArea / 10000).toFixed(1)}만㎡` : `${totalArea.toLocaleString()}㎡`;
+      const pyeongText = pyeong  >= 10000
+        ? `${Math.round(pyeong / 10000)}만평` : `${pyeong.toLocaleString()}평`;
       extraHTML += `
         <div class="info-park-stat">
-          <span class="info-park-stat-label">${gu} 강아지 1마리당</span>
-          <span class="info-park-stat-val">${ratio.toLocaleString()}㎡ 공원</span>
+          <span class="info-park-stat-label">${gu} 전체 공원 면적</span>
+          <span class="info-park-stat-val">${areaText} (${pyeongText})</span>
         </div>`;
     }
   }
@@ -1018,15 +1163,31 @@ function buildPopupHTML(place, category, index) {
       </a>`;
   }
 
+  // 교통 혼잡도
+  const tf = getTrafficInfo(place.address);
+  const trafficHTML = `
+    <div class="info-traffic">
+      <span class="traffic-label">주변 교통</span>
+      <span class="traffic-dot" style="color:${tf.color}">●</span>
+      <span class="traffic-status" style="color:${tf.color}">${tf.label}</span>
+      <span class="traffic-note">· 시간대 예측</span>
+      ${tf.roads.length ? `<span class="traffic-roads">${tf.roads.join(' · ')}</span>` : ''}
+    </div>`;
+
   return `
     <div class="info-popup">
       <button class="info-close-btn" onclick="closePopup()"><img src="icons/close.svg" alt="닫기"></button>
+      <button class="info-bookmark-btn${bmed ? ' active' : ''}"
+              onclick="toggleBookmarkPlace('${escaped}')" title="${bmed ? '북마크 취소' : '북마크 저장'}">
+        <img src="icons/bookmark.svg" alt="북마크">
+      </button>
       <div class="info-tag ${category}">${label}</div>
       <div class="info-name">${place.name}</div>
       <div class="info-addr"><img src="icons/location-pin.svg" alt="">${place.address || '주소 정보 없음'}</div>
       ${extraHTML}
+      ${trafficHTML}
       <div class="info-btn-row">
-        <a class="info-btn info-btn-map" href="${kakaoMapUrl}" target="_blank" rel="noopener">
+        <a class="info-btn info-btn-map" href="${infoUrl}" target="_blank" rel="noopener">
           <img src="icons/location.svg" alt="">정보 보기
         </a>
         <a class="info-btn info-btn-navi" href="${kakaoNaviUrl}" target="_blank" rel="noopener">
@@ -1036,6 +1197,26 @@ function buildPopupHTML(place, category, index) {
     </div>
   `;
 }
+
+// 북마크 토글 (팝업 onclick에서 호출)
+window.toggleBookmarkPlace = function(placeName) {
+  if (typeof currentUser === 'undefined' || !currentUser) {
+    if (typeof showLoginRequired === 'function') showLoginRequired();
+    return;
+  }
+  if (typeof toggleBookmark !== 'function') return;
+  const added = toggleBookmark(placeName);
+  // 현재 팝업 내 북마크 버튼 즉시 업데이트
+  const popup = document.querySelector('.info-popup');
+  if (popup) {
+    const btn = popup.querySelector('.info-bookmark-btn');
+    if (btn) {
+      btn.classList.toggle('active', added);
+      btn.title = added ? '북마크 취소' : '북마크 저장';
+    }
+  }
+  window.refreshBookmarkChip?.();
+};
 
 
 // ----------------------------------------------------------------
@@ -1304,7 +1485,9 @@ function setupFilters() {
   // 현재 필터 조건에 맞는 장소 반환
   function getFiltered() {
     return sidebarPlaces.filter(p => {
-      const matchCat   = currentCategory === 'all' || p.category === currentCategory;
+      const matchCat   = currentCategory === 'all'
+        || (currentCategory === 'bookmark' && typeof isBookmarked === 'function' && isBookmarked(p.name))
+        || p.category === currentCategory;
       const matchGu    = currentGu === 'all' || extractGu(p.address) === currentGu;
       const matchName  = p.name.toLowerCase().includes(currentQuery);
       return matchCat && matchGu && matchName;
@@ -1319,7 +1502,9 @@ function setupFilters() {
 
     // 마커 표시/숨김
     allMarkers.forEach(({ marker, category, place }) => {
-      const matchCat  = currentCategory === 'all' || category === currentCategory;
+      const matchCat  = currentCategory === 'all'
+        || (currentCategory === 'bookmark' && typeof isBookmarked === 'function' && isBookmarked(place.name))
+        || category === currentCategory;
       const matchGu   = currentGu === 'all' || extractGu(place.address) === currentGu;
       const matchName = place.name.toLowerCase().includes(currentQuery);
       marker.setMap(matchCat && matchGu && matchName ? map : null);
@@ -1369,6 +1554,18 @@ function setupFilters() {
 
   // 외부에서 재트리거할 수 있도록 노출
   applyFiltersRef = applyFilters;
+  window.applyFiltersGlobal = applyFilters;
+
+  // 북마크 칩 카운트 새로고침
+  window.refreshBookmarkChip = function() {
+    const count = typeof getBookmarks === 'function' ? getBookmarks().length : 0;
+    const badge = document.getElementById('bookmark-count-badge');
+    if (badge) {
+      badge.textContent = count;
+      badge.classList.toggle('hidden', count === 0);
+    }
+  };
+  window.refreshBookmarkChip(); // 초기 렌더
 
   // 초기 렌더
   applyFilters();
@@ -1396,6 +1593,7 @@ async function main() {
       airResult,
       vetsResult,
       playgroundsResult,
+      weatherResult,
     ] = await Promise.allSettled([
       fetchParks(),              // ① 공원 (서울 공공데이터)
       fetchPetRestaurants(),     // ② 애견동반 음식점 (카카오 Places)
@@ -1404,6 +1602,7 @@ async function main() {
       fetchAirQuality(),         // ⑤ 대기질
       fetchVets(),               // ⑥ 동물병원 (카카오 Places)
       fetchPlaygrounds(),        // ⑦ 반려견 놀이터 (카카오 Places)
+      fetchWeather(),            // ⑧ 날씨 (Open-Meteo)
     ]);
 
     // 공원 마커 추가
@@ -1429,6 +1628,10 @@ async function main() {
     // 반려견 놀이터 마커 추가
     const playgrounds = playgroundsResult.status === 'fulfilled' ? playgroundsResult.value : [];
     addMarkers(playgrounds, 'playground');
+
+    // 날씨 배너 업데이트
+    const weather = weatherResult?.status === 'fulfilled' ? weatherResult.value : null;
+    if (weather) updateWeatherLine(weather);
 
     // 필터 + 정렬 이벤트 연결 (applyFilters 내부에서 초기 렌더까지 처리)
     setupFilters();
@@ -1511,5 +1714,3 @@ main();
 // 모바일 바텀시트 인터랙션
 setupBottomSheet();
 
-// 산책 시간 추천 모달
-setupWalkModal();
