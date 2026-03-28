@@ -62,6 +62,11 @@
     <!-- 왼쪽 사이드바 -->
     <aside class="sidebar" id="sidebar">
 
+      <!-- 모바일 바텀시트 핸들 -->
+      <div class="sidebar-handle" id="sidebar-handle">
+        <div class="sidebar-handle-bar"></div>
+      </div>
+
       <div class="sidebar-search">
         <img src="icons/search.svg" class="search-icon" alt="검색">
         <input type="text" id="search-input" placeholder="장소 이름으로 검색" />
@@ -91,6 +96,12 @@
         </button>
         <button class="chip" data-category="pf-cafe">
           <img src="icons/location-pin.svg" alt="" class="chip-icon">애견동반 카페
+        </button>
+        <button class="chip" data-category="vet">
+          <img src="icons/heart.svg" alt="" class="chip-icon">동물병원
+        </button>
+        <button class="chip" data-category="playground">
+          <img src="icons/location.svg" alt="" class="chip-icon">반려견 놀이터
         </button>
       </div>
 
@@ -147,6 +158,66 @@
       <section id="tab-recommend" class="tab-content">
         <div class="recommend-wrap">
 
+          <!-- ① 산책 가능도 지수 카드 -->
+          <div class="walk-index-card" id="walk-index-card">
+            <div class="walk-index-top">
+              <div class="walk-index-badge-wrap">
+                <span class="walk-index-badge" id="walk-index-badge">―</span>
+              </div>
+              <div class="walk-index-info">
+                <div class="walk-index-title">오늘의 산책 가능도</div>
+                <div class="walk-index-sub" id="walk-index-sub">대기질 정보를 불러오는 중...</div>
+              </div>
+              <div class="walk-pm10-badge" id="walk-pm10-badge"></div>
+            </div>
+            <button class="walk-modal-open-btn" id="walk-modal-open-btn">
+              우리 강아지 적정 산책시간 알아보기 →
+            </button>
+          </div>
+
+          <!-- 산책시간 추천 모달 -->
+          <div class="walk-modal-backdrop hidden" id="walk-modal-backdrop">
+            <div class="walk-modal" id="walk-modal">
+              <button class="walk-modal-close" id="walk-modal-close">
+                <img src="icons/close.svg" alt="닫기">
+              </button>
+              <h2 class="walk-modal-title">우리 강아지 산책 시간 추천</h2>
+              <p class="walk-modal-desc">체중, 견종, 중성화 여부를 입력하면<br>오늘 날씨에 맞는 산책 시간을 알려드려요</p>
+
+              <div class="walk-modal-field">
+                <label class="walk-modal-label">체중 (kg)</label>
+                <div class="walk-weight-input-wrap">
+                  <input type="number" id="wm-weight" class="walk-weight-input"
+                         placeholder="예: 5.5" min="0.5" max="100" step="0.5">
+                  <span class="walk-weight-unit">kg</span>
+                </div>
+              </div>
+
+              <div class="walk-modal-field">
+                <label class="walk-modal-label">견종</label>
+                <input type="text" id="wm-breed" class="walk-breed-input"
+                       placeholder="예: 말티즈, 골든 리트리버, 믹스...">
+              </div>
+
+              <div class="walk-modal-field">
+                <label class="walk-modal-label">중성화 여부</label>
+                <div class="walk-neuter-row">
+                  <label class="walk-neuter-opt">
+                    <input type="radio" name="neuter" value="yes"> 중성화 완료
+                  </label>
+                  <label class="walk-neuter-opt">
+                    <input type="radio" name="neuter" value="no" checked> 중성화 미완료
+                  </label>
+                </div>
+              </div>
+
+              <button class="walk-modal-submit" id="walk-modal-submit">산책 시간 추천받기</button>
+
+              <div class="walk-modal-result hidden" id="walk-modal-result"></div>
+            </div>
+          </div>
+
+          <!-- ② AI 사진 업로드 -->
           <div class="ai-upload-zone" id="ai-upload-zone">
             <input type="file" id="ai-file-input-tab" accept="image/*" hidden>
             <div class="ai-upload-inner" id="ai-upload-inner">
@@ -159,10 +230,29 @@
             </div>
           </div>
 
+          <!-- ③ 견종 인식 결과 + 추천 장소 -->
           <div id="recommend-result" class="recommend-result hidden">
             <div id="recommend-breed-card" class="breed-card"></div>
             <h3 class="recommend-list-title">추천 장소</h3>
             <div id="recommend-place-list" class="recommend-place-list"></div>
+          </div>
+
+          <!-- ④ 입양 연계 섹션 -->
+          <div class="adoption-section">
+            <div class="adoption-header">
+              <div class="adoption-icon-wrap">
+                <img src="icons/heart.svg" alt="" class="adoption-icon-img">
+              </div>
+              <div>
+                <div class="adoption-title">서울에서 가족을 기다리고 있어요</div>
+                <div class="adoption-sub">서울동물복지지원센터 입양 대기 동물</div>
+              </div>
+            </div>
+            <div id="adoption-list" class="adoption-list">
+              <div class="adoption-loading">입양 정보 불러오는 중...</div>
+            </div>
+            <a href="https://animal.seoul.go.kr" target="_blank" rel="noopener"
+               class="adoption-more-btn">더 많은 아이들 보러 가기 →</a>
           </div>
 
         </div>
@@ -206,15 +296,22 @@
 
           <div class="charts-grid">
             <div class="chart-card">
-              <h3 class="chart-title">구별 반려견 등록 수 Top 10</h3>
+              <h3 class="chart-title">구별 반려견 등록 수</h3>
               <p class="chart-desc" id="chart-dogs-desc">서울시 반려동물 등록 현황 기반</p>
               <div class="chart-box"><canvas id="chart-dogs"></canvas></div>
             </div>
             <div class="chart-card">
-              <h3 class="chart-title">강아지 1마리당 공원 면적 Top 10</h3>
+              <h3 class="chart-title">강아지 1마리당 공원 면적</h3>
               <p class="chart-desc">구별 공원 면적 ÷ 반려견 등록 수 (단위: ㎡)</p>
               <div class="chart-box"><canvas id="chart-park"></canvas></div>
             </div>
+          </div>
+
+          <!-- 우리동네 반려생활 리포트 -->
+          <div class="insights-section">
+            <h3 class="insights-title">우리동네 반려생활 리포트</h3>
+            <p class="insights-sub">서울 25개 구 공공데이터 분석</p>
+            <div id="insights-list" class="insights-list"></div>
           </div>
 
           <p class="dashboard-note" id="dashboard-note">

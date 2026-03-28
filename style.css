@@ -31,6 +31,10 @@
   --cafe-bg:      rgba(142,106,75,0.10);
   --pf-cafe:      #5856D6;
   --pf-cafe-bg:   rgba(88,86,214,0.10);
+  --vet:          #FF2D55;
+  --vet-bg:       rgba(255,45,85,0.10);
+  --playground:   #30B0C7;
+  --playground-bg:rgba(48,176,199,0.10);
 
   --radius-xs:    6px;
   --radius-sm:    10px;
@@ -328,6 +332,8 @@ body {
 .place-item-icon.restaurant { background: var(--restaurant-bg); }
 .place-item-icon.cafe       { background: var(--cafe-bg); }
 .place-item-icon.pf-cafe    { background: var(--pf-cafe-bg); }
+.place-item-icon.vet        { background: var(--vet-bg); }
+.place-item-icon.playground { background: var(--playground-bg); }
 
 .place-item-icon img { width: 17px; height: 17px; }
 
@@ -335,6 +341,8 @@ body {
 .place-item-icon.restaurant img { filter: invert(28%) sepia(90%) saturate(2000%) hue-rotate(344deg); }
 .place-item-icon.cafe       img { filter: invert(40%) sepia(20%) saturate(800%) hue-rotate(10deg) brightness(70%); }
 .place-item-icon.pf-cafe    img { filter: invert(29%) sepia(80%) saturate(1500%) hue-rotate(228deg) brightness(90%); }
+.place-item-icon.vet        img { filter: invert(20%) sepia(90%) saturate(2500%) hue-rotate(335deg); }
+.place-item-icon.playground img { filter: invert(48%) sepia(60%) saturate(600%) hue-rotate(164deg); }
 
 .place-item-info { flex: 1; min-width: 0; }
 
@@ -518,6 +526,8 @@ body {
 .custom-marker.restaurant { background: var(--restaurant); }
 .custom-marker.cafe       { background: var(--cafe); }
 .custom-marker.pf-cafe    { background: var(--pf-cafe); }
+.custom-marker.vet        { background: var(--vet); }
+.custom-marker.playground { background: var(--playground); }
 
 .custom-marker .marker-icon { width: 14px; height: 14px; filter: brightness(0) invert(1); }
 
@@ -569,6 +579,8 @@ body {
 .info-tag.restaurant { background: var(--restaurant); }
 .info-tag.cafe       { background: var(--cafe); }
 .info-tag.pf-cafe    { background: var(--pf-cafe); }
+.info-tag.vet        { background: var(--vet); }
+.info-tag.playground { background: var(--playground); }
 
 .info-name {
   font-size: 0.92rem;
@@ -865,7 +877,7 @@ body {
 
 .chart-title { font-size: 0.88rem; font-weight: 700; letter-spacing: -0.3px; color: var(--text-1); margin-bottom: 3px; }
 .chart-desc  { font-size: 0.70rem; color: var(--text-4); margin-bottom: 12px; }
-.chart-box   { height: 240px; position: relative; }
+.chart-box   { height: 700px; position: relative; }
 
 /* 코로플레스 지도 — 카드 없이 배경 위에 직접 노출 */
 .choropleth-section {
@@ -904,6 +916,352 @@ body {
   color: var(--text-3);
   margin-top: 3px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   산책 가능도 카드
+═══════════════════════════════════════════════════════════════ */
+.walk-index-card {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.walk-index-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.walk-index-badge-wrap { flex-shrink: 0; }
+
+.walk-index-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  background: var(--surface-3);
+  color: var(--text-3);
+}
+.walk-index-badge.good     { background: #E9F9EE; color: #1A7F37; }
+.walk-index-badge.normal   { background: #FFF8E1; color: #B06000; }
+.walk-index-badge.bad      { background: #FFF0E8; color: #C0400A; }
+.walk-index-badge.very-bad { background: #FFECEC; color: #C0000A; }
+
+.walk-index-info { flex: 1; }
+.walk-index-title { font-size: 0.92rem; font-weight: 800; letter-spacing: -0.3px; color: var(--text-1); }
+.walk-index-sub   { font-size: 0.78rem; color: var(--text-3); margin-top: 3px; line-height: 1.45; }
+
+.walk-pm10-badge {
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: var(--text-3);
+  background: var(--surface-2);
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.walk-modal-open-btn {
+  width: 100%;
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 11px 16px;
+  font-size: 0.83rem;
+  font-weight: 700;
+  text-align: center;
+  transition: background 0.15s;
+}
+.walk-modal-open-btn:hover { background: rgba(255,140,66,0.18); }
+
+/* 산책 모달 */
+.walk-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.46);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.walk-modal-backdrop.hidden { display: none; }
+
+.walk-modal {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: 28px 24px 24px;
+  width: 100%;
+  max-width: 440px;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
+
+.walk-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: var(--surface-2);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.walk-modal-close img { width: 12px; height: 12px; opacity: 0.5; }
+
+.walk-modal-title { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.4px; color: var(--text-1); margin-bottom: 6px; }
+.walk-modal-desc  { font-size: 0.80rem; color: var(--text-3); line-height: 1.6; margin-bottom: 22px; }
+
+.walk-modal-field { margin-bottom: 16px; }
+.walk-modal-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-2);
+  margin-bottom: 7px;
+}
+
+.walk-weight-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.walk-weight-input {
+  width: 110px;
+  padding: 9px 12px;
+  border: 1.5px solid var(--surface-3);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-1);
+  background: var(--surface);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.walk-weight-input:focus { border-color: var(--brand); }
+.walk-weight-unit { font-size: 0.82rem; font-weight: 600; color: var(--text-3); }
+
+.walk-breed-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--surface-3);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-1);
+  background: var(--surface);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.walk-breed-input:focus { border-color: var(--brand); }
+
+.walk-neuter-row {
+  display: flex;
+  gap: 20px;
+}
+.walk-neuter-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.walk-modal-submit {
+  width: 100%;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 13px;
+  font-family: inherit;
+  font-size: 0.90rem;
+  font-weight: 800;
+  margin-top: 6px;
+  transition: opacity 0.15s;
+}
+.walk-modal-submit:hover { opacity: 0.88; }
+
+.walk-modal-result {
+  margin-top: 18px;
+  background: var(--surface-2);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.walk-modal-result.hidden { display: none; }
+
+.wmr-head   { font-size: 0.78rem; font-weight: 700; color: var(--text-3); margin-bottom: 8px; }
+.wmr-time   { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; color: var(--brand); line-height: 1; margin-bottom: 4px; }
+.wmr-unit   { font-size: 0.78rem; font-weight: 600; color: var(--text-3); }
+.wmr-tips   { margin-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+.wmr-tip    { font-size: 0.78rem; color: var(--text-2); line-height: 1.5; padding-left: 12px; position: relative; }
+.wmr-tip::before { content: '·'; position: absolute; left: 2px; color: var(--brand); font-weight: 900; }
+.wmr-air-note { font-size: 0.73rem; color: var(--text-3); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--separator); }
+
+/* 공원 상세 stat (팝업 내) */
+.info-park-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--park-bg);
+  border-radius: var(--radius-xs);
+  padding: 5px 8px;
+  margin-top: 6px;
+}
+.info-park-stat-label { font-size: 0.68rem; color: var(--park); font-weight: 600; }
+.info-park-stat-val   { font-size: 0.72rem; color: var(--text-2); font-weight: 700; }
+
+/* 동물병원 응급 배지 */
+.info-vet-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--vet-bg);
+  color: var(--vet);
+  font-size: 0.67rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-top: 6px;
+}
+
+/* 놀이터 예약 링크 */
+.info-reservation-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 7px 12px;
+  background: var(--playground-bg);
+  color: var(--playground);
+  border-radius: var(--radius-xs);
+  font-size: 0.73rem;
+  font-weight: 700;
+  transition: opacity 0.15s;
+}
+.info-reservation-btn:hover { opacity: 0.8; }
+
+/* ═══════════════════════════════════════════════════════════════
+   입양 연계 섹션
+═══════════════════════════════════════════════════════════════ */
+.adoption-section {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: 22px 20px 18px;
+  margin-top: 28px;
+  box-shadow: var(--shadow-sm);
+}
+
+.adoption-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.adoption-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: var(--vet-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.adoption-icon-img { width: 22px; height: 22px; filter: invert(20%) sepia(90%) saturate(2500%) hue-rotate(335deg); }
+
+.adoption-title { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.3px; color: var(--text-1); }
+.adoption-sub   { font-size: 0.75rem; color: var(--text-3); margin-top: 3px; }
+
+.adoption-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.adoption-loading { font-size: 0.80rem; color: var(--text-4); padding: 8px 0; }
+
+.adoption-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  transition: background 0.15s;
+}
+.adoption-card:hover { background: var(--surface-3); }
+
+.adoption-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--vet-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.adoption-card-icon img { width: 18px; height: 18px; filter: invert(20%) sepia(90%) saturate(2500%) hue-rotate(335deg); }
+
+.adoption-card-info { flex: 1; min-width: 0; }
+.adoption-card-name { font-size: 0.84rem; font-weight: 700; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.adoption-card-sub  { font-size: 0.72rem; color: var(--text-3); margin-top: 2px; }
+
+.adoption-more-btn {
+  display: block;
+  text-align: center;
+  padding: 10px;
+  background: var(--vet-bg);
+  color: var(--vet);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: opacity 0.15s;
+}
+.adoption-more-btn:hover { opacity: 0.8; }
+
+/* ═══════════════════════════════════════════════════════════════
+   우리동네 반려생활 리포트 (대시보드 인사이트)
+═══════════════════════════════════════════════════════════════ */
+.insights-section {
+  margin-bottom: 16px;
+}
+.insights-title { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.3px; color: var(--text-1); margin-bottom: 3px; }
+.insights-sub   { font-size: 0.72rem; color: var(--text-3); margin-bottom: 12px; }
+
+.insights-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.insight-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-xs);
+  border-left: 3px solid var(--brand);
+}
+.insight-card.green  { border-left-color: var(--park); }
+.insight-card.blue   { border-left-color: #007AFF; }
+.insight-card.purple { border-left-color: var(--pf-cafe); }
+.insight-card.red    { border-left-color: var(--vet); }
+
+.insight-card-label { font-size: 0.68rem; font-weight: 700; color: var(--text-4); letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 4px; }
+.insight-card-val   { font-size: 0.88rem; font-weight: 800; color: var(--text-1); letter-spacing: -0.2px; line-height: 1.4; }
+.insight-card-sub   { font-size: 0.71rem; color: var(--text-3); margin-top: 4px; line-height: 1.45; }
 
 .dashboard-note { font-size: 0.70rem; color: var(--text-4); text-align: center; margin-top: 4px; }
 
@@ -948,16 +1306,54 @@ body {
   }
 
   .app-body     { flex-direction: column; }
-  .sidebar      { width: 100%; height: 45dvh; border-right: none; border-top: 0.5px solid var(--separator); order: 2; }
   .main-content { flex: 1; order: 1; min-height: 55dvh; }
+
+  /* 바텀시트 */
+  .sidebar {
+    width: 100%;
+    height: 45dvh;
+    border-right: none;
+    border-top: none;
+    order: 2;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 24px rgba(58,33,25,0.10);
+    transition: height 0.32s cubic-bezier(0.34, 1.26, 0.64, 1);
+    position: relative;
+    z-index: 10;
+  }
+  .sidebar.sheet-expanded { height: 92dvh; }
+
+  /* 핸들 */
+  .sidebar-handle {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0 4px;
+    cursor: grab;
+    flex-shrink: 0;
+    touch-action: none;
+  }
+  .sidebar-handle:active { cursor: grabbing; }
+  .sidebar-handle-bar {
+    width: 36px;
+    height: 4px;
+    background: var(--text-4);
+    border-radius: 2px;
+    transition: background 0.15s, width 0.15s;
+  }
+  .sidebar-handle:hover .sidebar-handle-bar,
+  .sidebar-handle:active .sidebar-handle-bar {
+    background: var(--text-3);
+    width: 44px;
+  }
 
   .header       { padding: 0 16px; gap: 20px; }
   .logo-img     { height: 32px; }
   .tab-btn      { font-size: 0.85rem; }
   .tab-nav      { gap: 20px; }
 
-  .stat-cards   { grid-template-columns: 1fr 1fr; }
-  .charts-grid  { grid-template-columns: 1fr; }
+  .stat-cards     { grid-template-columns: 1fr 1fr; }
+  .charts-grid    { grid-template-columns: 1fr; }
+  .insights-list  { grid-template-columns: 1fr; }
 
   .map-watermark-img { height: 120px; }
 }

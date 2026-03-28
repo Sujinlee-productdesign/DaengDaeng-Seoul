@@ -462,6 +462,7 @@ let activeListItem = null; // 현재 선택된 사이드바 아이템
 let userLocation    = null;   // { lat, lng } — 사용자 현재 위치
 let currentSort     = 'dist'; // 'dist' | 'alpha'
 let applyFiltersRef = null;   // setupFilters 내부 applyFilters 외부 노출용
+let currentPm10     = null;   // 서울 평균 PM10 (산책 가능도 계산용)
 
 
 // ----------------------------------------------------------------
@@ -475,6 +476,8 @@ function getCategoryColor(category) {
     restaurant: '#EF5350',
     cafe:       '#8D6E63',
     'pf-cafe':  '#5856D6',
+    vet:        '#FF2D55',
+    playground: '#30B0C7',
   };
   return colors[category] || '#888';
 }
@@ -486,6 +489,8 @@ function getCategoryLabel(category) {
     restaurant: '음식점',
     cafe:       '애견카페/운동장',
     'pf-cafe':  '애견동반 카페',
+    vet:        '동물병원',
+    playground: '반려견 놀이터',
   };
   return labels[category] || '장소';
 }
@@ -519,10 +524,10 @@ function initMap() {
 // PM10 수치 → 등급 정보 반환
 // 기준: 환경부 대기질 통합지수 (CAI) PM10 구간
 function getAirGrade(pm10) {
-  if (pm10 <= 30)  return { cls: 'good',     msg: `산책하기 완벽해요` };
-  if (pm10 <= 80)  return { cls: 'normal',   msg: `산책하기 좋아요` };
-  if (pm10 <= 150) return { cls: 'bad',      msg: `짧게만 산책해요` };
-  return               { cls: 'very-bad', msg: `오늘은 집에서 쉬어요` };
+  if (pm10 <= 30)  return { cls: 'good',     label: '좋음',     msg: '산책하기 완벽해요' };
+  if (pm10 <= 80)  return { cls: 'normal',   label: '보통',     msg: '산책하기 좋아요' };
+  if (pm10 <= 150) return { cls: 'bad',      label: '나쁨',     msg: '짧게만 산책해요' };
+  return               { cls: 'very-bad', label: '매우 나쁨', msg: '오늘은 집에서 쉬어요' };
 }
 
 // 배너 DOM 업데이트
@@ -535,6 +540,159 @@ function updateAirBanner(pm10) {
   // 이전 클래스 제거 후 새 등급 클래스 적용
   banner.className = `air-banner ${info.cls}`;
   text.innerHTML = `미세먼지 ${pm10}㎍/m³<br>${info.msg}`;
+}
+
+// 산책 가능도 카드 업데이트 (recommend 탭)
+function updateWalkIndexCard(pm10) {
+  currentPm10 = pm10;
+  const info = getAirGrade(pm10);
+
+  const badge = document.getElementById('walk-index-badge');
+  const sub   = document.getElementById('walk-index-sub');
+  const pm10Badge = document.getElementById('walk-pm10-badge');
+
+  if (badge) {
+    badge.className = `walk-index-badge ${info.cls}`;
+    badge.textContent = info.label;
+  }
+  if (sub)  sub.textContent = info.msg;
+  if (pm10Badge) pm10Badge.textContent = `PM10 ${pm10}㎍/m³`;
+}
+
+// ----------------------------------------------------------------
+// 산책시간 모달 로직
+// ----------------------------------------------------------------
+
+// 견종 → 에너지 레벨 매핑 (키워드 기반)
+const HIGH_ENERGY_KEYWORDS = [
+  '허스키','리트리버','보더','콜리','스피츠','달마시안','비글','포메라니안',
+  '잭 러셀','springer','husky','retriever','border','collie','beagle',
+  'dalmatian','pomeranian','setter','pointer','corgi','코기','셸티',
+];
+const LOW_ENERGY_KEYWORDS = [
+  '불독','바셋','페키니즈','시추','차우차우','마스티프','불마스티프',
+  'bulldog','basset','pekingese','shih','chow','mastiff','bloodhound',
+];
+
+function getBreedEnergyLevel(breed) {
+  const b = (breed || '').toLowerCase();
+  if (HIGH_ENERGY_KEYWORDS.some(k => b.includes(k.toLowerCase()))) return 'high';
+  if (LOW_ENERGY_KEYWORDS.some(k => b.includes(k.toLowerCase()))) return 'low';
+  return 'medium';
+}
+
+// 체중 → 견종 크기 분류
+function getSizeByWeight(weightKg) {
+  if (weightKg <= 7)  return 'small';
+  if (weightKg <= 25) return 'medium';
+  return 'large';
+}
+
+// 기본 권장 산책 시간 (분/일) — 크기·에너지·중성화 기반
+function calcBaseWalkTime(weightKg, breed, neutered) {
+  const size   = getSizeByWeight(weightKg);
+  const energy = getBreedEnergyLevel(breed);
+
+  // [size][energy] 기본 분
+  const base = {
+    small:  { low: 20, medium: 30, high: 45 },
+    medium: { low: 30, medium: 50, high: 70 },
+    large:  { low: 45, medium: 70, high: 100 },
+  };
+
+  let minutes = base[size][energy];
+
+  // 중성화 완료 → 에너지 약 10% 감소
+  if (neutered === 'yes') minutes = Math.round(minutes * 0.9);
+
+  return minutes;
+}
+
+// 대기질에 따른 산책 시간 조정 비율
+function getAirMultiplier(pm10) {
+  if (pm10 <= 30)  return 1.0;
+  if (pm10 <= 80)  return 0.75;
+  if (pm10 <= 150) return 0.4;
+  return 0.15;
+}
+
+// 산책 추천 팁 생성
+function getWalkTips(pm10, size, energy, neutered) {
+  const tips = [];
+  const grade = getAirGrade(pm10);
+
+  if (grade.cls === 'bad' || grade.cls === 'very-bad') {
+    tips.push('외출 시 강아지용 마스크 착용을 고려해보세요');
+    tips.push('오전 이른 시간 또는 저녁 늦게 산책하면 미세먼지가 낮아요');
+  }
+  if (grade.cls === 'very-bad') {
+    tips.push('오늘은 실내에서 놀아주는 것을 권장해요');
+  }
+  if (energy === 'high' && (grade.cls === 'good' || grade.cls === 'normal')) {
+    tips.push('활동량이 많은 견종이에요. 하루 2회로 나눠 산책하면 좋아요');
+  }
+  if (size === 'small') {
+    tips.push('소형견은 기온·바람에 민감해요. 추운 날은 짧게 자주 산책하세요');
+  }
+  if (size === 'large' && energy === 'high') {
+    tips.push('대형 활동견은 산책만으로 부족할 수 있어요. 공원에서 자유 운동을 추천해요');
+  }
+  if (neutered === 'no' && energy === 'high') {
+    tips.push('중성화 전 수컷은 영역 표시로 자주 멈출 수 있어요. 시간 여유를 두세요');
+  }
+  return tips.slice(0, 3);
+}
+
+function setupWalkModal() {
+  const openBtn   = document.getElementById('walk-modal-open-btn');
+  const backdrop  = document.getElementById('walk-modal-backdrop');
+  const closeBtn  = document.getElementById('walk-modal-close');
+  const submitBtn = document.getElementById('walk-modal-submit');
+
+  if (!openBtn || !backdrop) return;
+
+  openBtn.addEventListener('click', () => backdrop.classList.remove('hidden'));
+  closeBtn.addEventListener('click', () => backdrop.classList.add('hidden'));
+  backdrop.addEventListener('click', e => {
+    if (e.target === backdrop) backdrop.classList.add('hidden');
+  });
+
+  submitBtn.addEventListener('click', () => {
+    const weightVal  = parseFloat(document.getElementById('wm-weight').value);
+    const breedVal   = document.getElementById('wm-breed').value.trim();
+    const neuteredEl = document.querySelector('input[name="neuter"]:checked');
+    const neutered   = neuteredEl ? neuteredEl.value : 'no';
+    const resultEl   = document.getElementById('walk-modal-result');
+
+    if (!weightVal || weightVal <= 0 || weightVal > 100) {
+      document.getElementById('wm-weight').focus();
+      return;
+    }
+
+    const pm10    = currentPm10 !== null ? currentPm10 : DUMMY_AIR_PM10;
+    const base    = calcBaseWalkTime(weightVal, breedVal, neutered);
+    const multi   = getAirMultiplier(pm10);
+    const minutes = Math.max(5, Math.round(base * multi));
+    const size    = getSizeByWeight(weightVal);
+    const energy  = getBreedEnergyLevel(breedVal);
+    const grade   = getAirGrade(pm10);
+    const tips    = getWalkTips(pm10, size, energy, neutered);
+    const sizeLabel = { small: '소형견', medium: '중형견', large: '대형견' }[size];
+
+    const tipsHtml = tips.map(t => `<div class="wmr-tip">${t}</div>`).join('');
+    const airNote  = grade.cls === 'good'
+      ? '오늘 미세먼지 좋음 — 최적의 산책 날씨예요!'
+      : `오늘 미세먼지 ${grade.label} (PM10 ${pm10}㎍/m³) — 기본값에서 조정됐어요`;
+
+    resultEl.innerHTML = `
+      <div class="wmr-head">${sizeLabel} · ${breedVal || '견종 미입력'} · 중성화 ${neutered === 'yes' ? '완료' : '미완료'}</div>
+      <div class="wmr-time">${minutes}</div>
+      <div class="wmr-unit">분 / 일 권장</div>
+      <div class="wmr-tips">${tipsHtml}</div>
+      <div class="wmr-air-note">${airNote}</div>
+    `;
+    resultEl.classList.remove('hidden');
+  });
 }
 
 
@@ -572,12 +730,14 @@ async function fetchAirQuality() {
     }
 
     updateAirBanner(avgPm10);
+    updateWalkIndexCard(avgPm10);
     console.log(`✅ 대기질 로드 완료: 서울 평균 PM10 ${avgPm10}㎍`);
 
   } catch (err) {
     // API 실패 → 더미 값으로 배너 표시
     console.warn('⚠️ 대기질 API 실패, 더미 값 사용:', err.message);
     updateAirBanner(DUMMY_AIR_PM10);
+    updateWalkIndexCard(DUMMY_AIR_PM10);
   }
 }
 
@@ -708,6 +868,34 @@ async function fetchPetRestaurants() {
   }
 }
 
+// ④ 동물병원 레이어
+async function fetchVets() {
+  try {
+    const places = await fetchKakaoPlaces(['동물병원']);
+    console.log(`✅ 동물병원 검색: ${places.length}건`);
+    return places;
+  } catch (e) {
+    console.warn('동물병원 검색 실패:', e);
+    return [];
+  }
+}
+
+// ⑤ 반려견 놀이터
+async function fetchPlaygrounds() {
+  try {
+    const places = await fetchKakaoPlaces([
+      '반려견 놀이터',
+      '강아지 놀이터',
+      '펫파크',
+    ]);
+    console.log(`✅ 반려견 놀이터 검색: ${places.length}건`);
+    return places;
+  } catch (e) {
+    console.warn('반려견 놀이터 검색 실패:', e);
+    return [];
+  }
+}
+
 // ③ 애견동반 일반 카페 — 반려견 입장 허용 카페 (애견카페 제외)
 async function fetchPetFriendlyCafes() {
   try {
@@ -791,9 +979,44 @@ function buildMarkerHTML(category, index) {
 function buildPopupHTML(place, category, index) {
   const label = getCategoryLabel(category);
 
-  // ⚠️ onclick="closePopup()" → 전역 함수 closePopup() 호출
-  const kakaoMapUrl  = place.url || `https://map.kakao.com/link/search/${encodeURIComponent(place.name)}`;
+  // place.url = kakao place_url → 상세 페이지 (https://place.map.kakao.com/{id})
+  const kakaoMapUrl  = place.url || `https://map.kakao.com/link/map/${encodeURIComponent(place.name)},${place.lat},${place.lng}`;
   const kakaoNaviUrl = `https://map.kakao.com/link/to/${encodeURIComponent(place.name)},${place.lat},${place.lng}`;
+
+  // 카테고리별 추가 HTML
+  let extraHTML = '';
+
+  // 공원: 구별 공원면적 / 등록견 수 통계 표시
+  if (category === 'park') {
+    const gu = extractGu(place.address);
+    const districtStats = window.DISTRICT_DATA
+      ? window.DISTRICT_DATA.find(d => d.gu === gu)
+      : null;
+    if (districtStats) {
+      const ratio = Math.round(districtStats.parkArea / districtStats.dogs);
+      extraHTML += `
+        <div class="info-park-stat">
+          <span class="info-park-stat-label">${gu} 강아지 1마리당</span>
+          <span class="info-park-stat-val">${ratio.toLocaleString()}㎡ 공원</span>
+        </div>`;
+    }
+  }
+
+  // 동물병원: 24시간 배지
+  if (category === 'vet') {
+    const is24h = /24|야간|응급/.test(place.name);
+    extraHTML += `<div class="info-vet-badge">${is24h ? '🚨 24시간 · 응급' : '🏥 동물병원'}</div>`;
+  }
+
+  // 반려견 놀이터: 공공예약 링크
+  if (category === 'playground') {
+    extraHTML += `
+      <a class="info-reservation-btn"
+         href="https://yeyak.seoul.go.kr/web/reservation/selectReservationList.do"
+         target="_blank" rel="noopener">
+        📅 공공서비스예약에서 예약 확인
+      </a>`;
+  }
 
   return `
     <div class="info-popup">
@@ -801,9 +1024,10 @@ function buildPopupHTML(place, category, index) {
       <div class="info-tag ${category}">${label}</div>
       <div class="info-name">${place.name}</div>
       <div class="info-addr"><img src="icons/location-pin.svg" alt="">${place.address || '주소 정보 없음'}</div>
+      ${extraHTML}
       <div class="info-btn-row">
         <a class="info-btn info-btn-map" href="${kakaoMapUrl}" target="_blank" rel="noopener">
-          <img src="icons/location.svg" alt="">카카오맵
+          <img src="icons/location.svg" alt="">정보 보기
         </a>
         <a class="info-btn info-btn-navi" href="${kakaoNaviUrl}" target="_blank" rel="noopener">
           <img src="icons/location-pin.svg" alt="">길찾기
@@ -985,6 +1209,8 @@ function getCategoryIconSrc(category) {
     restaurant: 'icons/location-pin.svg',
     cafe:       'icons/location-pin.svg',
     'pf-cafe':  'icons/location-pin.svg',
+    vet:        'icons/heart.svg',
+    playground: 'icons/location.svg',
   };
   return icons[category] || 'icons/location-pin.svg';
 }
@@ -1161,19 +1387,23 @@ async function main() {
   document.getElementById('loading-overlay').classList.remove('hidden');
 
   try {
-    // ─── API 동시 호출 (5개) ───────────────────────────────────
+    // ─── API 동시 호출 (7개) ───────────────────────────────────
     const [
       parksResult,
       restaurantsResult,
       petCafesResult,
       pfCafesResult,
       airResult,
+      vetsResult,
+      playgroundsResult,
     ] = await Promise.allSettled([
       fetchParks(),              // ① 공원 (서울 공공데이터)
       fetchPetRestaurants(),     // ② 애견동반 음식점 (카카오 Places)
       fetchPetCafes(),           // ③ 애견카페/운동장 (카카오 Places)
       fetchPetFriendlyCafes(),   // ④ 애견동반 일반 카페 (카카오 Places)
       fetchAirQuality(),         // ⑤ 대기질
+      fetchVets(),               // ⑥ 동물병원 (카카오 Places)
+      fetchPlaygrounds(),        // ⑦ 반려견 놀이터 (카카오 Places)
     ]);
 
     // 공원 마커 추가
@@ -1191,6 +1421,14 @@ async function main() {
     // 애견동반 일반 카페 마커 추가
     const pfCafes = pfCafesResult.status === 'fulfilled' ? pfCafesResult.value : [];
     addMarkers(pfCafes, 'pf-cafe');
+
+    // 동물병원 마커 추가
+    const vets = vetsResult.status === 'fulfilled' ? vetsResult.value : [];
+    addMarkers(vets, 'vet');
+
+    // 반려견 놀이터 마커 추가
+    const playgrounds = playgroundsResult.status === 'fulfilled' ? playgroundsResult.value : [];
+    addMarkers(playgrounds, 'playground');
 
     // 필터 + 정렬 이벤트 연결 (applyFilters 내부에서 초기 렌더까지 처리)
     setupFilters();
@@ -1216,8 +1454,62 @@ async function main() {
 //     카카오맵 초기화 → 데이터 로드 순서로 실행
 // ----------------------------------------------------------------
 
+// ----------------------------------------------------------------
+// 20. 모바일 바텀시트
+//     핸들 탭 → 펼치기/접기 / 드래그로 임계값 초과 시 전환
+// ----------------------------------------------------------------
+
+function setupBottomSheet() {
+  const sidebar = document.getElementById('sidebar');
+  const handle  = document.getElementById('sidebar-handle');
+  if (!handle || !sidebar) return;
+
+  // 데스크탑에서는 적용 안 함 (리사이즈 대응 포함)
+  function isMobile() { return window.innerWidth <= 768; }
+
+  let startY = 0;
+  let startExpanded = false;
+  let dragging = false;
+
+  handle.addEventListener('touchstart', (e) => {
+    if (!isMobile()) return;
+    startY = e.touches[0].clientY;
+    startExpanded = sidebar.classList.contains('sheet-expanded');
+    dragging = false;
+  }, { passive: true });
+
+  handle.addEventListener('touchmove', (e) => {
+    if (!isMobile()) return;
+    const dy = e.touches[0].clientY - startY;
+    if (Math.abs(dy) > 5) dragging = true;
+  }, { passive: true });
+
+  handle.addEventListener('touchend', (e) => {
+    if (!isMobile()) return;
+    const dy = e.changedTouches[0].clientY - startY;
+    const THRESHOLD = 40;
+
+    if (!dragging) {
+      // 탭: 토글
+      sidebar.classList.toggle('sheet-expanded');
+    } else if (dy < -THRESHOLD) {
+      // 위로 드래그 → 펼치기
+      sidebar.classList.add('sheet-expanded');
+    } else if (dy > THRESHOLD) {
+      // 아래로 드래그 → 접기
+      sidebar.classList.remove('sheet-expanded');
+    }
+  }, { passive: true });
+}
+
 // 카카오맵 먼저 초기화
 initMap();
 
 // 데이터 로드 및 마커 추가 (비동기)
 main();
+
+// 모바일 바텀시트 인터랙션
+setupBottomSheet();
+
+// 산책 시간 추천 모달
+setupWalkModal();

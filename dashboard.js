@@ -37,6 +37,9 @@ const DISTRICT_DATA = [
   { gu: '중랑구',   dogs: 13234, parkArea: 2890000 },
 ];
 
+// app.js의 buildPopupHTML에서 공원 팝업 통계 조회용으로 노출
+window.DISTRICT_DATA = DISTRICT_DATA;
+
 
 // ----------------------------------------------------------------
 // 2. 탭 전환 로직
@@ -65,11 +68,17 @@ function setupTabs() {
         initDashboard();
         dashboardInitialized = true;
       }
+
+      if (target === 'recommend' && !recommendInitialized) {
+        loadAdoptionSection();
+        recommendInitialized = true;
+      }
     });
   });
 }
 
-let dashboardInitialized = false;
+let dashboardInitialized  = false;
+let recommendInitialized  = false;
 
 
 // ----------------------------------------------------------------
@@ -192,12 +201,11 @@ function makeDatalabelsOptions(suffix) {
 // ----------------------------------------------------------------
 
 function drawDogChart() {
-  const top10 = [...DISTRICT_DATA]
-    .sort((a, b) => b.dogs - a.dogs)
-    .slice(0, 10);
+  const sorted = [...DISTRICT_DATA]
+    .sort((a, b) => b.dogs - a.dogs);
 
-  const labels = top10.map(d => d.gu);
-  const values = top10.map(d => d.dogs);
+  const labels = sorted.map(d => d.gu);
+  const values = sorted.map(d => d.dogs);
 
   const ctx = document.getElementById('chart-dogs').getContext('2d');
   chartDogs = new Chart(ctx, {
@@ -208,7 +216,7 @@ function drawDogChart() {
       datasets: [{
         label: '반려견 등록 수 (마리)',
         data: values,
-        backgroundColor: getPalette(10),
+        backgroundColor: getPalette(labels.length),
         borderRadius: 6,
         borderSkipped: false,
       }],
@@ -262,13 +270,12 @@ function drawDogChart() {
 // ----------------------------------------------------------------
 
 function drawParkChart() {
-  const top10 = [...DISTRICT_DATA]
+  const sorted = [...DISTRICT_DATA]
     .map(d => ({ gu: d.gu, ratio: Math.round(d.parkArea / d.dogs) }))
-    .sort((a, b) => b.ratio - a.ratio)
-    .slice(0, 10);
+    .sort((a, b) => b.ratio - a.ratio);
 
-  const labels = top10.map(d => d.gu);
-  const values = top10.map(d => d.ratio);
+  const labels = sorted.map(d => d.gu);
+  const values = sorted.map(d => d.ratio);
 
   const ctx = document.getElementById('chart-park').getContext('2d');
   chartPark = new Chart(ctx, {
@@ -279,7 +286,7 @@ function drawParkChart() {
       datasets: [{
         label: '1마리당 공원 면적 (㎡)',
         data: values,
-        backgroundColor: getPalette(10).reverse(),
+        backgroundColor: getPalette(labels.length).reverse(),
         borderRadius: 6,
         borderSkipped: false,
       }],
@@ -664,7 +671,130 @@ async function fetchDogRegistrationData() {
 
 
 // ----------------------------------------------------------------
-// 13. 대시보드 초기화
+// 13. 우리동네 반려생활 리포트 (인사이트 카드)
+// ----------------------------------------------------------------
+
+function drawInsights() {
+  const list = document.getElementById('insights-list');
+  if (!list) return;
+
+  const data   = DISTRICT_DATA;
+  const total  = data.reduce((s, d) => s + d.dogs, 0);
+  const avgDogs = Math.round(total / data.length);
+
+  // 등록견 수 기준 상위/하위
+  const sorted      = [...data].sort((a, b) => b.dogs - a.dogs);
+  const top1        = sorted[0];
+  const bottom1     = sorted[sorted.length - 1];
+
+  // 공원 여유도 기준
+  const parkSorted  = [...data].map(d => ({ ...d, ratio: Math.round(d.parkArea / d.dogs) })).sort((a, b) => b.ratio - a.ratio);
+  const bestPark    = parkSorted[0];
+  const worstPark   = parkSorted[parkSorted.length - 1];
+
+  // 공원 면적 vs 등록견 수 비율 서울 평균
+  const avgRatio    = Math.round(data.reduce((s, d) => s + d.parkArea / d.dogs, 0) / data.length);
+
+  // 서울 평균 대비 2배 이상인 구
+  const richPark    = parkSorted.filter(d => d.ratio >= avgRatio * 2);
+
+  const insights = [
+    {
+      cls:   '',
+      label: '등록견 최다',
+      val:   `${top1.gu}`,
+      sub:   `${top1.dogs.toLocaleString()}마리 · 서울 평균 ${avgDogs.toLocaleString()}마리의 ${(top1.dogs / avgDogs).toFixed(1)}배`,
+    },
+    {
+      cls:   'green',
+      label: '강아지에게 넓은 공원',
+      val:   `${bestPark.gu}`,
+      sub:   `1마리당 ${bestPark.ratio.toLocaleString()}㎡ — 서울 평균 ${avgRatio}㎡의 ${(bestPark.ratio / avgRatio).toFixed(1)}배`,
+    },
+    {
+      cls:   'blue',
+      label: '반려친화 체감도',
+      val:   richPark.length > 0 ? `서울 ${richPark.length}개 구` : `서울 평균 ${avgRatio}㎡`,
+      sub:   richPark.length > 0
+        ? `공원 여유도가 평균 2배 이상인 구: ${richPark.slice(0,3).map(d => d.gu).join(' · ')}`
+        : '공원 여유도 서울 평균 기준',
+    },
+    {
+      cls:   'purple',
+      label: '공원 여유도 최하',
+      val:   `${worstPark.gu}`,
+      sub:   `1마리당 ${worstPark.ratio.toLocaleString()}㎡ — 산책로 혼잡도가 높을 수 있어요`,
+    },
+  ];
+
+  list.innerHTML = insights.map(i => `
+    <div class="insight-card ${i.cls}">
+      <div class="insight-card-label">${i.label}</div>
+      <div class="insight-card-val">${i.val}</div>
+      <div class="insight-card-sub">${i.sub}</div>
+    </div>
+  `).join('');
+}
+
+
+// ----------------------------------------------------------------
+// 14. 입양 연계 섹션 — 서울동물복지지원센터
+// ----------------------------------------------------------------
+
+async function loadAdoptionSection() {
+  const listEl = document.getElementById('adoption-list');
+  if (!listEl) return;
+
+  // 더미 입양 대기 동물 데이터 (API 응답 실패 시 사용)
+  const DUMMY_ANIMALS = [
+    { name: '콩이', info: '믹스견 · 수컷 · 2살 추정', center: '서울동물복지지원센터 마포' },
+    { name: '하루', info: '말티즈 믹스 · 암컷 · 1살 추정', center: '서울동물복지지원센터 동대문' },
+    { name: '뭉치', info: '포메라니안 믹스 · 중성화 완료 · 4살', center: '서울동물복지지원센터 강동' },
+  ];
+
+  try {
+    // 서울 유기동물 입양 대기 API 시도
+    const url = `${SEOUL_API_BASE}/${SEOUL_API_KEY}/json/TbAdpWaitAnimalView/1/5/`;
+    const res  = await fetch(url);
+    const json = await res.json();
+
+    const rows = json?.TbAdpWaitAnimalView?.row ?? null;
+
+    if (rows && rows.length > 0) {
+      listEl.innerHTML = rows.slice(0, 4).map(r => `
+        <div class="adoption-card">
+          <div class="adoption-card-icon">
+            <img src="icons/heart.svg" alt="">
+          </div>
+          <div class="adoption-card-info">
+            <div class="adoption-card-name">${r.NM || '이름 미확인'}</div>
+            <div class="adoption-card-sub">${r.BREED_NM || '견종 미확인'} · ${r.SEX_NM || ''} · ${r.CENTER_NM || ''}</div>
+          </div>
+        </div>
+      `).join('');
+      return;
+    }
+    throw new Error('데이터 없음');
+
+  } catch (e) {
+    // fallback: 더미 카드 + 안내 메시지
+    listEl.innerHTML = DUMMY_ANIMALS.map(a => `
+      <div class="adoption-card">
+        <div class="adoption-card-icon">
+          <img src="icons/heart.svg" alt="">
+        </div>
+        <div class="adoption-card-info">
+          <div class="adoption-card-name">${a.name}</div>
+          <div class="adoption-card-sub">${a.info} · ${a.center}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+
+// ----------------------------------------------------------------
+// 15. 대시보드 초기화
 // ----------------------------------------------------------------
 
 async function initDashboard() {
@@ -673,6 +803,8 @@ async function initDashboard() {
   drawDogChart();
   drawParkChart();
   drawChoroplethMap();
+  drawInsights();
+  loadAdoptionSection();
   console.log('✅ 대시보드 초기화 완료');
 }
 
