@@ -1106,8 +1106,42 @@ async function loadAdoptionSection() {
 // 15. 대시보드 초기화
 // ----------------------------------------------------------------
 
+// ----------------------------------------------------------------
+// 15-1. 서울 공원 현황 API — 구별 공원 면적 집계
+// ----------------------------------------------------------------
+
+async function fetchParkAreaData() {
+  try {
+    const url = `${SEOUL_API_BASE}/${SEOUL_API_KEY}/json/SeoulPark/1/1000/`;
+    const res  = await fetch(url);
+    const json = await res.json();
+    const rows = json?.SeoulPark?.row ?? [];
+    if (!rows.length) throw new Error('공원 데이터 없음');
+
+    const areaByGu = {};
+    rows.forEach(r => {
+      const addr = r.P_ADDR || r.P_ZONE || '';
+      const m    = addr.match(/([가-힣]+구)/);
+      if (!m) return;
+      const area = parseFloat(r.AREA || r.PKAREA || 0);
+      if (area > 0) areaByGu[m[1]] = (areaByGu[m[1]] || 0) + area;
+    });
+
+    let updated = 0;
+    DISTRICT_DATA.forEach(d => {
+      if (areaByGu[d.gu] > 0) { d.parkArea = areaByGu[d.gu]; updated++; }
+    });
+    if (updated > 0) console.log(`✅ 공원 면적 실데이터 ${updated}개 구 로드`);
+    else throw new Error('구 매칭 결과 없음');
+
+  } catch (err) {
+    console.warn('⚠️ 공원 면적 API 실패, 더미 데이터 사용:', err.message);
+  }
+}
+
+
 async function initDashboard() {
-  await fetchDogRegistrationData(); // API 또는 더미 데이터 로드
+  await Promise.all([fetchDogRegistrationData(), fetchParkAreaData()]); // API 병렬 로드
   calcAllScores();                  // 댕댕 점수 계산 (데이터 로드 후)
   updateStatCards();
   drawScoreChart();                 // 점수 순위 차트 (신규)

@@ -1974,7 +1974,7 @@ body {
    로그인 필요 모달
 ═══════════════════════════════════════════════════════════════ */
 .login-required-box { text-align: center; padding: 36px 24px 28px; }
-.lrm-icon  { font-size: 2rem; margin-bottom: 10px; }
+.lrm-icon  { display: flex; justify-content: center; margin-bottom: 10px; }
 .lrm-title { font-size: 1rem; font-weight: 800; color: var(--text-1); margin-bottom: 6px; }
 .lrm-desc  { font-size: 0.84rem; color: var(--text-3); margin-bottom: 20px; }
 .lrm-buttons { display: flex; flex-direction: column; gap: 8px; }
@@ -1993,6 +1993,58 @@ body {
 /* ═══════════════════════════════════════════════════════════════
    모바일 하단 GNB
 ═══════════════════════════════════════════════════════════════ */
+/* ─── 공통 아이콘 유틸 ──────────────────────────────────────── */
+/* SVG 아이콘: 기본 black → CSS filter로 색상 변환 */
+.btn-icon {
+  width: 14px; height: 14px;
+  vertical-align: middle;
+  filter: invert(45%); /* 중간 회색 */
+}
+.btn-icon-white {
+  width: 14px; height: 14px;
+  vertical-align: middle;
+  filter: invert(1); /* 흰색 (버튼 위) */
+}
+.icon-sm {
+  width: 15px; height: 15px;
+  vertical-align: middle;
+  filter: invert(45%);
+}
+.stat-icon-img {
+  width: 28px; height: 28px;
+  filter: invert(62%) sepia(79%) saturate(546%) hue-rotate(342deg) brightness(106%); /* brand orange */
+}
+.gnb-icon-img {
+  width: 22px; height: 22px;
+  display: block;
+  filter: invert(45%); /* inactive 회색 */
+}
+.aiw-avatar-img {
+  width: 32px; height: 32px;
+  filter: invert(62%) sepia(79%) saturate(546%) hue-rotate(342deg) brightness(106%);
+}
+.aiw-paw-img {
+  width: 26px; height: 26px;
+  filter: invert(62%) sepia(79%) saturate(546%) hue-rotate(342deg) brightness(106%);
+}
+.aiw-result-icon-img {
+  width: 20px; height: 20px;
+  filter: invert(62%) sepia(79%) saturate(546%) hue-rotate(342deg) brightness(106%);
+}
+.modal-close-img {
+  width: 16px; height: 16px;
+  filter: invert(45%);
+}
+.lrm-icon-img {
+  width: 40px; height: 40px;
+  filter: invert(45%);
+}
+
+/* GNB 활성 아이콘 orange 처리 */
+.mobile-gnb .tab-btn.active .gnb-icon-img {
+  filter: invert(62%) sepia(79%) saturate(546%) hue-rotate(342deg) brightness(106%);
+}
+
 .mobile-gnb {
   display: none; /* 데스크탑에서 숨김 */
 }
@@ -2033,8 +2085,10 @@ body {
   }
 
   .mobile-gnb .gnb-icon {
-    font-size: 1.25rem;
-    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
   }
 
   .mobile-gnb .gnb-label {
@@ -2073,7 +2127,7 @@ body {
   .mobile-gnb .gnb-mypage-btn {
     padding: 6px 2px 8px;
   }
-  .mobile-gnb .gnb-icon { font-size: 1.1rem; }
+  .mobile-gnb .gnb-icon { height: 22px; }
 }
 
 
@@ -2122,7 +2176,9 @@ body {
   transition: all 0.15s;
 }
 .comm2-filter:hover  { border-color: var(--brand); color: var(--brand); }
+.comm2-filter:hover .btn-icon { filter: invert(62%) sepia(79%) saturate(546%) hue-rotate(342deg) brightness(106%); }
 .comm2-filter.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.comm2-filter.active .btn-icon { filter: invert(1); }
 
 /* 히트맵 지도 */
 .comm2-map-box {
@@ -2243,7 +2299,9 @@ body {
   gap: 14px;
 }
 .aiw-avatar {
-  font-size: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 56px;
   height: 56px;
   background: var(--brand-light);
@@ -2349,7 +2407,7 @@ body {
   margin-bottom: 14px;
 }
 .aiw-paw-anim span {
-  font-size: 1.6rem;
+  display: inline-flex;
   animation: paw-bounce 1s ease-in-out infinite;
 }
 .aiw-paw-anim span:nth-child(2) { animation-delay: 0.2s; }
@@ -2379,7 +2437,7 @@ body {
   background: linear-gradient(90deg, var(--brand-light), transparent);
   border-bottom: 0.5px solid var(--separator);
 }
-.aiw-result-icon  { font-size: 1.2rem; }
+.aiw-result-icon  { display: inline-flex; align-items: center; }
 .aiw-result-label { font-size: 0.88rem; font-weight: 700; color: var(--brand-dark); }
 
 .aiw-result-content { padding: 16px 20px; }

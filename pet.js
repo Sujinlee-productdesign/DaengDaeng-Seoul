@@ -33,13 +33,11 @@ const DONG_PET_DATA = [
   { name: '신촌동',    gu: '서대문구', lat: 37.5597, lng: 126.9370, spending: 202, index: 58, types: ['cafe','hospital'] },
 ];
 
-// TOP 5 랭킹 (spending 기준 자동 정렬)
-const TOP5 = [...DONG_PET_DATA]
+// TOP 5 랭킹 (spending 기준 자동 정렬, loadRealCommData 이후 재계산)
+let TOP5 = [...DONG_PET_DATA]
   .sort((a, b) => b.spending - a.spending)
   .slice(0, 5);
 
-// 타입 이모지 맵
-const TYPE_EMOJI = { hospital: '🏥', shop: '🛍️', cafe: '☕' };
 const TYPE_LABEL = { hospital: '동물병원', shop: '펫샵', cafe: '반려견카페' };
 
 let comm2Map     = null;  // 카카오맵 인스턴스
@@ -56,6 +54,59 @@ function initCommercial() {
   buildComm2Ranking();
   buildComm2Pie();
   bindComm2Filters();
+
+  // 카카오 Places로 실제 업종 수 로드 후 UI 갱신
+  loadRealCommData().then(() => {
+    buildComm2Ranking();
+    renderComm2Overlays('all');
+    if (comm2PieChart) { comm2PieChart.destroy(); comm2PieChart = null; }
+    buildComm2Pie();
+  }).catch(() => {});
+}
+
+// ── 카카오 Places 기반 실 업종 수 로드 ──────────────────────────
+async function loadRealCommData() {
+  if (!window.kakao?.maps?.services) return;
+  const ps = new kakao.maps.services.Places();
+
+  const search = (kw, lat, lng) => new Promise(resolve => {
+    ps.keywordSearch(kw, (result, status) => {
+      resolve(status === kakao.maps.services.Status.OK ? result.length : 0);
+    }, { location: new kakao.maps.LatLng(lat, lng), radius: 1000 });
+  });
+
+  for (const dong of DONG_PET_DATA) {
+    // 연속 호출 부하 방지
+    await new Promise(r => setTimeout(r, 80));
+
+    const [hosp, cafe, shop] = await Promise.all([
+      search('동물병원', dong.lat, dong.lng),
+      search('애견카페', dong.lat, dong.lng),
+      search('펫샵',    dong.lat, dong.lng),
+    ]);
+
+    const raw = hosp * 10 + cafe * 8 + shop * 6;
+    if (raw > 0) {
+      dong.index = raw;
+      dong.types = [];
+      if (hosp > 0) dong.types.push('hospital');
+      if (cafe > 0) dong.types.push('cafe');
+      if (shop > 0) dong.types.push('shop');
+      if (!dong.types.length) dong.types = ['hospital'];
+    }
+  }
+
+  // index 0~100 정규화 후 spending 재계산
+  const maxIdx = Math.max(...DONG_PET_DATA.map(d => d.index), 1);
+  DONG_PET_DATA.forEach(d => {
+    d.index    = Math.round(d.index / maxIdx * 100);
+    d.spending = Math.round(150 + d.index * 2.6); // 150~410만원 범위
+  });
+
+  // TOP5 갱신
+  DONG_PET_DATA.sort((a, b) => b.spending - a.spending);
+  TOP5 = DONG_PET_DATA.slice(0, 5);
+  console.log('✅ 펫 상권 실데이터 로드 완료');
 }
 
 // ── 카카오맵 + 히트맵 오버레이 ──────────────────────────────────
@@ -127,15 +178,14 @@ function buildComm2Ranking() {
   const el = document.getElementById('comm2-ranking');
   if (!el) return;
 
-  const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+  const medals = ['1', '2', '3', '4', '5'];
   el.innerHTML = TOP5.map((d, i) => {
-    const typeEmojis = d.types.map(t => TYPE_EMOJI[t]).join(' ');
     const typeLabels = d.types.map(t => TYPE_LABEL[t]).join(' · ');
     return `
       <div class="comm2-rank-item" onclick="comm2FocusDong('${d.name}')">
         <div class="comm2-rank-medal">${medals[i]}</div>
         <div class="comm2-rank-info">
-          <div class="comm2-rank-name">${d.gu} ${d.name} ${typeEmojis}</div>
+          <div class="comm2-rank-name">${d.gu} ${d.name}</div>
           <div class="comm2-rank-sub">${typeLabels} · 상권지수 ${d.index}</div>
         </div>
         <div class="comm2-rank-score">${d.spending.toLocaleString()}만원</div>
@@ -166,7 +216,7 @@ function buildComm2Pie() {
   comm2PieChart = new Chart(canvas, {
     type: 'doughnut',
     data: {
-      labels: ['🏥 동물병원', '🛍️ 펫샵', '☕ 반려견카페'],
+      labels: ['동물병원', '펫샵', '반려견카페'],
       datasets: [{
         data: [totals.hospital, totals.shop, totals.cafe],
         backgroundColor: ['#FF2D55', '#5856D6', '#FF8C42'],

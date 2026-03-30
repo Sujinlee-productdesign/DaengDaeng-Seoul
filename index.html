@@ -50,8 +50,8 @@
       <button class="tab-btn active" data-tab="map">댕댕지도</button>
       <button class="tab-btn" data-tab="recommend">맞춤 추천 장소</button>
       <button class="tab-btn" data-tab="dashboard">우리동네 댕댕</button>
-      <button class="tab-btn" data-tab="commercial">🐾 펫 상권 분석</button>
-      <button class="tab-btn" data-tab="aichat">🤖 AI 산책 추천</button>
+      <button class="tab-btn" data-tab="commercial">펫 상권 분석</button>
+      <button class="tab-btn" data-tab="aichat">AI 산책 추천</button>
     </nav>
 
     <div class="header-auth">
@@ -279,7 +279,7 @@
 
           <div class="stat-cards">
             <div class="stat-card stat-card-highlight">
-              <div class="stat-icon">🏆</div>
+              <div class="stat-icon"><img src="icons/heart.svg" alt="" class="stat-icon-img"></div>
               <div class="stat-label">댕댕 살기 좋은 점수 1위</div>
               <div class="stat-value" id="stat-top-score">-</div>
             </div>
@@ -303,9 +303,9 @@
           <!-- 댕댕 점수 지도 + 범례 -->
           <div class="choropleth-section">
             <div class="score-legend">
-              <span class="legend-dot high"></span><span>🟢 70점 이상 — 댕댕 천국</span>
-              <span class="legend-dot mid"></span><span>🟡 40~70점 — 평균 수준</span>
-              <span class="legend-dot low"></span><span>🔴 40점 미만 — 개선 필요</span>
+              <span class="legend-dot high"></span><span>70점 이상 — 댕댕 천국</span>
+              <span class="legend-dot mid"></span><span>40~70점 — 평균 수준</span>
+              <span class="legend-dot low"></span><span>40점 미만 — 개선 필요</span>
             </div>
             <div id="district-map" class="district-map-box">
               <div class="choropleth-title-overlay">
@@ -321,7 +321,7 @@
           <!-- 점수 순위 차트 -->
           <div class="charts-grid">
             <div class="chart-card chart-card-full">
-              <h3 class="chart-title">🏆 댕댕 살기 좋은 점수 순위</h3>
+              <h3 class="chart-title">댕댕 살기 좋은 점수 순위</h3>
               <p class="chart-desc">공원 여유도 40점 + 펫 상권 지수 30점 + 반려동물 시설 30점 (100점 만점)</p>
               <div class="chart-box chart-box-tall"><canvas id="chart-score"></canvas></div>
             </div>
@@ -360,16 +360,16 @@
           <!-- 왼쪽: 히트맵 지도 -->
           <div class="comm2-map-col">
             <div class="comm2-map-header">
-              <h2 class="comm2-title">🐾 펫 상권 분석</h2>
+              <h2 class="comm2-title">펫 상권 분석</h2>
               <p class="comm2-desc">펫 관련 소비(동물병원·펫샵·반려견카페) 밀집 지역을 히트맵으로 표시해요</p>
             </div>
 
             <!-- 필터 버튼 -->
             <div class="comm2-filters">
-              <button class="comm2-filter active" data-filter="all">전체</button>
-              <button class="comm2-filter" data-filter="hospital">🏥 동물병원</button>
-              <button class="comm2-filter" data-filter="shop">🛍️ 펫샵</button>
-              <button class="comm2-filter" data-filter="cafe">☕ 반려견카페</button>
+              <button class="comm2-filter active" data-filter="all"><img src="icons/filter.svg" alt="" class="btn-icon"> 전체</button>
+              <button class="comm2-filter" data-filter="hospital"><img src="icons/heart.svg" alt="" class="btn-icon"> 동물병원</button>
+              <button class="comm2-filter" data-filter="shop"><img src="icons/location-pin.svg" alt="" class="btn-icon"> 펫샵</button>
+              <button class="comm2-filter" data-filter="cafe"><img src="icons/location.svg" alt="" class="btn-icon"> 반려견카페</button>
             </div>
 
             <!-- 히트맵 지도 영역 -->
@@ -377,22 +377,22 @@
 
             <!-- 인사이트 카드 -->
             <div class="comm2-insights">
-              <h3 class="comm2-insights-title">💡 AI 인사이트</h3>
+              <h3 class="comm2-insights-title"><img src="icons/search.svg" alt="" class="btn-icon"> AI 인사이트</h3>
               <div id="comm2-insights-list" class="comm2-insights-list">
                 <div class="comm2-insight-card">
-                  <span class="comm2-insight-icon">📊</span>
+                  <span class="comm2-insight-icon"><img src="icons/filter.svg" alt="" class="icon-sm"></span>
                   <span>마포구는 펫 관련 소비가 서울 평균보다 <strong>42% 높아요</strong></span>
                 </div>
                 <div class="comm2-insight-card">
-                  <span class="comm2-insight-icon">☕</span>
+                  <span class="comm2-insight-icon"><img src="icons/location.svg" alt="" class="icon-sm"></span>
                   <span>성동구 성수동에 반려견 카페가 <strong>집중</strong>되어 있어요</span>
                 </div>
                 <div class="comm2-insight-card">
-                  <span class="comm2-insight-icon">📈</span>
+                  <span class="comm2-insight-icon"><img src="icons/arrow-right.svg" alt="" class="icon-sm"></span>
                   <span>강남구 청담동은 펫샵 상권 지수가 서울 <strong>1위</strong>예요</span>
                 </div>
                 <div class="comm2-insight-card">
-                  <span class="comm2-insight-icon">🏥</span>
+                  <span class="comm2-insight-icon"><img src="icons/heart.svg" alt="" class="icon-sm"></span>
                   <span>노원구는 동물병원 수 대비 반려견 등록이 많아 <strong>수요 대비 공급 부족</strong>이에요</span>
                 </div>
               </div>
@@ -402,7 +402,7 @@
 
           <!-- 오른쪽: TOP 5 랭킹 -->
           <div class="comm2-rank-col">
-            <h3 class="comm2-rank-title">🏆 펫 프렌들리 동네 TOP 5</h3>
+            <h3 class="comm2-rank-title">펫 프렌들리 동네 TOP 5</h3>
             <p class="comm2-rank-desc">펫 소비 금액 + 상권 지수 기준</p>
             <div id="comm2-ranking" class="comm2-ranking">
               <!-- JS로 렌더 -->
@@ -426,7 +426,7 @@
 
           <!-- 헤더 -->
           <div class="aiw-header">
-            <div class="aiw-avatar">🐶</div>
+            <div class="aiw-avatar"><img src="icons/heart.svg" alt="" class="aiw-avatar-img"></div>
             <div>
               <h2 class="aiw-title">AI 산책 추천</h2>
               <p class="aiw-desc">강아지 정보를 선택하면 오늘의 맞춤 코스를 추천해드릴게요!</p>
@@ -437,16 +437,16 @@
           <div class="aiw-form" id="aiw-form">
 
             <div class="aiw-field">
-              <div class="aiw-field-label">🐾 강아지 크기</div>
+              <div class="aiw-field-label"><img src="icons/heart.svg" alt="" class="icon-sm"> 강아지 크기</div>
               <div class="aiw-btn-group" data-field="size">
-                <button class="aiw-opt-btn" data-val="소형견">🐩 소형견</button>
-                <button class="aiw-opt-btn" data-val="중형견">🐕 중형견</button>
-                <button class="aiw-opt-btn" data-val="대형견">🦮 대형견</button>
+                <button class="aiw-opt-btn" data-val="소형견">소형견</button>
+                <button class="aiw-opt-btn" data-val="중형견">중형견</button>
+                <button class="aiw-opt-btn" data-val="대형견">대형견</button>
               </div>
             </div>
 
             <div class="aiw-field">
-              <div class="aiw-field-label">📍 현재 위치</div>
+              <div class="aiw-field-label"><img src="icons/location-pin.svg" alt="" class="icon-sm"> 현재 위치</div>
               <select class="aiw-select" id="aiw-location">
                 <option value="">구를 선택하세요</option>
                 <option>강남구</option><option>강동구</option><option>강북구</option>
@@ -462,32 +462,34 @@
             </div>
 
             <div class="aiw-field">
-              <div class="aiw-field-label">⏱️ 산책 시간</div>
+              <div class="aiw-field-label"><img src="icons/search.svg" alt="" class="icon-sm"> 산책 시간</div>
               <div class="aiw-btn-group" data-field="duration">
-                <button class="aiw-opt-btn" data-val="30분">⚡ 30분</button>
-                <button class="aiw-opt-btn" data-val="1시간">🚶 1시간</button>
-                <button class="aiw-opt-btn" data-val="2시간 이상">🏃 2시간+</button>
+                <button class="aiw-opt-btn" data-val="30분">30분</button>
+                <button class="aiw-opt-btn" data-val="1시간">1시간</button>
+                <button class="aiw-opt-btn" data-val="2시간 이상">2시간+</button>
               </div>
             </div>
 
             <div class="aiw-field">
-              <div class="aiw-field-label">🌳 선호 장소</div>
+              <div class="aiw-field-label"><img src="icons/location.svg" alt="" class="icon-sm"> 선호 장소</div>
               <div class="aiw-btn-group" data-field="place">
-                <button class="aiw-opt-btn" data-val="공원">🌳 공원</button>
-                <button class="aiw-opt-btn" data-val="카페">☕ 카페</button>
-                <button class="aiw-opt-btn" data-val="산책로">🛤️ 산책로</button>
+                <button class="aiw-opt-btn" data-val="공원">공원</button>
+                <button class="aiw-opt-btn" data-val="카페">카페</button>
+                <button class="aiw-opt-btn" data-val="산책로">산책로</button>
               </div>
             </div>
 
             <button class="aiw-submit-btn" id="aiw-submit" disabled>
-              맞춤 코스 추천받기 🐾
+              맞춤 코스 추천받기 <img src="icons/arrow-right.svg" alt="" class="btn-icon-white">
             </button>
           </div>
 
           <!-- 로딩 -->
           <div class="aiw-loading hidden" id="aiw-loading">
             <div class="aiw-paw-anim">
-              <span>🐾</span><span>🐾</span><span>🐾</span>
+              <span><img src="icons/heart.svg" alt="" class="aiw-paw-img"></span>
+              <span><img src="icons/heart.svg" alt="" class="aiw-paw-img"></span>
+              <span><img src="icons/heart.svg" alt="" class="aiw-paw-img"></span>
             </div>
             <p class="aiw-loading-text">AI가 오늘의 코스를 분석 중이에요...</p>
           </div>
@@ -495,16 +497,16 @@
           <!-- 결과 카드 -->
           <div class="aiw-result hidden" id="aiw-result">
             <div class="aiw-result-header">
-              <span class="aiw-result-icon">🎯</span>
+              <span class="aiw-result-icon"><img src="icons/arrow-right.svg" alt="" class="aiw-result-icon-img"></span>
               <span class="aiw-result-label">오늘의 맞춤 산책 코스</span>
             </div>
             <div class="aiw-result-content" id="aiw-result-content"></div>
             <div class="aiw-result-actions">
               <button class="aiw-map-btn" id="aiw-map-btn">
-                🗺️ 지도에서 보기
+                <img src="icons/location.svg" alt="" class="btn-icon-white"> 지도에서 보기
               </button>
               <button class="aiw-retry-btn" id="aiw-retry-btn">
-                🔄 다시 추천받기
+                <img src="icons/arrow-right.svg" alt="" class="btn-icon"> 다시 추천받기
               </button>
             </div>
           </div>
@@ -522,7 +524,7 @@
   ═══════════════════════════════════════ -->
   <div id="auth-modal" class="modal-backdrop hidden">
     <div class="modal-box auth-modal-box">
-      <button class="modal-close-x" onclick="closeAuthModal()">✕</button>
+      <button class="modal-close-x" onclick="closeAuthModal()"><img src="icons/close.svg" alt="닫기" class="modal-close-img"></button>
 
       <div class="auth-modal-title">댕댕서울 계정</div>
       <div class="auth-tabs">
@@ -557,7 +559,7 @@
           <input type="password" id="signup-pw2" class="auth-input" placeholder="비밀번호 재입력">
         </div>
         <div class="auth-error" id="signup-error"></div>
-        <div class="auth-success hidden" id="signup-success">가입 완료! 로그인해주세요 🎉</div>
+        <div class="auth-success hidden" id="signup-success">가입 완료! 로그인해주세요</div>
         <button class="auth-submit-btn" id="auth-signup-submit">가입하기</button>
       </div>
     </div>
@@ -568,7 +570,7 @@
   ═══════════════════════════════════════ -->
   <div id="mypage-modal" class="modal-backdrop hidden">
     <div class="modal-box auth-modal-box">
-      <button class="modal-close-x" onclick="closeMyPageModal()">✕</button>
+      <button class="modal-close-x" onclick="closeMyPageModal()"><img src="icons/close.svg" alt="닫기" class="modal-close-img"></button>
       <div class="auth-modal-title">내 계정</div>
       <div class="account-user-info">
         <div class="account-user-id" id="account-user-id">사용자명</div>
@@ -592,7 +594,7 @@
       <!-- 관리자 전용 -->
       <div id="admin-panel" class="hidden">
         <div class="admin-panel-divider"></div>
-        <div class="admin-panel-title">👑 관리자 패널</div>
+        <div class="admin-panel-title">관리자 패널</div>
         <div class="admin-section-label">등록된 사용자</div>
         <div id="admin-user-list" class="admin-user-list"></div>
         <button class="auth-btn-secondary auth-submit-btn" id="admin-refresh-btn">목록 새로고침</button>
@@ -612,7 +614,7 @@
   ═══════════════════════════════════════ -->
   <div id="login-required-modal" class="modal-backdrop hidden">
     <div class="modal-box login-required-box">
-      <div class="lrm-icon">🔒</div>
+      <div class="lrm-icon"><img src="icons/heart-off.svg" alt="" class="lrm-icon-img"></div>
       <div class="lrm-title">로그인이 필요해요</div>
       <div class="lrm-desc">장소를 저장하려면 로그인이 필요해요</div>
       <div class="lrm-buttons">
@@ -627,27 +629,27 @@
   ═══════════════════════════════════════ -->
   <nav class="mobile-gnb" id="mobile-gnb">
     <button class="tab-btn active" data-tab="map">
-      <span class="gnb-icon">🗺️</span>
+      <span class="gnb-icon"><img src="icons/location.svg" alt="" class="gnb-icon-img"></span>
       <span class="gnb-label">지도</span>
     </button>
     <button class="tab-btn" data-tab="recommend">
-      <span class="gnb-icon">🐾</span>
+      <span class="gnb-icon"><img src="icons/heart.svg" alt="" class="gnb-icon-img"></span>
       <span class="gnb-label">맞춤추천</span>
     </button>
     <button class="tab-btn" data-tab="dashboard">
-      <span class="gnb-icon">📊</span>
+      <span class="gnb-icon"><img src="icons/filter.svg" alt="" class="gnb-icon-img"></span>
       <span class="gnb-label">우리동네</span>
     </button>
     <button class="tab-btn" data-tab="commercial">
-      <span class="gnb-icon">🏪</span>
+      <span class="gnb-icon"><img src="icons/location-pin.svg" alt="" class="gnb-icon-img"></span>
       <span class="gnb-label">상권분석</span>
     </button>
     <button class="tab-btn" data-tab="aichat">
-      <span class="gnb-icon">🤖</span>
+      <span class="gnb-icon"><img src="icons/search.svg" alt="" class="gnb-icon-img"></span>
       <span class="gnb-label">AI추천</span>
     </button>
     <button class="gnb-mypage-btn" id="gnb-mypage-btn" onclick="currentUser ? openMyPageModal() : openAuthModal('login')">
-      <span class="gnb-icon">👤</span>
+      <span class="gnb-icon"><img src="icons/bookmark.svg" alt="" class="gnb-icon-img"></span>
       <span class="gnb-label" id="gnb-mypage-label">로그인</span>
     </button>
   </nav>
