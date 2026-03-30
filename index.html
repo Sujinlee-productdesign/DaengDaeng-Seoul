@@ -344,83 +344,85 @@
     <div class="modal-box auth-modal-box">
       <button class="modal-close-x" onclick="closeAuthModal()">✕</button>
 
-      <!-- 비로그인: 로그인 / 회원가입 -->
-      <div id="auth-guest-area">
-        <div class="auth-modal-title">댕댕서울 계정</div>
-        <div class="auth-tabs">
-          <button class="auth-tab-btn active" data-tab="login">로그인</button>
-          <button class="auth-tab-btn" data-tab="signup">회원가입</button>
-        </div>
-
-        <div class="auth-panel" data-panel="login">
-          <div class="auth-field">
-            <label class="auth-label">아이디</label>
-            <input type="text" id="login-id" class="auth-input" placeholder="아이디 입력" autocomplete="username">
-          </div>
-          <div class="auth-field">
-            <label class="auth-label">비밀번호</label>
-            <input type="password" id="login-pw" class="auth-input" placeholder="비밀번호 입력" autocomplete="current-password">
-          </div>
-          <div class="auth-error" id="login-error"></div>
-          <button class="auth-submit-btn" id="auth-login-submit">로그인</button>
-        </div>
-
-        <div class="auth-panel hidden" data-panel="signup">
-          <div class="auth-field">
-            <label class="auth-label">아이디</label>
-            <input type="text" id="signup-id" class="auth-input" placeholder="2자 이상">
-          </div>
-          <div class="auth-field">
-            <label class="auth-label">비밀번호</label>
-            <input type="password" id="signup-pw" class="auth-input" placeholder="6자 이상">
-          </div>
-          <div class="auth-field">
-            <label class="auth-label">비밀번호 확인</label>
-            <input type="password" id="signup-pw2" class="auth-input" placeholder="비밀번호 재입력">
-          </div>
-          <div class="auth-error" id="signup-error"></div>
-          <div class="auth-success hidden" id="signup-success">가입 완료! 로그인해주세요 🎉</div>
-          <button class="auth-submit-btn" id="auth-signup-submit">가입하기</button>
-        </div>
+      <div class="auth-modal-title">댕댕서울 계정</div>
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" data-tab="login">로그인</button>
+        <button class="auth-tab-btn" data-tab="signup">회원가입</button>
       </div>
 
-      <!-- 로그인 상태: 내 계정 -->
-      <div id="auth-user-area" class="hidden">
-        <div class="auth-modal-title">내 계정</div>
-        <div class="account-user-info">
-          <div class="account-user-id" id="account-user-id">사용자명</div>
-          <span class="account-role-badge" id="account-role-badge">일반</span>
+      <div class="auth-panel" data-panel="login">
+        <div class="auth-field">
+          <label class="auth-label">아이디</label>
+          <input type="text" id="login-id" class="auth-input" placeholder="아이디 입력" autocomplete="username">
         </div>
+        <div class="auth-field">
+          <label class="auth-label">비밀번호</label>
+          <input type="password" id="login-pw" class="auth-input" placeholder="비밀번호 입력" autocomplete="current-password">
+        </div>
+        <div class="auth-error" id="login-error"></div>
+        <button class="auth-submit-btn" id="auth-login-submit">로그인</button>
+      </div>
 
-        <div class="account-section">
-          <div class="account-section-label">비밀번호 변경</div>
-          <div class="auth-field">
-            <input type="password" id="account-new-pw" class="auth-input" placeholder="새 비밀번호 (6자 이상)">
-          </div>
-          <div class="auth-error" id="account-pw-error"></div>
-          <button class="auth-submit-btn auth-btn-secondary" id="account-pw-submit">변경하기</button>
+      <div class="auth-panel hidden" data-panel="signup">
+        <div class="auth-field">
+          <label class="auth-label">아이디</label>
+          <input type="text" id="signup-id" class="auth-input" placeholder="2자 이상">
         </div>
+        <div class="auth-field">
+          <label class="auth-label">비밀번호</label>
+          <input type="password" id="signup-pw" class="auth-input" placeholder="6자 이상">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">비밀번호 확인</label>
+          <input type="password" id="signup-pw2" class="auth-input" placeholder="비밀번호 재입력">
+        </div>
+        <div class="auth-error" id="signup-error"></div>
+        <div class="auth-success hidden" id="signup-success">가입 완료! 로그인해주세요 🎉</div>
+        <button class="auth-submit-btn" id="auth-signup-submit">가입하기</button>
+      </div>
+    </div>
+  </div>
 
-        <div class="account-actions">
-          <button class="auth-logout-btn" id="auth-logout-btn">로그아웃</button>
-          <button class="auth-delete-btn" id="account-delete-btn">계정 삭제</button>
-        </div>
+  <!-- ═══════════════════════════════════════
+       마이페이지 모달
+  ═══════════════════════════════════════ -->
+  <div id="mypage-modal" class="modal-backdrop hidden">
+    <div class="modal-box auth-modal-box">
+      <button class="modal-close-x" onclick="closeMyPageModal()">✕</button>
+      <div class="auth-modal-title">내 계정</div>
+      <div class="account-user-info">
+        <div class="account-user-id" id="account-user-id">사용자명</div>
+        <span class="account-role-badge" id="account-role-badge">일반</span>
+      </div>
 
-        <!-- 관리자 전용 -->
-        <div id="admin-panel" class="hidden">
-          <div class="admin-panel-divider"></div>
-          <div class="admin-panel-title">👑 관리자 패널</div>
-          <div class="admin-section-label">등록된 사용자</div>
-          <div id="admin-user-list" class="admin-user-list"></div>
-          <button class="auth-btn-secondary auth-submit-btn" id="admin-refresh-btn">목록 새로고침</button>
-          <div class="admin-section-label" style="margin-top:14px">비밀번호 초기화</div>
-          <div class="admin-reset-row">
-            <input type="text" id="admin-target-id" class="auth-input" placeholder="아이디">
-            <input type="password" id="admin-new-pw" class="auth-input" placeholder="새 비밀번호">
-          </div>
-          <div class="auth-error" id="admin-error"></div>
-          <button class="auth-submit-btn" id="admin-reset-submit">초기화</button>
+      <div class="account-section" id="mypage-pw-section">
+        <div class="account-section-label">비밀번호 변경</div>
+        <div class="auth-field">
+          <input type="password" id="account-new-pw" class="auth-input" placeholder="새 비밀번호 (6자 이상)">
         </div>
+        <div class="auth-error" id="account-pw-error"></div>
+        <button class="auth-submit-btn auth-btn-secondary" id="account-pw-submit">변경하기</button>
+      </div>
+
+      <div class="account-actions">
+        <button class="auth-logout-btn" id="auth-logout-btn">로그아웃</button>
+        <button class="auth-delete-btn" id="account-delete-btn">계정 삭제</button>
+      </div>
+
+      <!-- 관리자 전용 -->
+      <div id="admin-panel" class="hidden">
+        <div class="admin-panel-divider"></div>
+        <div class="admin-panel-title">👑 관리자 패널</div>
+        <div class="admin-section-label">등록된 사용자</div>
+        <div id="admin-user-list" class="admin-user-list"></div>
+        <button class="auth-btn-secondary auth-submit-btn" id="admin-refresh-btn">목록 새로고침</button>
+        <div class="admin-section-label" style="margin-top:14px">비밀번호 초기화</div>
+        <div class="admin-reset-row">
+          <input type="text" id="admin-target-id" class="auth-input" placeholder="아이디">
+          <input type="password" id="admin-new-pw" class="auth-input" placeholder="새 비밀번호">
+        </div>
+        <div class="auth-error" id="admin-error"></div>
+        <button class="auth-submit-btn" id="admin-reset-submit">초기화</button>
       </div>
     </div>
   </div>
@@ -439,6 +441,28 @@
       </div>
     </div>
   </div>
+
+  <!-- ═══════════════════════════════════════
+       모바일 하단 GNB
+  ═══════════════════════════════════════ -->
+  <nav class="mobile-gnb" id="mobile-gnb">
+    <button class="tab-btn active" data-tab="map">
+      <span class="gnb-icon">🗺️</span>
+      <span class="gnb-label">댕댕지도</span>
+    </button>
+    <button class="tab-btn" data-tab="recommend">
+      <span class="gnb-icon">🐾</span>
+      <span class="gnb-label">맞춤 추천</span>
+    </button>
+    <button class="tab-btn" data-tab="dashboard">
+      <span class="gnb-icon">📊</span>
+      <span class="gnb-label">우리동네</span>
+    </button>
+    <button class="gnb-mypage-btn" id="gnb-mypage-btn" onclick="currentUser ? openMyPageModal() : openAuthModal('login')">
+      <span class="gnb-icon">👤</span>
+      <span class="gnb-label" id="gnb-mypage-label">로그인</span>
+    </button>
+  </nav>
 
   <script src="auth.js"></script>
   <script src="app.js"></script>

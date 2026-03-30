@@ -54,10 +54,10 @@ function setupTabs() {
     btn.addEventListener('click', () => {
       const target = btn.dataset.tab;
 
-      tabBtns.forEach(b => b.classList.remove('active'));
+      // 헤더 + GNB 모든 탭버튼 동기화
+      tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === target));
       tabContents.forEach(c => c.classList.remove('active'));
 
-      btn.classList.add('active');
       document.getElementById(`tab-${target}`).classList.add('active');
 
       if (sidebar) {

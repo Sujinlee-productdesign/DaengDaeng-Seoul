@@ -1667,40 +1667,52 @@ function setupBottomSheet() {
   const handle  = document.getElementById('sidebar-handle');
   if (!handle || !sidebar) return;
 
-  // 데스크탑에서는 적용 안 함 (리사이즈 대응 포함)
   function isMobile() { return window.innerWidth <= 768; }
 
-  let startY = 0;
+  let startY      = 0;
+  let startHeight = 0;
   let startExpanded = false;
-  let dragging = false;
+  let dragging    = false;
 
   handle.addEventListener('touchstart', (e) => {
     if (!isMobile()) return;
-    startY = e.touches[0].clientY;
+    startY        = e.touches[0].clientY;
+    startHeight   = sidebar.offsetHeight;
     startExpanded = sidebar.classList.contains('sheet-expanded');
-    dragging = false;
+    dragging      = false;
+    // 드래그 중 트랜지션 끔
+    sidebar.style.transition = 'none';
   }, { passive: true });
 
   handle.addEventListener('touchmove', (e) => {
     if (!isMobile()) return;
     const dy = e.touches[0].clientY - startY;
     if (Math.abs(dy) > 5) dragging = true;
+    if (dragging) {
+      const maxH = window.innerHeight * 0.92;
+      const minH = 80;
+      const newH = Math.max(minH, Math.min(startHeight - dy, maxH));
+      sidebar.style.height = `${newH}px`;
+    }
   }, { passive: true });
 
   handle.addEventListener('touchend', (e) => {
     if (!isMobile()) return;
-    const dy = e.changedTouches[0].clientY - startY;
-    const THRESHOLD = 40;
+    // 트랜지션 복원
+    sidebar.style.transition = '';
+    sidebar.style.height     = '';
+
+    const dy        = e.changedTouches[0].clientY - startY;
+    const THRESHOLD = 60;
 
     if (!dragging) {
-      // 탭: 토글
       sidebar.classList.toggle('sheet-expanded');
     } else if (dy < -THRESHOLD) {
-      // 위로 드래그 → 펼치기
       sidebar.classList.add('sheet-expanded');
     } else if (dy > THRESHOLD) {
-      // 아래로 드래그 → 접기
       sidebar.classList.remove('sheet-expanded');
+    } else {
+      // 임계 미달 → 원래 상태 유지 (이미 height: '' 초기화됨)
     }
   }, { passive: true });
 }

@@ -1852,3 +1852,83 @@ body {
   font-family: inherit;
 }
 .lrm-cancel:hover { color: var(--text-1); }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   모바일 하단 GNB
+═══════════════════════════════════════════════════════════════ */
+.mobile-gnb {
+  display: none; /* 데스크탑에서 숨김 */
+}
+
+@media (max-width: 768px) {
+  .mobile-gnb {
+    display: flex;
+    align-items: stretch;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-top: 0.5px solid var(--separator);
+    flex-shrink: 0;
+    z-index: 500;
+  }
+
+  .mobile-gnb .tab-btn,
+  .mobile-gnb .gnb-mypage-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 8px 4px 10px;
+    border: none;
+    background: transparent;
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    color: var(--text-3);
+    cursor: pointer;
+  }
+
+  .mobile-gnb .tab-btn::after { display: none; } /* 헤더 탭 인디케이터 제거 */
+
+  .mobile-gnb .tab-btn.active {
+    color: var(--brand);
+    font-weight: 700;
+  }
+
+  .mobile-gnb .gnb-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .mobile-gnb .gnb-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    line-height: 1;
+  }
+
+  /* 헤더 탭 네비 숨김 (GNB로 대체) */
+  .tab-nav { display: none; }
+
+  /* 지도 워터마크 모바일 숨김 */
+  .map-watermark { display: none; }
+
+  /* 산책 가능도 카드 - 세로 정렬 */
+  .walk-index-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  /* 코로플레스 지도 - 가로 스크롤 */
+  .choropleth-section {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .district-map-box {
+    min-width: 700px;
+    width: 700px;
+    height: 480px;
+  }
+}

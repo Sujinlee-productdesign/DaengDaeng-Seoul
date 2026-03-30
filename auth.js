@@ -127,15 +127,18 @@ function updateAuthUI() {
   const loginBtn  = document.getElementById('auth-login-btn');
   const userChip  = document.getElementById('auth-user-chip');
   const userName  = document.getElementById('auth-user-name');
+  const gnbLabel  = document.getElementById('gnb-mypage-label');
 
   if (currentUser) {
     loginBtn?.classList.add('hidden');
     userChip?.classList.remove('hidden');
-    if (userName) userName.textContent = currentUser.role === 'admin'
-      ? `👑 ${currentUser.id}` : currentUser.id;
+    const displayName = currentUser.role === 'admin' ? `👑 ${currentUser.id}` : currentUser.id;
+    if (userName) userName.textContent = displayName;
+    if (gnbLabel) gnbLabel.textContent = currentUser.id;
   } else {
     loginBtn?.classList.remove('hidden');
     userChip?.classList.add('hidden');
+    if (gnbLabel) gnbLabel.textContent = '로그인';
   }
 }
 
@@ -144,26 +147,27 @@ function updateAuthUI() {
 // 모달 열기 / 닫기
 // ────────────────────────────────────────────────────────────────
 function openAuthModal(tab) {
+  if (currentUser) { openMyPageModal(); return; }
   const modal = document.getElementById('auth-modal');
   if (!modal) return;
   modal.classList.remove('hidden');
-
-  const guestArea = document.getElementById('auth-guest-area');
-  const userArea  = document.getElementById('auth-user-area');
-
-  if (currentUser) {
-    guestArea?.classList.add('hidden');
-    userArea?.classList.remove('hidden');
-    updateAccountPanel();
-  } else {
-    guestArea?.classList.remove('hidden');
-    userArea?.classList.add('hidden');
-    switchAuthTab(tab || 'login');
-  }
+  switchAuthTab(tab || 'login');
 }
 
 function closeAuthModal() {
   document.getElementById('auth-modal')?.classList.add('hidden');
+}
+
+function openMyPageModal() {
+  if (!currentUser) { openAuthModal('login'); return; }
+  const modal = document.getElementById('mypage-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  updateAccountPanel();
+}
+
+function closeMyPageModal() {
+  document.getElementById('mypage-modal')?.classList.add('hidden');
 }
 
 function showLoginRequired() {
@@ -204,7 +208,7 @@ function updateAccountPanel() {
   const idEl    = document.getElementById('account-user-id');
   const roleEl  = document.getElementById('account-role-badge');
   const adminEl = document.getElementById('admin-panel');
-  const pwEl    = document.getElementById('account-pw-submit')?.closest('.account-section');
+  const pwEl    = document.getElementById('mypage-pw-section');
 
   if (idEl)   idEl.textContent   = currentUser.id;
   if (roleEl) roleEl.textContent = currentUser.role === 'admin' ? '관리자' : '일반';
@@ -259,11 +263,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 헤더 버튼 ────────────────────────────────────────────────
   document.getElementById('auth-login-btn')?.addEventListener('click', () => openAuthModal('login'));
-  document.getElementById('auth-user-chip')?.addEventListener('click', () => openAuthModal());
+  document.getElementById('auth-user-chip')?.addEventListener('click', () => openMyPageModal());
 
   // ── 모달 배경 클릭 닫기 ──────────────────────────────────────
   document.getElementById('auth-modal')?.addEventListener('click', (e) => {
     if (e.target.id === 'auth-modal') closeAuthModal();
+  });
+  document.getElementById('mypage-modal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'mypage-modal') closeMyPageModal();
   });
   document.getElementById('login-required-modal')?.addEventListener('click', (e) => {
     if (e.target.id === 'login-required-modal') closeLoginRequired();
@@ -314,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── 로그아웃 ─────────────────────────────────────────────────
   document.getElementById('auth-logout-btn')?.addEventListener('click', () => {
     authLogout();
-    closeAuthModal();
+    closeMyPageModal();
   });
 
   // ── 비밀번호 변경 ─────────────────────────────────────────────
@@ -335,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentUser) return;
     if (!confirm(`정말로 '${currentUser.id}' 계정을 삭제할까요?\n북마크 데이터도 함께 삭제돼요.`)) return;
     authDeleteAccount(currentUser.id);
-    closeAuthModal();
+    closeMyPageModal();
   });
 
   // ── 로그인 필요 모달 ─────────────────────────────────────────
