@@ -78,7 +78,7 @@ app.post('/ai-chat', async (req, res) => {
     return res.status(503).json({ content: 'AI 서비스가 아직 설정되지 않았어요. 관리자에게 문의해주세요.' });
   }
 
-  const { messages = [] } = req.body;
+  const { messages = [], systemOverride } = req.body;
 
   // 시스템 프롬프트: 댕댕서울 AI 산책 도우미 역할 설정
   const systemPrompt = `당신은 '댕댕서울 AI 산책 도우미'입니다.
@@ -108,7 +108,7 @@ app.post('/ai-chat', async (req, res) => {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001', // 빠른 응답을 위해 Haiku 사용
         max_tokens: 512,
-        system: systemPrompt,
+        system: systemOverride || systemPrompt, // 탭별 특화 프롬프트 지원
         messages: messages.slice(-10), // 최근 10개 메시지만 전송 (비용 절감)
       }),
     });

@@ -1,127 +1,192 @@
 // ================================================================
-// 댕댕서울 — 펫 상권 분석 + AI 산책 추천 탭 로직
+// 댕댕서울 — 펫 상권 분석 + AI 산책 추천
 // ================================================================
 
 
-// ----------------------------------------------------------------
-// 1. 펫 상권 분석 — 구별 장소 밀집도 분석
-//    sidebarPlaces(전역, app.js에서 설정)를 구별로 집계
-// ----------------------------------------------------------------
+// ================================================================
+//  TAB 3 : 펫 상권 분석
+//  동 단위 더미 소비 데이터 → 카카오맵 히트맵 오버레이 + TOP5 랭킹
+// ================================================================
 
-let commercialInitialized = false;
+// ── 동 단위 더미 데이터 (B079 카드소비 기반, 추후 실데이터 교체) ──
+// spending : 펫 관련 월평균 소비 (만원) / index : 상권 지수 0~100
+const DONG_PET_DATA = [
+  { name: '연남동',    gu: '마포구',   lat: 37.5665, lng: 126.9235, spending: 382, index: 92, types: ['cafe','shop'] },
+  { name: '성수동1가', gu: '성동구',   lat: 37.5444, lng: 127.0567, spending: 354, index: 88, types: ['cafe','hospital'] },
+  { name: '청담동',    gu: '강남구',   lat: 37.5230, lng: 127.0491, spending: 412, index: 95, types: ['shop','hospital'] },
+  { name: '합정동',    gu: '마포구',   lat: 37.5497, lng: 126.9140, spending: 298, index: 80, types: ['cafe'] },
+  { name: '한남동',    gu: '용산구',   lat: 37.5344, lng: 127.0006, spending: 336, index: 85, types: ['cafe','shop'] },
+  { name: '서교동',    gu: '마포구',   lat: 37.5530, lng: 126.9219, spending: 274, index: 76, types: ['cafe','shop'] },
+  { name: '역삼동',    gu: '강남구',   lat: 37.5007, lng: 127.0363, spending: 310, index: 82, types: ['hospital','shop'] },
+  { name: '반포동',    gu: '서초구',   lat: 37.5040, lng: 126.9945, spending: 288, index: 78, types: ['hospital','cafe'] },
+  { name: '이태원동',  gu: '용산구',   lat: 37.5345, lng: 126.9944, spending: 266, index: 73, types: ['cafe'] },
+  { name: '상수동',    gu: '마포구',   lat: 37.5479, lng: 126.9222, spending: 252, index: 70, types: ['cafe','shop'] },
+  { name: '망원동',    gu: '마포구',   lat: 37.5561, lng: 126.9036, spending: 241, index: 68, types: ['cafe'] },
+  { name: '송파동',    gu: '송파구',   lat: 37.5011, lng: 127.1156, spending: 235, index: 66, types: ['hospital','shop'] },
+  { name: '잠실동',    gu: '송파구',   lat: 37.5133, lng: 127.1002, spending: 228, index: 64, types: ['shop','hospital'] },
+  { name: '화양동',    gu: '광진구',   lat: 37.5433, lng: 127.0685, spending: 214, index: 60, types: ['cafe'] },
+  { name: '대치동',    gu: '강남구',   lat: 37.4940, lng: 127.0612, spending: 296, index: 79, types: ['hospital','shop'] },
+  { name: '도화동',    gu: '마포구',   lat: 37.5389, lng: 126.9519, spending: 188, index: 54, types: ['hospital'] },
+  { name: '왕십리동',  gu: '성동구',   lat: 37.5613, lng: 127.0372, spending: 175, index: 50, types: ['hospital'] },
+  { name: '공덕동',    gu: '마포구',   lat: 37.5440, lng: 126.9518, spending: 193, index: 56, types: ['shop','cafe'] },
+  { name: '혜화동',    gu: '종로구',   lat: 37.5830, lng: 127.0017, spending: 164, index: 48, types: ['cafe'] },
+  { name: '신촌동',    gu: '서대문구', lat: 37.5597, lng: 126.9370, spending: 202, index: 58, types: ['cafe','hospital'] },
+];
 
-// 카테고리 한글 레이블 + 이모지
-const CATEGORY_META = {
-  park:       { emoji: '🌳', label: '공원' },
-  restaurant: { emoji: '🍽️', label: '음식점' },
-  cafe:       { emoji: '☕', label: '카페' },
-  'pf-cafe':  { emoji: '🐶', label: '애견카페' },
-  vet:        { emoji: '🏥', label: '동물병원' },
-  playground: { emoji: '🎾', label: '놀이터' },
-};
+// TOP 5 랭킹 (spending 기준 자동 정렬)
+const TOP5 = [...DONG_PET_DATA]
+  .sort((a, b) => b.spending - a.spending)
+  .slice(0, 5);
 
+// 타입 이모지 맵
+const TYPE_EMOJI = { hospital: '🏥', shop: '🛍️', cafe: '☕' };
+const TYPE_LABEL = { hospital: '동물병원', shop: '펫샵', cafe: '반려견카페' };
+
+let comm2Map     = null;  // 카카오맵 인스턴스
+let comm2Overlays = [];   // 히트맵 원형 오버레이 배열
+let comm2PieChart = null; // 업종별 도넛 차트
+let comm2Initialized = false;
+
+// ── 탭 진입 시 초기화 ────────────────────────────────────────────
 function initCommercial() {
-  if (commercialInitialized) return;
-  commercialInitialized = true;
+  if (comm2Initialized) return;
+  comm2Initialized = true;
 
-  // sidebarPlaces가 아직 없으면 잠시 후 재시도
-  if (!window.sidebarPlaces || window.sidebarPlaces.length === 0) {
-    setTimeout(initCommercial, 800);
-    commercialInitialized = false;
-    return;
-  }
-
-  buildCommercialRanking();
-  buildCommercialChart();
-  populateCommercialGuSelect();
+  buildComm2Map();
+  buildComm2Ranking();
+  buildComm2Pie();
+  bindComm2Filters();
 }
 
-// ── 구별 집계 ────────────────────────────────────────────────────
-function aggregateByGu() {
-  // { 구명: { total: N, park: N, restaurant: N, ... } }
-  const map = {};
-  (window.sidebarPlaces || []).forEach(p => {
-    const gu = extractGu(p.address || '');
-    if (!gu) return;
-    if (!map[gu]) {
-      map[gu] = { total: 0 };
-      Object.keys(CATEGORY_META).forEach(k => { map[gu][k] = 0; });
+// ── 카카오맵 + 히트맵 오버레이 ──────────────────────────────────
+function buildComm2Map() {
+  const container = document.getElementById('comm2-map');
+  if (!container || !window.kakao?.maps) return;
+
+  // 서울 중심 좌표
+  const options = {
+    center: new kakao.maps.LatLng(37.5630, 127.0000),
+    level: 8,
+  };
+  comm2Map = new kakao.maps.Map(container, options);
+
+  renderComm2Overlays('all');
+}
+
+// 오버레이 렌더 (필터 적용)
+function renderComm2Overlays(filter) {
+  // 기존 오버레이 제거
+  comm2Overlays.forEach(o => o.setMap(null));
+  comm2Overlays = [];
+
+  const filtered = filter === 'all'
+    ? DONG_PET_DATA
+    : DONG_PET_DATA.filter(d => d.types.includes(filter));
+
+  const maxSpending = Math.max(...filtered.map(d => d.spending));
+
+  filtered.forEach(dong => {
+    const ratio   = dong.spending / maxSpending;
+    const radius  = Math.round(300 + ratio * 500);   // 300~800m 원
+    const opacity = (0.15 + ratio * 0.45).toFixed(2); // 0.15~0.60
+
+    // 색상: 낮음(#FFE082 노랑) → 높음(#FF3B30 빨강)
+    const r  = 255;
+    const g  = Math.round(225 - ratio * 195);
+    const b  = Math.round(130 - ratio * 130);
+    const fillColor   = `rgb(${r},${g},${b})`;
+    const strokeColor = `rgb(${Math.max(0,r-30)},${Math.max(0,g-40)},${Math.max(0,b-20)})`;
+
+    const circle = new kakao.maps.Circle({
+      center:        new kakao.maps.LatLng(dong.lat, dong.lng),
+      radius,
+      strokeWeight:  1,
+      strokeColor,
+      strokeOpacity: 0.4,
+      fillColor,
+      fillOpacity:   parseFloat(opacity),
+    });
+    circle.setMap(comm2Map);
+    comm2Overlays.push(circle);
+
+    // 마커 라벨 (상위 5개만)
+    if (TOP5.find(t => t.name === dong.name)) {
+      const overlay = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(dong.lat, dong.lng),
+        content: `<div class="comm2-map-label">${dong.name}</div>`,
+        yAnchor: 1.4,
+      });
+      overlay.setMap(comm2Map);
+      comm2Overlays.push(overlay);
     }
-    map[gu].total++;
-    if (map[gu][p.category] !== undefined) map[gu][p.category]++;
   });
-  return map;
 }
 
-// 주소에서 "OO구" 추출
-function extractGu(address) {
-  const m = address.match(/([가-힣]+구)/);
-  return m ? m[1] : null;
-}
-
-// ── TOP 10 순위 렌더 ─────────────────────────────────────────────
-function buildCommercialRanking() {
-  const agg = aggregateByGu();
-  const sorted = Object.entries(agg)
-    .map(([gu, d]) => ({ gu, ...d }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 10);
-
-  const maxCount = sorted[0]?.total || 1;
-  const el = document.getElementById('commercial-ranking');
+// ── TOP5 랭킹 렌더 ───────────────────────────────────────────────
+function buildComm2Ranking() {
+  const el = document.getElementById('comm2-ranking');
   if (!el) return;
 
-  if (sorted.length === 0) {
-    el.innerHTML = '<div class="commercial-loading">데이터가 없습니다. 먼저 댕댕지도 탭을 열어주세요.</div>';
-    return;
-  }
-
-  el.innerHTML = sorted.map((item, i) => `
-    <div class="rank-item">
-      <div class="rank-num">${i + 1}</div>
-      <div class="rank-gu">${item.gu}</div>
-      <div class="rank-bar-wrap">
-        <div class="rank-bar" style="width:${Math.round((item.total / maxCount) * 100)}%"></div>
+  const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+  el.innerHTML = TOP5.map((d, i) => {
+    const typeEmojis = d.types.map(t => TYPE_EMOJI[t]).join(' ');
+    const typeLabels = d.types.map(t => TYPE_LABEL[t]).join(' · ');
+    return `
+      <div class="comm2-rank-item" onclick="comm2FocusDong('${d.name}')">
+        <div class="comm2-rank-medal">${medals[i]}</div>
+        <div class="comm2-rank-info">
+          <div class="comm2-rank-name">${d.gu} ${d.name} ${typeEmojis}</div>
+          <div class="comm2-rank-sub">${typeLabels} · 상권지수 ${d.index}</div>
+        </div>
+        <div class="comm2-rank-score">${d.spending.toLocaleString()}만원</div>
       </div>
-      <div class="rank-count">${item.total}곳</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
-// ── 카테고리 도넛 차트 ───────────────────────────────────────────
-function buildCommercialChart() {
-  const canvas = document.getElementById('chart-commercial');
+// 랭킹 클릭 시 지도 이동
+function comm2FocusDong(dongName) {
+  const d = DONG_PET_DATA.find(x => x.name === dongName);
+  if (!d || !comm2Map) return;
+  comm2Map.setCenter(new kakao.maps.LatLng(d.lat, d.lng));
+  comm2Map.setLevel(5);
+}
+
+// ── 업종별 도넛 차트 ─────────────────────────────────────────────
+function buildComm2Pie() {
+  const canvas = document.getElementById('chart-comm2-pie');
   if (!canvas) return;
 
-  // 카테고리별 합계
-  const counts = {};
-  Object.keys(CATEGORY_META).forEach(k => { counts[k] = 0; });
-  (window.sidebarPlaces || []).forEach(p => {
-    if (counts[p.category] !== undefined) counts[p.category]++;
+  // 업종별 소비 합산
+  const totals = { hospital: 0, shop: 0, cafe: 0 };
+  DONG_PET_DATA.forEach(d => {
+    d.types.forEach(t => { totals[t] += d.spending; });
   });
 
-  const labels = Object.keys(CATEGORY_META).map(k => `${CATEGORY_META[k].emoji} ${CATEGORY_META[k].label}`);
-  const data   = Object.keys(CATEGORY_META).map(k => counts[k]);
-  const colors = ['#34C759','#FF8C42','#8E6A4B','#5856D6','#FF2D55','#30B0C7'];
-
-  new Chart(canvas, {
+  comm2PieChart = new Chart(canvas, {
     type: 'doughnut',
     data: {
-      labels,
-      datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }],
+      labels: ['🏥 동물병원', '🛍️ 펫샵', '☕ 반려견카페'],
+      datasets: [{
+        data: [totals.hospital, totals.shop, totals.cafe],
+        backgroundColor: ['#FF2D55', '#5856D6', '#FF8C42'],
+        borderWidth: 2,
+        borderColor: '#fff',
+      }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          position: 'right',
-          labels: { font: { family: 'Pretendard', size: 12 }, padding: 12 },
-        },
+        legend: { position: 'bottom', labels: { font: { family: 'Pretendard', size: 12 }, padding: 10 } },
+        tooltip: { callbacks: { label: c => ` ${c.raw.toLocaleString()}만원` } },
         datalabels: {
           color: '#fff',
           font: { weight: 'bold', size: 11 },
-          formatter: (val) => val > 0 ? val : '',
+          formatter: (val, ctx) => {
+            const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+            return `${Math.round(val / sum * 100)}%`;
+          },
         },
       },
     },
@@ -129,200 +194,168 @@ function buildCommercialChart() {
   });
 }
 
-// ── 구 선택 셀렉트박스 ───────────────────────────────────────────
-function populateCommercialGuSelect() {
-  const agg    = aggregateByGu();
-  const select = document.getElementById('commercial-gu-select');
-  if (!select) return;
-
-  const guList = Object.keys(agg).sort();
-  guList.forEach(gu => {
-    const opt = document.createElement('option');
-    opt.value = gu;
-    opt.textContent = gu;
-    select.appendChild(opt);
-  });
-
-  select.addEventListener('change', () => {
-    const gu = select.value;
-    if (!gu) return;
-    renderGuDetail(gu, agg[gu]);
+// ── 필터 버튼 바인딩 ─────────────────────────────────────────────
+function bindComm2Filters() {
+  document.querySelectorAll('.comm2-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.comm2-filter').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderComm2Overlays(btn.dataset.filter);
+    });
   });
 }
 
-// ── 구 상세 렌더 ─────────────────────────────────────────────────
-function renderGuDetail(gu, data) {
-  const el = document.getElementById('commercial-gu-detail');
-  if (!el || !data) return;
-  el.classList.remove('hidden');
 
-  const cats = Object.keys(CATEGORY_META).map(k => ({
-    key: k,
-    emoji: CATEGORY_META[k].emoji,
-    label: CATEGORY_META[k].label,
-    count: data[k] || 0,
-  }));
+// ================================================================
+//  TAB 4 : AI 산책 추천
+//  버튼 선택 → 자동 Claude API 호출 → 결과 카드
+// ================================================================
 
-  el.innerHTML = `
-    <div class="gu-detail-name">📍 ${gu} — 총 ${data.total}곳</div>
-    <div class="gu-category-grid">
-      ${cats.map(c => `
-        <div class="gu-category-item">
-          <div class="gu-category-emoji">${c.emoji}</div>
-          <div class="gu-category-label">${c.label}</div>
-          <div class="gu-category-count">${c.count}</div>
-        </div>
-      `).join('')}
-    </div>
-  `;
+// 선택 상태 관리
+const aiwSelections = { size: null, duration: null, place: null };
+
+// ── 버튼 그룹 이벤트 바인딩 ─────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+
+  // 옵션 버튼 클릭
+  document.querySelectorAll('.aiw-btn-group').forEach(group => {
+    group.querySelectorAll('.aiw-opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // 같은 그룹 내 선택 해제 후 현재 선택
+        group.querySelectorAll('.aiw-opt-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        aiwSelections[group.dataset.field] = btn.dataset.val;
+        checkAiwReady();
+      });
+    });
+  });
+
+  // 위치 드롭다운 변경
+  document.getElementById('aiw-location')?.addEventListener('change', checkAiwReady);
+
+  // 추천받기 버튼
+  document.getElementById('aiw-submit')?.addEventListener('click', requestAiWalk);
+
+  // 다시 추천받기
+  document.getElementById('aiw-retry-btn')?.addEventListener('click', resetAiWalk);
+
+  // 지도에서 보기
+  document.getElementById('aiw-map-btn')?.addEventListener('click', () => {
+    document.querySelector('.tab-btn[data-tab="map"]')?.click();
+  });
+});
+
+// 모든 항목 선택됐는지 체크 → 버튼 활성화
+function checkAiwReady() {
+  const loc = document.getElementById('aiw-location')?.value;
+  const ready = aiwSelections.size && loc && aiwSelections.duration && aiwSelections.place;
+  const btn = document.getElementById('aiw-submit');
+  if (btn) btn.disabled = !ready;
 }
 
+// ── AI 산책 추천 요청 ────────────────────────────────────────────
+async function requestAiWalk() {
+  const location = document.getElementById('aiw-location')?.value;
+  const { size, duration, place } = aiwSelections;
+  if (!location || !size || !duration || !place) return;
 
-// ----------------------------------------------------------------
-// 2. AI 산책 추천 — Claude API 챗봇
-//    서버 /ai-chat 엔드포인트로 프록시 (CLAUDE_API_KEY 필요)
-// ----------------------------------------------------------------
+  // 현재 대기질 정보 (app.js에서 전역 노출된 값 참조)
+  const airInfo = window.currentAirInfo || '정보 없음';
 
-let aiChatHistory = []; // 대화 히스토리 (Claude messages 형식)
-let aiTyping      = false;
+  // UI 전환: 폼 숨김 → 로딩
+  document.getElementById('aiw-form').classList.add('hidden');
+  document.getElementById('aiw-result').classList.add('hidden');
+  document.getElementById('aiw-loading').classList.remove('hidden');
 
-// 메시지 추가 렌더 함수
-function appendMessage(role, text) {
-  const container = document.getElementById('aichat-messages');
-  if (!container) return;
+  // Claude에 보낼 메시지 구성
+  const userMsg = `
+강아지 크기: ${size}
+현재 위치: 서울 ${location}
+산책 시간: ${duration}
+선호 장소: ${place}
+현재 대기질: ${airInfo}
 
-  const div = document.createElement('div');
-  div.className = `aichat-msg aichat-msg-${role === 'user' ? 'user' : 'bot'}`;
+위 조건에 맞는 서울 산책 코스를 추천해줘.
+`.trim();
 
-  div.innerHTML = role === 'user'
-    ? `<div class="aichat-msg-bubble">${escapeHtml(text)}</div>`
-    : `
-        <span class="aichat-msg-avatar">🐶</span>
-        <div class="aichat-msg-bubble">${formatBotText(text)}</div>
-      `;
+  try {
+    const res = await fetch('/ai-chat', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemOverride: buildWalkSystemPrompt(airInfo),
+        messages: [{ role: 'user', content: userMsg }],
+      }),
+    });
 
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-  return div;
+    const data = await res.json();
+    const text = data.content || '추천 코스를 불러오지 못했어요. 다시 시도해주세요.';
+
+    showAiwResult(text, location, size, duration, place);
+
+  } catch (err) {
+    console.error('AI 산책 추천 오류:', err);
+    showAiwResult(
+      '🙏 AI 서비스에 일시적인 문제가 생겼어요!\n잠시 후 다시 시도해주세요.',
+      location, size, duration, place
+    );
+  }
 }
 
-// 타이핑 인디케이터 표시
-function showTyping() {
-  const container = document.getElementById('aichat-messages');
-  if (!container) return null;
-  const div = document.createElement('div');
-  div.className = 'aichat-msg aichat-msg-bot';
-  div.id = 'aichat-typing-indicator';
-  div.innerHTML = `
-    <span class="aichat-msg-avatar">🐶</span>
-    <div class="aichat-msg-bubble">
-      <div class="aichat-typing"><span></span><span></span><span></span></div>
-    </div>
-  `;
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-  return div;
+// ── 시스템 프롬프트 (산책 특화) ──────────────────────────────────
+function buildWalkSystemPrompt(airInfo) {
+  return `너는 서울 반려견 산책 전문가야.
+강아지 크기와 산책 시간에 맞는 오늘의 맞춤 코스를 추천해줘.
+
+참고 정보:
+- 현재 서울 대기질: ${airInfo}
+- 서울 주요 반려견 공원: 월드컵공원(마포), 보라매공원(동작), 서울숲(성동), 올림픽공원(송파), 한강공원 각 지구
+- 소형견은 혼잡하거나 언덕이 심한 곳을 피하고, 대형견은 뛸 수 있는 넓은 공간을 선호해
+
+답변 형식 (반드시 아래 형식으로):
+1. 🗺️ **오늘의 추천 코스**: 장소명 + 이유 (2~3곳)
+2. 💡 **산책 팁**: 한 가지
+3. ⚠️ **주의사항**: 한 가지
+
+규칙:
+- 항상 한국어로, 친근하고 귀엽게
+- 이모지 적극 활용
+- 간결하게 (전체 200자 이내)`;
 }
 
-function removeTyping() {
-  document.getElementById('aichat-typing-indicator')?.remove();
-}
+// ── 결과 카드 렌더 ───────────────────────────────────────────────
+function showAiwResult(text, location, size, duration, place) {
+  document.getElementById('aiw-loading').classList.add('hidden');
+  document.getElementById('aiw-result').classList.remove('hidden');
 
-// XSS 방지용 이스케이프
-function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-            .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
-}
-
-// 봇 응답에 기본 포맷 적용 (줄바꿈, ** 볼드)
-function formatBotText(text) {
-  return text
+  const formatted = text
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br>');
+
+  const tagHtml = [
+    `<span class="aiw-tag">${size}</span>`,
+    `<span class="aiw-tag">📍 ${location}</span>`,
+    `<span class="aiw-tag">⏱️ ${duration}</span>`,
+    `<span class="aiw-tag">${place}</span>`,
+  ].join('');
+
+  document.getElementById('aiw-result-content').innerHTML = `
+    <div class="aiw-tags">${tagHtml}</div>
+    <div class="aiw-result-text">${formatted}</div>
+  `;
 }
 
-// 메시지 전송 핵심 함수
-async function sendMessage(text) {
-  if (!text.trim() || aiTyping) return;
-  aiTyping = true;
+// ── 폼 리셋 ─────────────────────────────────────────────────────
+function resetAiWalk() {
+  aiwSelections.size = null;
+  aiwSelections.duration = null;
+  aiwSelections.place = null;
 
-  // 입력창 초기화 및 버튼 비활성화
-  const input  = document.getElementById('aichat-input');
-  const btn    = document.getElementById('aichat-send');
-  const quick  = document.getElementById('aichat-quick-btns');
-  if (input) input.value = '';
-  if (btn)   btn.disabled = true;
-  if (quick) quick.style.display = 'none'; // 첫 전송 후 빠른버튼 숨김
-
-  // 유저 메시지 표시
-  appendMessage('user', text);
-
-  // 대화 히스토리에 추가
-  aiChatHistory.push({ role: 'user', content: text });
-
-  // 타이핑 인디케이터 표시
-  showTyping();
-
-  try {
-    const response = await fetch('/ai-chat', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: aiChatHistory }),
-    });
-
-    removeTyping();
-
-    if (!response.ok) {
-      throw new Error(`서버 오류 ${response.status}`);
-    }
-
-    const data    = await response.json();
-    const botText = data.content || '죄송해요, 응답을 받지 못했어요. 다시 시도해주세요.';
-
-    // 봇 응답 표시 및 히스토리 저장
-    appendMessage('bot', botText);
-    aiChatHistory.push({ role: 'assistant', content: botText });
-
-  } catch (err) {
-    removeTyping();
-    console.error('AI 채팅 오류:', err);
-    appendMessage('bot',
-      'AI 서비스에 일시적인 문제가 발생했어요 😥\n\n' +
-      '서버에 CLAUDE_API_KEY가 설정되어 있는지 확인해주세요.\n' +
-      '잠시 후 다시 시도해주세요!');
-  }
-
-  if (btn) btn.disabled = false;
-  aiTyping = false;
+  document.querySelectorAll('.aiw-opt-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('aiw-location').value = '';
+  document.getElementById('aiw-submit').disabled = true;
+  document.getElementById('aiw-result').classList.add('hidden');
+  document.getElementById('aiw-loading').classList.add('hidden');
+  document.getElementById('aiw-form').classList.remove('hidden');
 }
-
-// 빠른 질문 버튼 클릭
-function sendQuickMsg(text) {
-  sendMessage(text);
-}
-
-// DOMContentLoaded 이벤트 연결
-document.addEventListener('DOMContentLoaded', () => {
-
-  // ── AI 채팅 전송 버튼 ──────────────────────────────────────────
-  document.getElementById('aichat-send')?.addEventListener('click', () => {
-    const input = document.getElementById('aichat-input');
-    sendMessage(input?.value || '');
-  });
-
-  // ── 엔터키 전송 (Shift+Enter: 줄바꿈) ──────────────────────────
-  document.getElementById('aichat-input')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      document.getElementById('aichat-send')?.click();
-    }
-  });
-
-  // ── textarea 자동 높이 조절 ────────────────────────────────────
-  document.getElementById('aichat-input')?.addEventListener('input', (e) => {
-    e.target.style.height = 'auto';
-    e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
-  });
-
-});

@@ -2078,6 +2078,378 @@ body {
 
 
 /* ═══════════════════════════════════════════════════════════════
+   펫 상권 분석 탭 (개편)
+═══════════════════════════════════════════════════════════════ */
+#tab-commercial { overflow-y: auto; background: var(--bg); }
+
+.comm2-layout {
+  display: flex;
+  height: 100%;
+  gap: 0;
+}
+
+/* 왼쪽 지도 컬럼 */
+.comm2-map-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 20px 20px 20px 20px;
+  gap: 14px;
+}
+
+.comm2-map-header { flex-shrink: 0; }
+.comm2-title { font-size: 1.25rem; font-weight: 800; color: var(--text-1); margin-bottom: 4px; }
+.comm2-desc  { font-size: 0.82rem; color: var(--text-3); }
+
+/* 필터 버튼 */
+.comm2-filters {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.comm2-filter {
+  padding: 6px 14px;
+  border: 1.5px solid var(--separator);
+  border-radius: 20px;
+  background: var(--surface);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.comm2-filter:hover  { border-color: var(--brand); color: var(--brand); }
+.comm2-filter.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+/* 히트맵 지도 */
+.comm2-map-box {
+  flex-shrink: 0;
+  height: 360px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+/* 카카오맵 라벨 오버레이 */
+.comm2-map-label {
+  background: rgba(255,255,255,0.92);
+  border: 1.5px solid var(--brand);
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-1);
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+/* 인사이트 카드 */
+.comm2-insights { flex-shrink: 0; }
+.comm2-insights-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 10px;
+}
+.comm2-insights-list { display: flex; flex-direction: column; gap: 8px; }
+.comm2-insight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font-size: 0.83rem;
+  color: var(--text-2);
+  line-height: 1.5;
+  box-shadow: var(--shadow-xs);
+}
+.comm2-insight-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.comm2-data-note {
+  font-size: 0.70rem;
+  color: var(--text-4);
+  margin-top: 8px;
+}
+
+/* 오른쪽 랭킹 컬럼 */
+.comm2-rank-col {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-left: 0.5px solid var(--separator);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 16px;
+  gap: 0;
+  overflow-y: auto;
+}
+
+.comm2-rank-title { font-size: 1rem; font-weight: 800; color: var(--text-1); margin-bottom: 4px; }
+.comm2-rank-desc  { font-size: 0.75rem; color: var(--text-3); margin-bottom: 14px; }
+
+.comm2-rank-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.12s;
+  margin-bottom: 4px;
+}
+.comm2-rank-item:hover { background: var(--surface-2); }
+
+.comm2-rank-medal { font-size: 1.3rem; flex-shrink: 0; }
+.comm2-rank-info  { flex: 1; min-width: 0; }
+.comm2-rank-name  { font-size: 0.83rem; font-weight: 700; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.comm2-rank-sub   { font-size: 0.70rem; color: var(--text-3); margin-top: 1px; }
+.comm2-rank-score { font-size: 0.78rem; font-weight: 800; color: var(--brand); white-space: nowrap; flex-shrink: 0; }
+
+/* 업종별 파이 */
+.comm2-pie-section { margin-top: 20px; padding-top: 16px; border-top: 0.5px solid var(--separator); }
+.comm2-pie-title   { font-size: 0.85rem; font-weight: 700; color: var(--text-1); margin-bottom: 10px; }
+.comm2-pie-box     { height: 180px; }
+
+@media (max-width: 768px) {
+  .comm2-layout { flex-direction: column; }
+  .comm2-rank-col { width: 100%; border-left: none; border-top: 0.5px solid var(--separator); }
+  .comm2-map-box { height: 280px; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   AI 산책 추천 탭 (개편)
+═══════════════════════════════════════════════════════════════ */
+#tab-aichat { overflow-y: auto; background: var(--bg); }
+#tab-aichat.active { display: flex; flex-direction: column; }
+
+.aiw-wrap {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 24px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 헤더 */
+.aiw-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.aiw-avatar {
+  font-size: 2.2rem;
+  width: 56px;
+  height: 56px;
+  background: var(--brand-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.aiw-title { font-size: 1.15rem; font-weight: 800; color: var(--text-1); margin-bottom: 3px; }
+.aiw-desc  { font-size: 0.80rem; color: var(--text-3); }
+
+/* 입력 폼 */
+.aiw-form {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: 22px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.aiw-form.hidden { display: none; }
+
+.aiw-field-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+
+.aiw-btn-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.aiw-opt-btn {
+  padding: 8px 16px;
+  border: 1.5px solid var(--separator);
+  border-radius: 22px;
+  background: var(--surface-2);
+  font-size: 0.84rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.aiw-opt-btn:hover   { border-color: var(--brand); color: var(--brand); }
+.aiw-opt-btn.selected {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.aiw-select {
+  width: 100%;
+  padding: 10px 32px 10px 14px;
+  border: 1.5px solid var(--separator);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--text-1);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%238E8E93' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+.aiw-select:focus { outline: none; border-color: var(--brand); background-color: var(--surface); }
+
+.aiw-submit-btn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--brand);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.aiw-submit-btn:hover    { background: var(--brand-dark); }
+.aiw-submit-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+
+/* 로딩 */
+.aiw-loading {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+.aiw-loading.hidden { display: none; }
+
+.aiw-paw-anim {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.aiw-paw-anim span {
+  font-size: 1.6rem;
+  animation: paw-bounce 1s ease-in-out infinite;
+}
+.aiw-paw-anim span:nth-child(2) { animation-delay: 0.2s; }
+.aiw-paw-anim span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes paw-bounce {
+  0%, 80%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
+  40% { transform: translateY(-10px) scale(1.15); opacity: 1; }
+}
+.aiw-loading-text { font-size: 0.88rem; color: var(--text-3); font-weight: 600; }
+
+/* 결과 카드 */
+.aiw-result {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  animation: slide-in 0.35s ease;
+}
+.aiw-result.hidden { display: none; }
+
+.aiw-result-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: linear-gradient(90deg, var(--brand-light), transparent);
+  border-bottom: 0.5px solid var(--separator);
+}
+.aiw-result-icon  { font-size: 1.2rem; }
+.aiw-result-label { font-size: 0.88rem; font-weight: 700; color: var(--brand-dark); }
+
+.aiw-result-content { padding: 16px 20px; }
+
+.aiw-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.aiw-tag {
+  padding: 4px 10px;
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  border-radius: 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.aiw-result-text {
+  font-size: 0.88rem;
+  line-height: 1.8;
+  color: var(--text-1);
+  word-break: keep-all;
+}
+
+.aiw-result-actions {
+  display: flex;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 0.5px solid var(--separator);
+}
+.aiw-map-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--brand);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.aiw-map-btn:hover { background: var(--brand-dark); }
+
+.aiw-retry-btn {
+  flex: 1;
+  padding: 10px;
+  border: 1.5px solid var(--separator);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.aiw-retry-btn:hover { background: var(--surface-3); }
+
+.aiw-notice {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-4);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
    펫 상권 분석 탭
 ═══════════════════════════════════════════════════════════════ */
 #tab-commercial { overflow-y: auto; background: var(--bg); }
