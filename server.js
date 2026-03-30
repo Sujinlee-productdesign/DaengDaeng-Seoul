@@ -66,7 +66,71 @@ app.get('/adopt-api', async (req, res) => {
 });
 
 // ----------------------------------------------------------------
-// 2. 정적 파일 서빙 (HTML, CSS, JS, 이미지 등)
+// 3. Claude AI 챗봇 프록시
+//    환경변수: CLAUDE_API_KEY (Railway Variables에서 설정)
+//    /ai-chat POST → Anthropic API 호출 → 응답 반환
+// ----------------------------------------------------------------
+app.use(express.json()); // JSON body 파싱
+
+app.post('/ai-chat', async (req, res) => {
+  const apiKey = process.env.CLAUDE_API_KEY;
+  if (!apiKey) {
+    return res.status(503).json({ content: 'AI 서비스가 아직 설정되지 않았어요. 관리자에게 문의해주세요.' });
+  }
+
+  const { messages = [] } = req.body;
+
+  // 시스템 프롬프트: 댕댕서울 AI 산책 도우미 역할 설정
+  const systemPrompt = `당신은 '댕댕서울 AI 산책 도우미'입니다.
+서울에서 반려견과 산책하기 좋은 장소와 코스를 추천해주는 전문가예요.
+
+주요 역할:
+- 강아지 크기/견종/나이/건강 상태에 맞는 서울 산책 코스 추천
+- 서울 구별 반려견 동반 가능 공원, 카페, 음식점 정보 제공
+- 미세먼지·날씨에 따른 산책 팁 제공
+- 반려견 에티켓과 안전 수칙 안내
+
+답변 규칙:
+- 항상 한국어로 답변하세요
+- 구체적인 장소명과 위치(구/동)를 언급하세요
+- 친근하고 따뜻한 말투를 사용하세요
+- 답변은 간결하게 (300자 이내)
+- 줄바꿈을 적절히 활용해 가독성 높게 작성하세요`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001', // 빠른 응답을 위해 Haiku 사용
+        max_tokens: 512,
+        system: systemPrompt,
+        messages: messages.slice(-10), // 최근 10개 메시지만 전송 (비용 절감)
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Claude API 오류:', errText);
+      return res.status(502).json({ content: 'AI 응답을 받지 못했어요. 잠시 후 다시 시도해주세요.' });
+    }
+
+    const data = await response.json();
+    const content = data.content?.[0]?.text || '응답을 생성하지 못했어요.';
+    res.json({ content });
+
+  } catch (err) {
+    console.error('AI 챗봇 프록시 오류:', err.message);
+    res.status(502).json({ content: 'AI 서비스에 일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.' });
+  }
+});
+
+// ----------------------------------------------------------------
+// 4. 정적 파일 서빙 (HTML, CSS, JS, 이미지 등)
 //    현재 폴더의 모든 파일을 그대로 제공
 // ----------------------------------------------------------------
 app.use(express.static(path.join(__dirname, '.')));

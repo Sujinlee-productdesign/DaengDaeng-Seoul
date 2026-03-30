@@ -73,6 +73,11 @@ function setupTabs() {
         loadAdoptionSection();
         recommendInitialized = true;
       }
+
+      // 펫 상권 분석 탭 초기화 (pet.js)
+      if (target === 'commercial' && typeof initCommercial === 'function') {
+        initCommercial();
+      }
     });
   });
 }

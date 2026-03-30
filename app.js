@@ -1289,6 +1289,8 @@ function addMarkers(places, category) {
     // 사이드바 리스트에도 저장
     sidebarPlaces.push({ ...place, category, markerIndex: allMarkers.length - 1 });
   });
+  // 펫 상권 분석 탭에서 접근할 수 있도록 window에 노출
+  window.sidebarPlaces = sidebarPlaces;
 }
 
 
