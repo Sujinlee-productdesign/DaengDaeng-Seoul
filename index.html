@@ -278,6 +278,11 @@
         <div class="dashboard-wrap">
 
           <div class="stat-cards">
+            <div class="stat-card stat-card-highlight">
+              <div class="stat-icon">🏆</div>
+              <div class="stat-label">댕댕 살기 좋은 점수 1위</div>
+              <div class="stat-value" id="stat-top-score">-</div>
+            </div>
             <div class="stat-card">
               <div class="stat-icon"><img src="icons/heart.svg" alt=""></div>
               <div class="stat-label">반려견 최다 등록 구</div>
@@ -285,11 +290,6 @@
             </div>
             <div class="stat-card">
               <div class="stat-icon"><img src="icons/location.svg" alt=""></div>
-              <div class="stat-label">강아지 1마리당 공원 최대 구</div>
-              <div class="stat-value" id="stat-top-park">-</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon"><img src="icons/heart.svg" alt=""></div>
               <div class="stat-label">서울시 총 반려견 수</div>
               <div class="stat-value" id="stat-total">-</div>
             </div>
@@ -300,12 +300,30 @@
             </div>
           </div>
 
+          <!-- 댕댕 점수 지도 + 범례 -->
           <div class="choropleth-section">
+            <div class="score-legend">
+              <span class="legend-dot high"></span><span>🟢 70점 이상 — 댕댕 천국</span>
+              <span class="legend-dot mid"></span><span>🟡 40~70점 — 평균 수준</span>
+              <span class="legend-dot low"></span><span>🔴 40점 미만 — 개선 필요</span>
+            </div>
             <div id="district-map" class="district-map-box">
               <div class="choropleth-title-overlay">
-                <h3 class="choropleth-map-title">구별 반려견 등록 현황 지도</h3>
-                <p class="choropleth-map-desc">구를 클릭하면 등록 마릿수가 표시돼요 · 색이 진할수록 많아요</p>
+                <h3 class="choropleth-map-title">댕댕 살기 좋은 점수 지도</h3>
+                <p class="choropleth-map-desc">구를 클릭하면 상세 점수를 볼 수 있어요 · 공원·상권·시설 종합</p>
               </div>
+            </div>
+          </div>
+
+          <!-- 구 상세 카드 (클릭 시 표시) -->
+          <div id="district-detail-card" class="district-detail-card hidden"></div>
+
+          <!-- 점수 순위 차트 -->
+          <div class="charts-grid">
+            <div class="chart-card chart-card-full">
+              <h3 class="chart-title">🏆 댕댕 살기 좋은 점수 순위</h3>
+              <p class="chart-desc">공원 여유도 40점 + 펫 상권 지수 30점 + 반려동물 시설 30점 (100점 만점)</p>
+              <div class="chart-box chart-box-tall"><canvas id="chart-score"></canvas></div>
             </div>
           </div>
 

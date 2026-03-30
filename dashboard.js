@@ -9,36 +9,88 @@
 // 1. 서울 25개 구 더미 데이터
 // ----------------------------------------------------------------
 
+// petFacilities : 반려동물 시설 수 (애견카페·동물병원·놀이터 등) — 더미
+// petCommercial : 펫 관련 상권 지수 0~100 — 더미 (추후 B069 데이터로 교체)
 const DISTRICT_DATA = [
-  { gu: '강남구',   dogs: 27543, parkArea: 3250000 },
-  { gu: '강동구',   dogs: 16234, parkArea: 2180000 },
-  { gu: '강북구',   dogs: 11892, parkArea: 4520000 },
-  { gu: '강서구',   dogs: 19876, parkArea: 5830000 },
-  { gu: '관악구',   dogs: 14523, parkArea: 1920000 },
-  { gu: '광진구',   dogs: 13456, parkArea: 2340000 },
-  { gu: '구로구',   dogs: 14321, parkArea: 2670000 },
-  { gu: '금천구',   dogs:  8976, parkArea: 1430000 },
-  { gu: '노원구',   dogs: 21345, parkArea: 6780000 },
-  { gu: '도봉구',   dogs: 13678, parkArea: 5230000 },
-  { gu: '동대문구', dogs: 12345, parkArea: 1560000 },
-  { gu: '동작구',   dogs: 14567, parkArea: 2890000 },
-  { gu: '마포구',   dogs: 18234, parkArea: 7340000 },
-  { gu: '서대문구', dogs: 13456, parkArea: 3210000 },
-  { gu: '서초구',   dogs: 22345, parkArea: 4560000 },
-  { gu: '성동구',   dogs: 15678, parkArea: 3890000 },
-  { gu: '성북구',   dogs: 14234, parkArea: 2340000 },
-  { gu: '송파구',   dogs: 24567, parkArea: 8920000 },
-  { gu: '양천구',   dogs: 16789, parkArea: 2130000 },
-  { gu: '영등포구', dogs: 15432, parkArea: 4560000 },
-  { gu: '용산구',   dogs: 13456, parkArea: 2670000 },
-  { gu: '은평구',   dogs: 17654, parkArea: 3450000 },
-  { gu: '종로구',   dogs:  8765, parkArea: 5670000 },
-  { gu: '중구',     dogs:  6543, parkArea: 2340000 },
-  { gu: '중랑구',   dogs: 13234, parkArea: 2890000 },
+  { gu: '강남구',   dogs: 27543, parkArea: 3250000, petFacilities: 52, petCommercial: 88 },
+  { gu: '강동구',   dogs: 16234, parkArea: 2180000, petFacilities: 28, petCommercial: 55 },
+  { gu: '강북구',   dogs: 11892, parkArea: 4520000, petFacilities: 18, petCommercial: 32 },
+  { gu: '강서구',   dogs: 19876, parkArea: 5830000, petFacilities: 34, petCommercial: 62 },
+  { gu: '관악구',   dogs: 14523, parkArea: 1920000, petFacilities: 22, petCommercial: 41 },
+  { gu: '광진구',   dogs: 13456, parkArea: 2340000, petFacilities: 24, petCommercial: 48 },
+  { gu: '구로구',   dogs: 14321, parkArea: 2670000, petFacilities: 20, petCommercial: 38 },
+  { gu: '금천구',   dogs:  8976, parkArea: 1430000, petFacilities: 12, petCommercial: 25 },
+  { gu: '노원구',   dogs: 21345, parkArea: 6780000, petFacilities: 38, petCommercial: 58 },
+  { gu: '도봉구',   dogs: 13678, parkArea: 5230000, petFacilities: 22, petCommercial: 40 },
+  { gu: '동대문구', dogs: 12345, parkArea: 1560000, petFacilities: 16, petCommercial: 35 },
+  { gu: '동작구',   dogs: 14567, parkArea: 2890000, petFacilities: 26, petCommercial: 50 },
+  { gu: '마포구',   dogs: 18234, parkArea: 7340000, petFacilities: 48, petCommercial: 82 },
+  { gu: '서대문구', dogs: 13456, parkArea: 3210000, petFacilities: 24, petCommercial: 46 },
+  { gu: '서초구',   dogs: 22345, parkArea: 4560000, petFacilities: 46, petCommercial: 80 },
+  { gu: '성동구',   dogs: 15678, parkArea: 3890000, petFacilities: 32, petCommercial: 65 },
+  { gu: '성북구',   dogs: 14234, parkArea: 2340000, petFacilities: 20, petCommercial: 38 },
+  { gu: '송파구',   dogs: 24567, parkArea: 8920000, petFacilities: 50, petCommercial: 84 },
+  { gu: '양천구',   dogs: 16789, parkArea: 2130000, petFacilities: 22, petCommercial: 44 },
+  { gu: '영등포구', dogs: 15432, parkArea: 4560000, petFacilities: 36, petCommercial: 70 },
+  { gu: '용산구',   dogs: 13456, parkArea: 2670000, petFacilities: 30, petCommercial: 72 },
+  { gu: '은평구',   dogs: 17654, parkArea: 3450000, petFacilities: 26, petCommercial: 45 },
+  { gu: '종로구',   dogs:  8765, parkArea: 5670000, petFacilities: 28, petCommercial: 60 },
+  { gu: '중구',     dogs:  6543, parkArea: 2340000, petFacilities: 20, petCommercial: 55 },
+  { gu: '중랑구',   dogs: 13234, parkArea: 2890000, petFacilities: 16, petCommercial: 30 },
 ];
 
 // app.js의 buildPopupHTML에서 공원 팝업 통계 조회용으로 노출
 window.DISTRICT_DATA = DISTRICT_DATA;
+
+
+// ----------------------------------------------------------------
+// 1-1. 댕댕 살기 좋은 점수 계산 (100점 만점)
+//      공원 여유도 40점 + 상권 지수 30점 + 시설 수 30점
+// ----------------------------------------------------------------
+
+function calcAllScores() {
+  // 각 항목 최솟값/최댓값 → 0~1 정규화 후 가중치 적용
+  const parkRatios  = DISTRICT_DATA.map(d => d.parkArea / d.dogs);
+  const commercials = DISTRICT_DATA.map(d => d.petCommercial);
+  const facilities  = DISTRICT_DATA.map(d => d.petFacilities);
+
+  const minPark = Math.min(...parkRatios), maxPark = Math.max(...parkRatios);
+  const minComm = Math.min(...commercials), maxComm = Math.max(...commercials);
+  const minFac  = Math.min(...facilities),  maxFac  = Math.max(...facilities);
+
+  const norm = (v, mn, mx) => mx === mn ? 0.5 : (v - mn) / (mx - mn);
+
+  DISTRICT_DATA.forEach((d, i) => {
+    const parkScore = norm(parkRatios[i], minPark, maxPark) * 40;
+    const commScore = norm(commercials[i], minComm, maxComm) * 30;
+    const facScore  = norm(facilities[i],  minFac,  maxFac)  * 30;
+    d.daengScore = Math.round(parkScore + commScore + facScore);
+  });
+}
+
+// 점수를 색상으로 변환 (🟢 70+, 🟡 40~70, 🔴 40 미만)
+function getScoreColor(score) {
+  if (score >= 70) {
+    // 초록 계열: 연초록 → 진초록
+    const t = (score - 70) / 30;
+    return `rgb(${Math.round(134 - t * 40)}, ${Math.round(199 + t * 30)}, ${Math.round(130 - t * 40)})`;
+  } else if (score >= 40) {
+    // 노랑 계열
+    const t = (score - 40) / 30;
+    return `rgb(255, ${Math.round(210 - t * 30)}, ${Math.round(50 + t * 20)})`;
+  } else {
+    // 빨강 계열: 연빨강 → 진빨강
+    const t = score / 40;
+    return `rgb(255, ${Math.round(100 + t * 60)}, ${Math.round(80 + t * 50)})`;
+  }
+}
+
+// 점수 등급 텍스트
+function getScoreTier(score) {
+  if (score >= 70) return 'high';
+  if (score >= 40) return 'mid';
+  return 'low';
+}
 
 
 // ----------------------------------------------------------------
@@ -91,15 +143,18 @@ let recommendInitialized  = false;
 // ----------------------------------------------------------------
 
 function updateStatCards() {
+  // 댕댕 점수 1위 (calcAllScores 이후 호출되어야 함)
+  const topScore = [...DISTRICT_DATA].sort((a, b) => (b.daengScore ?? 0) - (a.daengScore ?? 0))[0];
+  const topScoreEl = document.getElementById('stat-top-score');
+  if (topScoreEl && topScore?.daengScore != null) {
+    topScoreEl.textContent = `${topScore.gu} (${topScore.daengScore}점)`;
+  }
+
   const topDogs = [...DISTRICT_DATA].sort((a, b) => b.dogs - a.dogs)[0];
   document.getElementById('stat-top-gu').textContent =
     `${topDogs.gu} (${topDogs.dogs.toLocaleString()}마리)`;
 
-  const topPark = [...DISTRICT_DATA]
-    .map(d => ({ ...d, ratio: Math.round(d.parkArea / d.dogs) }))
-    .sort((a, b) => b.ratio - a.ratio)[0];
-  document.getElementById('stat-top-park').textContent =
-    `${topPark.gu} (${topPark.ratio.toLocaleString()}㎡)`;
+  // stat-top-park 엘리먼트가 제거됐으므로 skip (HTML 변경됨)
 
   const total = DISTRICT_DATA.reduce((sum, d) => sum + d.dogs, 0);
   document.getElementById('stat-total').textContent =
@@ -394,31 +449,20 @@ function selectDistrictByName(guName) {
   const g = svgEl.querySelector(`g[data-gu="${guName}"]`);
   if (!g) return;
 
-  const dogs = g.dataset.dogs || 0;
+  const score = parseFloat(g.dataset.score) || 0;
 
   if (selectedGu === guName) {
     deselectDistrict();
   } else {
-    onDistrictClick(guName, dogs, g);
+    onDistrictClick(guName, score, g);
   }
 }
 
 
 // ----------------------------------------------------------------
-// 9. 코로플레스 지도 색상 계산
+// 9. 코로플레스 지도 — 댕댕 점수 기반 색상
 // ----------------------------------------------------------------
-
-function getDogColor(dogs) {
-  const min   = Math.min(...DISTRICT_DATA.map(d => d.dogs));
-  const max   = Math.max(...DISTRICT_DATA.map(d => d.dogs));
-  const ratio = (dogs - min) / (max - min);
-
-  // 연한 살구 → 진한 오렌지
-  const r = 255;
-  const g = Math.round(243 - ratio * 180);
-  const b = Math.round(224 - ratio * 224);
-  return `rgb(${r},${g},${b})`;
-}
+// (getDogColor 제거 → getScoreColor 사용)
 
 
 // ----------------------------------------------------------------
@@ -444,8 +488,9 @@ async function drawChoroplethMap() {
     return;
   }
 
-  const dogMap = {};
-  DISTRICT_DATA.forEach(d => { dogMap[d.gu] = d.dogs; });
+  // 점수→구명 매핑
+  const scoreMap = {};
+  DISTRICT_DATA.forEach(d => { scoreMap[d.gu] = d.daengScore ?? 50; });
 
   // 모든 좌표 범위 계산
   let minLng = Infinity, maxLng = -Infinity;
@@ -480,8 +525,8 @@ async function drawChoroplethMap() {
 
   geoData.features.forEach(feature => {
     const guName = feature.properties.name;
-    const dogs   = dogMap[guName] || 0;
-    const color  = getDogColor(dogs);
+    const score  = scoreMap[guName] ?? 50;
+    const color  = getScoreColor(score);
 
     const geom  = feature.geometry;
     const rings = geom.type === 'MultiPolygon'
@@ -501,10 +546,10 @@ async function drawChoroplethMap() {
     const cy = (minY + maxY) / 2;
 
     const g = document.createElementNS(NS, 'g');
-    g.dataset.gu   = guName;
-    g.dataset.dogs = dogs;
-    g.dataset.cx   = cx;
-    g.dataset.cy   = cy;
+    g.dataset.gu    = guName;
+    g.dataset.score = score;
+    g.dataset.cx    = cx;
+    g.dataset.cy    = cy;
     g.style.cursor = 'pointer';
 
     rings.forEach(ring => {
@@ -556,7 +601,7 @@ async function drawChoroplethMap() {
 
     g.addEventListener('click', e => {
       e.stopPropagation();
-      onDistrictClick(guName, dogs, g);
+      onDistrictClick(guName, score, g);
     });
 
     svg.appendChild(g);
@@ -586,12 +631,17 @@ async function drawChoroplethMap() {
 // 11. 구 선택 / 해제 상태 관리
 // ----------------------------------------------------------------
 
-function onDistrictClick(guName, dogs, clickedG) {
+function onDistrictClick(guName, scoreOrDogs, clickedG) {
+  // 두 번 클릭 → 선택 해제
   if (selectedGu === guName) {
     deselectDistrict();
     return;
   }
   selectedGu = guName;
+
+  // 구 데이터 조회
+  const distData = DISTRICT_DATA.find(d => d.gu === guName);
+  const score    = distData?.daengScore ?? (typeof scoreOrDogs === 'number' ? scoreOrDogs : 50);
 
   // 폴리곤 스타일 업데이트
   if (svgEl) {
@@ -619,9 +669,11 @@ function onDistrictClick(guName, dogs, clickedG) {
   if (svgTooltipEl) {
     const cx = parseFloat(clickedG.dataset.cx);
     const cy = parseFloat(clickedG.dataset.cy);
+    const tier = getScoreTier(score);
+    const tierEmoji = tier === 'high' ? '🟢' : tier === 'mid' ? '🟡' : '🔴';
     svgTooltipEl.innerHTML =
       `<div class="dt-gu">${guName}</div>` +
-      `<div class="dt-count">${parseInt(dogs).toLocaleString()}마리</div>`;
+      `<div class="dt-score">${tierEmoji} ${score}점</div>`;
     svgTooltipEl.style.display = 'block';
 
     // 퍼센트 위치 계산
@@ -641,6 +693,9 @@ function onDistrictClick(guName, dogs, clickedG) {
 
   // 차트 막대 강조
   highlightChartBar(guName);
+
+  // 구 상세 카드 렌더
+  renderDistrictDetailCard(guName, score, distData);
 }
 
 function deselectDistrict() {
@@ -660,6 +715,174 @@ function deselectDistrict() {
   if (svgTooltipEl) svgTooltipEl.style.display = 'none';
 
   clearChartHighlight();
+
+  // 상세 카드 숨기기
+  const card = document.getElementById('district-detail-card');
+  if (card) card.classList.add('hidden');
+}
+
+
+// ----------------------------------------------------------------
+// 11-1. 구 상세 카드 렌더 (점수 티어에 따라 다른 메시지 + 버튼)
+// ----------------------------------------------------------------
+
+function renderDistrictDetailCard(guName, score, data) {
+  const card = document.getElementById('district-detail-card');
+  if (!card) return;
+  card.classList.remove('hidden');
+
+  const tier = getScoreTier(score);
+
+  // 티어별 콘텐츠 정의
+  const tiers = {
+    high: {
+      emoji:   '🎉',
+      cls:     'score-high',
+      title:   `${guName}는 댕댕 살기 좋은 동네예요!`,
+      msg:     `공원 여유도·펫 상권·시설 모두 상위권이에요.\n강아지와 함께 다양한 장소를 즐겨보세요! 🐾`,
+      buttons: [
+        { label: '🗺️ 추천 산책 코스 보기', action: () => document.querySelector('.tab-btn[data-tab="map"]')?.click() },
+      ],
+    },
+    mid: {
+      emoji:   '🌱',
+      cls:     'score-mid',
+      title:   `${guName}도 괜찮지만, 여기 가면 더 넓어요!`,
+      msg:     `중위권 점수예요. 인근 상위 구의 공원에서\n더 여유로운 산책을 즐길 수 있어요!`,
+      buttons: [
+        { label: '🌳 인근 공원 추천 보기', action: () => document.querySelector('.tab-btn[data-tab="map"]')?.click() },
+      ],
+    },
+    low: {
+      emoji:   '😢',
+      cls:     'score-low',
+      title:   `${guName}는 댕댕 인프라가 부족해요`,
+      msg:     `공원 면적이나 반려동물 시설이 상대적으로\n부족해요. 우리 동네 목소리를 높여봐요!`,
+      buttons: [
+        { label: '📢 서울시 주민청원 바로가기', href: 'https://petition.seoul.go.kr' },
+        { label: '📂 공공데이터 제공신청 바로가기', href: 'https://data.seoul.go.kr/together/applyDataRequest.do' },
+      ],
+    },
+  };
+
+  const t = tiers[tier];
+
+  // 통계 정보
+  const parkRatio = data ? Math.round(data.parkArea / data.dogs) : '-';
+  const dogs      = data ? data.dogs.toLocaleString() : '-';
+
+  card.innerHTML = `
+    <div class="ddc-top ${t.cls}">
+      <div class="ddc-score-badge">
+        <span class="ddc-score-num">${score}</span>
+        <span class="ddc-score-label">점</span>
+      </div>
+      <div class="ddc-info">
+        <div class="ddc-emoji">${t.emoji}</div>
+        <div class="ddc-title">${t.title}</div>
+        <div class="ddc-msg">${t.msg.replace(/\n/g,'<br>')}</div>
+      </div>
+    </div>
+    <div class="ddc-stats">
+      <div class="ddc-stat-item">
+        <span class="ddc-stat-label">등록 반려견</span>
+        <span class="ddc-stat-val">${dogs}마리</span>
+      </div>
+      <div class="ddc-stat-item">
+        <span class="ddc-stat-label">1마리당 공원</span>
+        <span class="ddc-stat-val">${parkRatio}㎡</span>
+      </div>
+      <div class="ddc-stat-item">
+        <span class="ddc-stat-label">반려동물 시설</span>
+        <span class="ddc-stat-val">${data?.petFacilities ?? '-'}개</span>
+      </div>
+      <div class="ddc-stat-item">
+        <span class="ddc-stat-label">상권 지수</span>
+        <span class="ddc-stat-val">${data?.petCommercial ?? '-'}점</span>
+      </div>
+    </div>
+    <div class="ddc-buttons">
+      ${t.buttons.map(b => b.href
+        ? `<a href="${b.href}" target="_blank" rel="noopener" class="ddc-btn">${b.label}</a>`
+        : `<button class="ddc-btn" onclick="(${b.action.toString()})()">${b.label}</button>`
+      ).join('')}
+    </div>
+  `;
+}
+
+
+// ----------------------------------------------------------------
+// 11-2. 댕댕 점수 순위 차트
+// ----------------------------------------------------------------
+
+let chartScore = null;
+
+function drawScoreChart() {
+  const sorted = [...DISTRICT_DATA].sort((a, b) => b.daengScore - a.daengScore);
+  const labels = sorted.map(d => d.gu);
+  const values = sorted.map(d => d.daengScore);
+  const colors = sorted.map(d => {
+    const tier = getScoreTier(d.daengScore);
+    return tier === 'high' ? 'rgba(52,199,89,0.82)' : tier === 'mid' ? 'rgba(255,184,0,0.82)' : 'rgba(255,69,58,0.72)';
+  });
+
+  const canvas = document.getElementById('chart-score');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  chartScore = new Chart(ctx, {
+    type: 'bar',
+    plugins: [barHighlightPlugin],
+    data: {
+      labels,
+      datasets: [{
+        label: '댕댕 살기 좋은 점수',
+        data: values,
+        backgroundColor: colors,
+        borderRadius: 6,
+        borderSkipped: false,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { right: 52 } },
+      onClick: (evt, elements) => {
+        if (elements.length > 0) selectDistrictByName(labels[elements[0].index]);
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.raw}점` },
+        },
+        datalabels: {
+          anchor: 'end',
+          align: 'end',
+          clamp: true,
+          formatter: v => `${v}점`,
+          font: { family: 'Pretendard, -apple-system, sans-serif', weight: '700', size: 10 },
+          color: (ctx) => {
+            const idx = ctx.chart._highlightIndex;
+            return ctx.dataIndex === idx ? '#FF8C42' : '#8E8E93';
+          },
+        },
+      },
+      scales: {
+        x: { min: 0, max: 100, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => `${v}점` } },
+        y: { grid: { display: false }, ticks: {
+          font: (ctx) => {
+            const isSel = ctx.chart._highlightIndex != null && ctx.index === ctx.chart._highlightIndex;
+            return { family: 'Pretendard, -apple-system, sans-serif', weight: isSel ? '900' : '600', size: isSel ? 13 : 12 };
+          },
+          color: (ctx) => {
+            const idx = ctx.chart._highlightIndex;
+            return idx != null && ctx.index === idx ? '#FF8C42' : '#48484A';
+          },
+        }},
+      },
+    },
+  });
 }
 
 
@@ -884,11 +1107,13 @@ async function loadAdoptionSection() {
 // ----------------------------------------------------------------
 
 async function initDashboard() {
-  await fetchDogRegistrationData();
+  await fetchDogRegistrationData(); // API 또는 더미 데이터 로드
+  calcAllScores();                  // 댕댕 점수 계산 (데이터 로드 후)
   updateStatCards();
+  drawScoreChart();                 // 점수 순위 차트 (신규)
   drawDogChart();
   drawParkChart();
-  drawChoroplethMap();
+  drawChoroplethMap();              // 점수 기반 색상으로 표시
   drawInsights();
   loadAdoptionSection();
   console.log('✅ 대시보드 초기화 완료');

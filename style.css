@@ -1415,6 +1415,142 @@ body {
 
 .district-tooltip .dt-gu    { font-size: 0.80rem; font-weight: 700; letter-spacing: -0.2px; color: var(--text-1); margin-bottom: 4px; }
 .district-tooltip .dt-count { font-size: 1rem; font-weight: 900; letter-spacing: -0.4px; color: var(--brand); margin-bottom: 2px; }
+.district-tooltip .dt-score { font-size: 1rem; font-weight: 900; letter-spacing: -0.4px; color: var(--brand); }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   댕댕 점수 지도 범례
+═══════════════════════════════════════════════════════════════ */
+.score-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-dot.high { background: #34C759; }
+.legend-dot.mid  { background: #FFB800; }
+.legend-dot.low  { background: #FF453A; }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   구 상세 카드
+═══════════════════════════════════════════════════════════════ */
+.district-detail-card {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 20px;
+  overflow: hidden;
+  animation: slide-in 0.3s ease;
+}
+.district-detail-card.hidden { display: none; }
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ddc-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 20px 16px;
+}
+
+.ddc-top.score-high { border-left: 5px solid #34C759; }
+.ddc-top.score-mid  { border-left: 5px solid #FFB800; }
+.ddc-top.score-low  { border-left: 5px solid #FF453A; }
+
+.ddc-score-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  height: 60px;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+.ddc-score-num   { font-size: 1.5rem; font-weight: 900; color: var(--brand); line-height: 1; }
+.ddc-score-label { font-size: 0.65rem; font-weight: 700; color: var(--text-3); margin-top: 2px; }
+
+.ddc-info { flex: 1; }
+.ddc-emoji { font-size: 1.3rem; margin-bottom: 4px; }
+.ddc-title { font-size: 0.95rem; font-weight: 800; color: var(--text-1); margin-bottom: 4px; letter-spacing: -0.2px; }
+.ddc-msg   { font-size: 0.80rem; color: var(--text-3); line-height: 1.6; }
+
+.ddc-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--separator);
+  border-top: 1px solid var(--separator);
+}
+.ddc-stat-item {
+  background: var(--surface);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ddc-stat-label { font-size: 0.68rem; font-weight: 600; color: var(--text-3); }
+.ddc-stat-val   { font-size: 0.9rem; font-weight: 800; color: var(--text-1); }
+
+.ddc-buttons {
+  display: flex;
+  gap: 8px;
+  padding: 14px 20px;
+  flex-wrap: wrap;
+}
+.ddc-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 16px;
+  border-radius: var(--radius-md);
+  background: var(--brand);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.ddc-btn:hover { background: var(--brand-dark); }
+.ddc-btn + .ddc-btn { background: var(--surface-2); color: var(--text-1); border: 1px solid var(--separator); }
+.ddc-btn + .ddc-btn:hover { background: var(--surface-3); }
+
+
+/* ── 점수 차트 전체 너비 + 높이 ─── */
+.chart-card-full { grid-column: 1 / -1; }
+.chart-box-tall  { height: 560px; }
+
+/* ── 통계 카드 하이라이트 ─── */
+.stat-card-highlight {
+  background: linear-gradient(135deg, #FFF4E6, #FFF9F0);
+  border: 1.5px solid var(--brand-light);
+}
+.stat-card-highlight .stat-icon { font-size: 1.4rem; }
+
+/* 모바일 ddc-stats */
+@media (max-width: 768px) {
+  .ddc-stats { grid-template-columns: repeat(2, 1fr); }
+  .chart-box-tall { height: 700px; }
+}
 
 
 /* ═══════════════════════════════════════════════════════════════
