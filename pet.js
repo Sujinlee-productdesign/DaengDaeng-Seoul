@@ -11,24 +11,24 @@
 // ── 동 단위 더미 데이터 (B079 카드소비 기반, 추후 실데이터 교체) ──
 // spending : 펫 관련 월평균 소비 (만원) / index : 상권 지수 0~100
 const DONG_PET_DATA = [
-  { name: '연남동',    gu: '마포구',   lat: 37.5665, lng: 126.9235, spending: 382, index: 92, types: ['cafe','shop'] },
+  { name: '연남동',    gu: '마포구',   lat: 37.5665, lng: 126.9235, spending: 382, index: 92, types: ['cafe'] },
   { name: '성수동1가', gu: '성동구',   lat: 37.5444, lng: 127.0567, spending: 354, index: 88, types: ['cafe','hospital'] },
-  { name: '청담동',    gu: '강남구',   lat: 37.5230, lng: 127.0491, spending: 412, index: 95, types: ['shop','hospital'] },
+  { name: '청담동',    gu: '강남구',   lat: 37.5230, lng: 127.0491, spending: 412, index: 95, types: ['hospital'] },
   { name: '합정동',    gu: '마포구',   lat: 37.5497, lng: 126.9140, spending: 298, index: 80, types: ['cafe'] },
-  { name: '한남동',    gu: '용산구',   lat: 37.5344, lng: 127.0006, spending: 336, index: 85, types: ['cafe','shop'] },
-  { name: '서교동',    gu: '마포구',   lat: 37.5530, lng: 126.9219, spending: 274, index: 76, types: ['cafe','shop'] },
-  { name: '역삼동',    gu: '강남구',   lat: 37.5007, lng: 127.0363, spending: 310, index: 82, types: ['hospital','shop'] },
+  { name: '한남동',    gu: '용산구',   lat: 37.5344, lng: 127.0006, spending: 336, index: 85, types: ['cafe'] },
+  { name: '서교동',    gu: '마포구',   lat: 37.5530, lng: 126.9219, spending: 274, index: 76, types: ['cafe'] },
+  { name: '역삼동',    gu: '강남구',   lat: 37.5007, lng: 127.0363, spending: 310, index: 82, types: ['hospital'] },
   { name: '반포동',    gu: '서초구',   lat: 37.5040, lng: 126.9945, spending: 288, index: 78, types: ['hospital','cafe'] },
   { name: '이태원동',  gu: '용산구',   lat: 37.5345, lng: 126.9944, spending: 266, index: 73, types: ['cafe'] },
-  { name: '상수동',    gu: '마포구',   lat: 37.5479, lng: 126.9222, spending: 252, index: 70, types: ['cafe','shop'] },
+  { name: '상수동',    gu: '마포구',   lat: 37.5479, lng: 126.9222, spending: 252, index: 70, types: ['cafe'] },
   { name: '망원동',    gu: '마포구',   lat: 37.5561, lng: 126.9036, spending: 241, index: 68, types: ['cafe'] },
-  { name: '송파동',    gu: '송파구',   lat: 37.5011, lng: 127.1156, spending: 235, index: 66, types: ['hospital','shop'] },
-  { name: '잠실동',    gu: '송파구',   lat: 37.5133, lng: 127.1002, spending: 228, index: 64, types: ['shop','hospital'] },
+  { name: '송파동',    gu: '송파구',   lat: 37.5011, lng: 127.1156, spending: 235, index: 66, types: ['hospital'] },
+  { name: '잠실동',    gu: '송파구',   lat: 37.5133, lng: 127.1002, spending: 228, index: 64, types: ['hospital'] },
   { name: '화양동',    gu: '광진구',   lat: 37.5433, lng: 127.0685, spending: 214, index: 60, types: ['cafe'] },
-  { name: '대치동',    gu: '강남구',   lat: 37.4940, lng: 127.0612, spending: 296, index: 79, types: ['hospital','shop'] },
+  { name: '대치동',    gu: '강남구',   lat: 37.4940, lng: 127.0612, spending: 296, index: 79, types: ['hospital'] },
   { name: '도화동',    gu: '마포구',   lat: 37.5389, lng: 126.9519, spending: 188, index: 54, types: ['hospital'] },
   { name: '왕십리동',  gu: '성동구',   lat: 37.5613, lng: 127.0372, spending: 175, index: 50, types: ['hospital'] },
-  { name: '공덕동',    gu: '마포구',   lat: 37.5440, lng: 126.9518, spending: 193, index: 56, types: ['shop','cafe'] },
+  { name: '공덕동',    gu: '마포구',   lat: 37.5440, lng: 126.9518, spending: 193, index: 56, types: ['cafe'] },
   { name: '혜화동',    gu: '종로구',   lat: 37.5830, lng: 127.0017, spending: 164, index: 48, types: ['cafe'] },
   { name: '신촌동',    gu: '서대문구', lat: 37.5597, lng: 126.9370, spending: 202, index: 58, types: ['cafe','hospital'] },
 ];
@@ -38,7 +38,7 @@ let TOP5 = [...DONG_PET_DATA]
   .sort((a, b) => b.spending - a.spending)
   .slice(0, 5);
 
-const TYPE_LABEL = { hospital: '동물병원', shop: '펫샵', cafe: '반려견카페' };
+const TYPE_LABEL = { hospital: '동물병원', cafe: '반려견카페' };
 
 let comm2Map     = null;  // 카카오맵 인스턴스
 let comm2Overlays = [];   // 히트맵 원형 오버레이 배열
@@ -79,19 +79,17 @@ async function loadRealCommData() {
     // 연속 호출 부하 방지
     await new Promise(r => setTimeout(r, 80));
 
-    const [hosp, cafe, shop] = await Promise.all([
+    const [hosp, cafe] = await Promise.all([
       search('동물병원', dong.lat, dong.lng),
       search('애견카페', dong.lat, dong.lng),
-      search('펫샵',    dong.lat, dong.lng),
     ]);
 
-    const raw = hosp * 10 + cafe * 8 + shop * 6;
+    const raw = hosp * 10 + cafe * 8;
     if (raw > 0) {
       dong.index = raw;
       dong.types = [];
       if (hosp > 0) dong.types.push('hospital');
       if (cafe > 0) dong.types.push('cafe');
-      if (shop > 0) dong.types.push('shop');
       if (!dong.types.length) dong.types = ['hospital'];
     }
   }
@@ -208,18 +206,18 @@ function buildComm2Pie() {
   if (!canvas) return;
 
   // 업종별 소비 합산
-  const totals = { hospital: 0, shop: 0, cafe: 0 };
+  const totals = { hospital: 0, cafe: 0 };
   DONG_PET_DATA.forEach(d => {
-    d.types.forEach(t => { totals[t] += d.spending; });
+    d.types.forEach(t => { if (t in totals) totals[t] += d.spending; });
   });
 
   comm2PieChart = new Chart(canvas, {
     type: 'doughnut',
     data: {
-      labels: ['동물병원', '펫샵', '반려견카페'],
+      labels: ['동물병원', '반려견카페'],
       datasets: [{
-        data: [totals.hospital, totals.shop, totals.cafe],
-        backgroundColor: ['#FF2D55', '#5856D6', '#FF8C42'],
+        data: [totals.hospital, totals.cafe],
+        backgroundColor: ['#FF2D55', '#FF8C42'],
         borderWidth: 2,
         borderColor: '#fff',
       }],
