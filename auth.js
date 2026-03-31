@@ -12,6 +12,7 @@ const KEY_SESSION     = 'daengseoul_session';
 const KEY_BM          = (uid) => `daengseoul_bm_${uid}`;
 const KEY_CORRECTIONS = 'daengseoul_corrections';   // 정정 요청 목록
 const KEY_EXCLUDED    = 'daengseoul_excluded';       // 관리자가 제외한 장소 이름 목록
+const KEY_SUGGESTIONS = 'daengseoul_suggestions';   // 장소 등록 제안 목록
 
 // 현재 세션 (전역 — app.js, ai.js에서도 참조)
 let currentUser = null; // { id, role: 'admin'|'user' }
@@ -357,7 +358,45 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('admin-refresh-btn')?.addEventListener('click', () => {
     renderAdminUserList();
     renderCorrectionList();
+    renderSuggestionList();
   });
+
+  // ── 장소 등록 제안 FAB ────────────────────────────────────────
+  document.getElementById('map-suggest-btn')?.addEventListener('click', () => {
+    document.getElementById('suggest-modal')?.classList.remove('hidden');
+  });
+
+  document.getElementById('suggest-modal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'suggest-modal')
+      document.getElementById('suggest-modal').classList.add('hidden');
+  });
+
+  document.getElementById('suggest-submit-btn')?.addEventListener('click', () => {
+    const name     = document.getElementById('suggest-name')?.value || '';
+    const category = document.getElementById('suggest-category')?.value || 'cafe';
+    const desc     = document.getElementById('suggest-desc-input')?.value || '';
+    const kakaoUrl = document.getElementById('suggest-kakao-url')?.value || '';
+    const errEl    = document.getElementById('suggest-error');
+    const okEl     = document.getElementById('suggest-success');
+
+    const res = window.submitPlaceSuggestion(name, category, desc, kakaoUrl);
+    if (!res.ok) {
+      if (errEl) errEl.textContent = res.msg;
+      return;
+    }
+    if (errEl) errEl.textContent = '';
+    okEl?.classList.remove('hidden');
+    setTimeout(() => {
+      document.getElementById('suggest-modal')?.classList.add('hidden');
+      okEl?.classList.add('hidden');
+      document.getElementById('suggest-name').value     = '';
+      document.getElementById('suggest-desc-input').value = '';
+      document.getElementById('suggest-kakao-url').value = '';
+    }, 2000);
+  });
+
+  // 초기 뱃지 업데이트
+  updateSuggBadge();
 
   document.getElementById('admin-reset-submit')?.addEventListener('click', () => {
     const targetId = document.getElementById('admin-target-id')?.value.trim();
@@ -473,5 +512,97 @@ function renderCorrectionList() {
 const _origUpdateAccountPanel = typeof updateAccountPanel === 'function' ? updateAccountPanel : null;
 function updateAccountPanel() {
   if (_origUpdateAccountPanel) _origUpdateAccountPanel();
-  if (currentUser?.role === 'admin') renderCorrectionList();
+  if (currentUser?.role === 'admin') {
+    renderCorrectionList();
+    renderSuggestionList();
+  }
+}
+
+
+// ================================================================
+//  장소 등록 제안 관리
+// ================================================================
+
+function getSuggestions() {
+  try { return JSON.parse(localStorage.getItem(KEY_SUGGESTIONS) || '[]'); } catch { return []; }
+}
+function saveSuggestions(list) {
+  localStorage.setItem(KEY_SUGGESTIONS, JSON.stringify(list));
+}
+
+function updateSuggBadge() {
+  const badge = document.getElementById('sugg-badge');
+  if (!badge) return;
+  const count = getSuggestions().filter(s => s.status === 'pending').length;
+  badge.textContent = count || '';
+  badge.classList.toggle('hidden', count === 0);
+}
+
+// 제출 (누구나 가능)
+window.submitPlaceSuggestion = function(name, category, desc, kakaoUrl) {
+  if (!name.trim())     return { ok: false, msg: '장소 이름을 입력해주세요' };
+  if (!kakaoUrl.trim()) return { ok: false, msg: '카카오맵 링크를 입력해주세요' };
+  if (!kakaoUrl.startsWith('http')) return { ok: false, msg: '올바른 URL 형식으로 입력해주세요' };
+
+  const list = getSuggestions();
+  list.push({
+    id:        Date.now(),
+    name:      name.trim(),
+    category,
+    desc:      desc.trim(),
+    kakaoUrl:  kakaoUrl.trim(),
+    timestamp: new Date().toLocaleString('ko-KR'),
+    status:    'pending',
+  });
+  saveSuggestions(list);
+  updateSuggBadge();
+  return { ok: true };
+};
+
+// 관리자: 승인
+window.adminApproveSuggestion = function(suggId) {
+  const list = getSuggestions().map(s =>
+    s.id === suggId ? { ...s, status: 'approved' } : s
+  );
+  saveSuggestions(list);
+  renderSuggestionList();
+};
+
+// 관리자: 반려
+window.adminRejectSuggestion = function(suggId) {
+  const list = getSuggestions().map(s =>
+    s.id === suggId ? { ...s, status: 'rejected' } : s
+  );
+  saveSuggestions(list);
+  renderSuggestionList();
+};
+
+const CAT_LABEL = {
+  park: '공원', cafe: '애견카페', restaurant: '음식점',
+  'pf-cafe': '애견동반카페', vet: '동물병원', playground: '반려견놀이터',
+};
+
+function renderSuggestionList() {
+  const el = document.getElementById('admin-suggestion-list');
+  if (!el) return;
+  const pending = getSuggestions().filter(s => s.status === 'pending');
+  updateSuggBadge();
+  if (pending.length === 0) {
+    el.innerHTML = '<div class="admin-empty">등록 제안이 없어요</div>';
+    return;
+  }
+  el.innerHTML = pending.map(s => `
+    <div class="admin-correction-item" id="sugg-${s.id}">
+      <div class="corr-name">${s.name}
+        <span class="sugg-cat-badge">${CAT_LABEL[s.category] || s.category}</span>
+      </div>
+      ${s.desc ? `<div class="corr-reason">${s.desc}</div>` : ''}
+      <a href="${s.kakaoUrl}" target="_blank" rel="noopener" class="sugg-kakao-link">카카오맵에서 보기 →</a>
+      <div class="corr-time">${s.timestamp}</div>
+      <div class="corr-actions">
+        <button class="corr-exclude-btn" onclick="adminApproveSuggestion(${s.id})">등록 승인</button>
+        <button class="corr-ignore-btn"  onclick="adminRejectSuggestion(${s.id})">반려</button>
+      </div>
+    </div>
+  `).join('');
 }

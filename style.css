@@ -3107,3 +3107,69 @@ body {
 @media (max-width: 600px) {
   .pet-events-list { grid-template-columns: 1fr; }
 }
+
+/* ── 장소 등록 제안 FAB ─────────────────────────────────────── */
+.map-suggest-fab {
+  position: absolute;
+  bottom: 64px;
+  right: 16px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--separator);
+  border-radius: 40px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--brand-dark);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.map-suggest-fab img { width: 16px; height: 16px;
+  filter: invert(34%) sepia(78%) saturate(671%) hue-rotate(342deg) brightness(96%); }
+.map-suggest-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.18); }
+.map-suggest-fab:active { transform: translateY(0); }
+
+/* ── 장소 등록 제안 모달 ────────────────────────────────────── */
+.suggest-modal-box { max-width: 420px; width: 92%; }
+.suggest-modal-box .auth-field { margin-bottom: 12px; }
+.suggest-modal-box select.auth-input { cursor: pointer; }
+
+/* ── 제안 카테고리 뱃지 ─────────────────────────────────────── */
+.sugg-cat-badge {
+  display: inline-block;
+  font-size: 0.65rem; font-weight: 700;
+  background: var(--brand-light); color: var(--brand-dark);
+  padding: 2px 7px; border-radius: 20px;
+  margin-left: 6px; vertical-align: middle;
+}
+.sugg-kakao-link {
+  display: inline-block; margin: 4px 0;
+  font-size: 0.75rem; font-weight: 700;
+  color: var(--brand); text-decoration: none;
+}
+.sugg-kakao-link:hover { text-decoration: underline; }
+
+/* ── 입양 카드 클릭 가능 스타일 ─────────────────────────────── */
+a.adoption-thumb-card--link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+a.adoption-thumb-card--link:hover .adoption-thumb-photo-wrap {
+  opacity: 0.88;
+}
+a.adoption-thumb-card--link:hover {
+  box-shadow: 0 4px 20px rgba(255,140,66,0.22);
+  transform: translateY(-2px);
+}
+a.adoption-thumb-card--link { transition: transform 0.15s, box-shadow 0.15s; }
+.adoption-detail-arrow {
+  margin-left: 6px;
+  font-size: 0.8rem;
+  color: var(--brand);
+  font-weight: 700;
+}

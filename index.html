@@ -160,6 +160,12 @@
           <img src="img/white_outline_logo.png" alt="댕댕서울" class="map-watermark-img">
         </div>
 
+        <!-- 장소 등록 제안 FAB (지도 우측 하단) -->
+        <button class="map-suggest-fab" id="map-suggest-btn" title="장소 등록 제안">
+          <img src="icons/location-pin.svg" alt="">
+          <span>장소 등록 제안</span>
+        </button>
+
         <!-- 날씨 + 미세먼지 플로팅 카드 (지도 우측 상단) -->
         <div id="air-banner" class="air-banner">
           <div id="weather-line" class="weather-line hidden"></div>
@@ -607,6 +613,14 @@
         <div class="admin-panel-divider"></div>
         <div class="admin-panel-title">관리자 패널</div>
 
+        <!-- 장소 등록 제안 섹션 -->
+        <div class="admin-section-label">장소 등록 제안 <span id="sugg-badge" class="corr-count-badge hidden"></span></div>
+        <div id="admin-suggestion-list" class="admin-correction-list">
+          <div class="admin-empty">등록 제안이 없어요</div>
+        </div>
+
+        <div class="admin-panel-divider"></div>
+
         <!-- 정정 요청 섹션 -->
         <div class="admin-section-label">정정 요청 <span id="corr-badge" class="corr-count-badge"></span></div>
         <div id="admin-correction-list" class="admin-correction-list">
@@ -658,6 +672,52 @@
       <div class="auth-success hidden" id="corr-success">접수 완료! 관리자가 확인 후 처리해드릴게요.</div>
 
       <button class="auth-submit-btn" id="corr-submit-btn">제출하기</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       장소 등록 제안 모달
+  ═══════════════════════════════════════ -->
+  <div id="suggest-modal" class="modal-backdrop hidden">
+    <div class="modal-box suggest-modal-box">
+      <button class="modal-close-x" onclick="document.getElementById('suggest-modal').classList.add('hidden')">
+        <img src="icons/close.svg" alt="닫기" class="modal-close-img">
+      </button>
+      <div class="auth-modal-title">장소 등록 제안</div>
+      <p class="corr-modal-desc">댕댕서울에 없는 반려견 동반 장소를 알려주세요!<br>관리자 검토 후 지도에 추가돼요.</p>
+
+      <div class="auth-field">
+        <label class="auth-label">장소 이름 <span style="color:var(--primary)">*</span></label>
+        <input type="text" id="suggest-name" class="auth-input" placeholder="예: 한강 반려견 놀이터">
+      </div>
+
+      <div class="auth-field">
+        <label class="auth-label">카테고리</label>
+        <select id="suggest-category" class="auth-input">
+          <option value="park">공원</option>
+          <option value="cafe">애견카페/운동장</option>
+          <option value="restaurant">음식점</option>
+          <option value="pf-cafe">애견동반 카페</option>
+          <option value="vet">동물병원</option>
+          <option value="playground">반려견 놀이터</option>
+        </select>
+      </div>
+
+      <div class="auth-field">
+        <label class="auth-label">장소 설명</label>
+        <textarea id="suggest-desc-input" class="corr-textarea"
+          placeholder="위치, 특징, 이용 시간 등 알려주세요"></textarea>
+      </div>
+
+      <div class="auth-field">
+        <label class="auth-label">카카오맵 링크 <span style="color:var(--primary)">*</span></label>
+        <input type="url" id="suggest-kakao-url" class="auth-input" placeholder="https://place.map.kakao.com/...">
+      </div>
+
+      <div class="auth-error" id="suggest-error"></div>
+      <div class="auth-success hidden" id="suggest-success">제안 감사해요! 관리자 확인 후 반영돼요 🐾</div>
+
+      <button class="auth-submit-btn" id="suggest-submit-btn">제출하기</button>
     </div>
   </div>
 

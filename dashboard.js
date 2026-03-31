@@ -1031,28 +1031,34 @@ async function loadAdoptionSection() {
   const listEl = document.getElementById('adoption-list');
   if (!listEl) return;
 
+  // 더미 데이터 — ADOPT_API_KEY 미설정 시 표시 (서울시 동물복지지원센터 실제 연락처)
+  // 상세 페이지: 서울시 반려동물 입양 안내 페이지로 연결
   const DUMMY_ANIMALS = [
-    { photo: 'https://images.dog.ceo/breeds/shiba/shiba-18.jpg',        name:'콩이',  breed:'믹스견',          sex:'수컷', age:'2살 추정', neuter:'',            care:'서울동물복지지원센터 마포',    tel:'02-300-5947',  tmpOk:true, adoptOk:true },
-    { photo: 'https://images.dog.ceo/breeds/maltese/n02085936_3709.jpg', name:'하루',  breed:'말티즈 믹스',     sex:'암컷', age:'1살 추정', neuter:'',            care:'서울동물복지지원센터 동대문', tel:'02-2127-5560', tmpOk:true, adoptOk:true },
-    { photo: 'https://images.dog.ceo/breeds/pomeranian/n02112018_5685.jpg', name:'뭉치',  breed:'포메라니안 믹스', sex:'수컷', age:'4살',      neuter:'중성화 완료', care:'서울동물복지지원센터 강동',   tel:'02-3425-3390', tmpOk:true, adoptOk:true },
-    { photo: 'https://images.dog.ceo/breeds/jindo/n02085782_4946.jpg',  name:'보리',  breed:'진도 믹스',       sex:'수컷', age:'3살 추정', neuter:'중성화 완료', care:'서울동물복지지원센터 중랑',   tel:'02-2094-0616', tmpOk:true, adoptOk:true },
-    { photo: 'https://images.dog.ceo/breeds/bichon-frise/WhatsApp_Image_2022-04-20_at_5.32.02_PM.jpg', name:'솜이',  breed:'비숑 믹스',       sex:'암컷', age:'5살',      neuter:'중성화 완료', care:'서울동물복지지원센터 은평',   tel:'02-351-0590',  tmpOk:true, adoptOk:true },
-    { photo: 'https://images.dog.ceo/breeds/shiba/shiba-7.jpg',         name:'단비',  breed:'시바견 믹스',     sex:'암컷', age:'2살 추정', neuter:'',            care:'서울동물복지지원센터 동작',   tel:'02-820-0988',  tmpOk:true, adoptOk:true },
+    { photo: 'https://images.dog.ceo/breeds/shiba/shiba-18.jpg',           name:'콩이',  breed:'믹스견',          sex:'수컷', age:'2살 추정', neuter:'',            care:'서울동물복지지원센터 마포',    tel:'02-300-5947',  tmpOk:true, adoptOk:true, detailUrl:'https://news.seoul.go.kr/env/pet' },
+    { photo: 'https://images.dog.ceo/breeds/maltese/n02085936_3709.jpg',   name:'하루',  breed:'말티즈 믹스',     sex:'암컷', age:'1살 추정', neuter:'',            care:'서울동물복지지원센터 동대문', tel:'02-2127-5560', tmpOk:true, adoptOk:true, detailUrl:'https://news.seoul.go.kr/env/pet' },
+    { photo: 'https://images.dog.ceo/breeds/pomeranian/n02112018_5685.jpg',name:'뭉치',  breed:'포메라니안 믹스', sex:'수컷', age:'4살',      neuter:'중성화 완료', care:'서울동물복지지원센터 강동',   tel:'02-3425-3390', tmpOk:true, adoptOk:true, detailUrl:'https://news.seoul.go.kr/env/pet' },
+    { photo: 'https://images.dog.ceo/breeds/jindo/n02085782_4946.jpg',     name:'보리',  breed:'진도 믹스',       sex:'수컷', age:'3살 추정', neuter:'중성화 완료', care:'서울동물복지지원센터 중랑',   tel:'02-2094-0616', tmpOk:true, adoptOk:true, detailUrl:'https://news.seoul.go.kr/env/pet' },
+    { photo: 'https://images.dog.ceo/breeds/bichon-frise/WhatsApp_Image_2022-04-20_at_5.32.02_PM.jpg', name:'솜이', breed:'비숑 믹스', sex:'암컷', age:'5살', neuter:'중성화 완료', care:'서울동물복지지원센터 은평', tel:'02-351-0590', tmpOk:true, adoptOk:true, detailUrl:'https://news.seoul.go.kr/env/pet' },
+    { photo: 'https://images.dog.ceo/breeds/shiba/shiba-7.jpg',            name:'단비',  breed:'시바견 믹스',     sex:'암컷', age:'2살 추정', neuter:'',            care:'서울동물복지지원센터 동작',   tel:'02-820-0988',  tmpOk:true, adoptOk:true, detailUrl:'https://news.seoul.go.kr/env/pet' },
   ];
 
   function renderCards(animals) {
     listEl.innerHTML = animals.map(a => {
       const sub = [a.breed, a.sex, a.age, a.neuter].filter(Boolean).join(' · ');
       const telLink = a.tel
-        ? `<a href="tel:${a.tel}" class="adoption-tel-link">${a.tel}</a>`
+        ? `<a href="tel:${a.tel}" class="adoption-tel-link" onclick="event.stopPropagation()">${a.tel}</a>`
         : '';
       const badges = `
         <div class="adoption-badges">
           <span class="adoption-badge ${a.tmpOk ? 'badge-ok' : 'badge-ask'}">임시보호 ${a.tmpOk ? '가능' : '문의'}</span>
           <span class="adoption-badge ${a.adoptOk ? 'badge-ok' : 'badge-ask'}">입양문의 ${a.adoptOk ? '가능' : '마감'}</span>
         </div>`;
+      const cardTag  = a.detailUrl ? 'a' : 'div';
+      const cardAttr = a.detailUrl
+        ? `href="${a.detailUrl}" target="_blank" rel="noopener"`
+        : '';
       return `
-        <div class="adoption-thumb-card">
+        <${cardTag} class="adoption-thumb-card${a.detailUrl ? ' adoption-thumb-card--link' : ''}" ${cardAttr}>
           <div class="adoption-thumb-photo-wrap">
             ${a.photo
               ? `<img src="${a.photo}" alt="${a.breed}" class="adoption-thumb-photo" loading="lazy"
@@ -1063,12 +1069,12 @@ async function loadAdoptionSection() {
             </div>
           </div>
           <div class="adoption-thumb-info">
-            <div class="adoption-card-name">${a.name || '보호 중'}</div>
+            <div class="adoption-card-name">${a.name || '보호 중'}${a.detailUrl ? '<span class="adoption-detail-arrow">→</span>' : ''}</div>
             <div class="adoption-card-sub">${sub}</div>
             ${badges}
             <div class="adoption-card-care">${a.care || ''}${telLink ? `<br>${telLink}` : ''}</div>
           </div>
-        </div>`;
+        </${cardTag}>`;
     }).join('');
   }
 
@@ -1084,9 +1090,12 @@ async function loadAdoptionSection() {
       const state   = item.processState || '';
       const isOpen  = state.includes('공고') || state === '';
       return {
-        photo:   (item.popfile || item.filename)
-                   ? `/img-proxy?url=${encodeURIComponent(item.popfile || item.filename)}`
-                   : null,
+        photo:     (item.popfile || item.filename)
+                     ? `/img-proxy?url=${encodeURIComponent(item.popfile || item.filename)}`
+                     : null,
+        detailUrl: item.desertionNo
+                     ? `https://www.animal.go.kr/front/anim/animalView.do?desertionNo=${item.desertionNo}`
+                     : 'https://news.seoul.go.kr/env/pet',
         name:    item.noticeNo ? `공고 ${item.noticeNo.split('-').pop()}` : '보호 중',
         breed:   cleanBreed(item.kindCd),
         sex:     sexLabel(item.sexCd),

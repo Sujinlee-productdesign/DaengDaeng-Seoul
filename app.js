@@ -941,20 +941,44 @@ async function fetchKakaoPlaces(keywords) {
       return addr.startsWith('서울');
     })
     .map(p => ({
-      name:    p.place_name,
-      lat:     parseFloat(p.y),
-      lng:     parseFloat(p.x),
-      address: p.road_address_name || p.address_name || '',
-      url:     p.place_url || '',
+      name:         p.place_name,
+      lat:          parseFloat(p.y),
+      lng:          parseFloat(p.x),
+      address:      p.road_address_name || p.address_name || '',
+      url:          p.place_url || '',
+      categoryName: p.category_name || '', // 카테고리 필터링용
     }))
     .filter(p => !isNaN(p.lat) && !isNaN(p.lng));
+}
+
+// 애견카페·놀이터 결과에서 제외할 업종 필터
+// - 카카오맵 업종: 반려동물미용, 반려동물용품 카테고리 제외
+// - 이름 기반: 유치원·호텔만 운영하는 업체 제외 (Kakao API가 태그를 미제공하므로 이름 휴리스틱 사용)
+function filterPetCafeExclusions(places) {
+  const EXCLUDE_CATS  = ['반려동물미용', '반려동물용품'];
+  const EXCLUDE_NAMES = /유치원|호텔/;
+  const KEEP_NAMES    = /카페|운동장|놀이터|파크|펫카페|도그카페/;
+
+  return places.filter(p => {
+    const cat  = p.categoryName || '';
+    const name = p.name || '';
+
+    // 1. 업종 분류가 미용·용품이면 제외
+    if (EXCLUDE_CATS.some(c => cat.includes(c))) return false;
+
+    // 2. 이름에 유치원·호텔이 포함되고, 카페·운동장 등 단어가 없으면 제외
+    if (EXCLUDE_NAMES.test(name) && !KEEP_NAMES.test(name)) return false;
+
+    return true;
+  });
 }
 
 // ① 애견카페/운동장 — 카카오에 "애견카페" 카테고리로 등록된 실제 업체
 async function fetchPetCafes() {
   try {
-    const places = await fetchKakaoPlaces(['애견카페', '강아지카페', '애견운동장']);
-    console.log(`✅ 애견카페/운동장 검색: ${places.length}건`);
+    const raw    = await fetchKakaoPlaces(['애견카페', '강아지카페', '애견운동장']);
+    const places = filterPetCafeExclusions(raw);
+    console.log(`✅ 애견카페/운동장: ${raw.length}건 → 필터 후 ${places.length}건`);
     return places.length > 0 ? places : DUMMY_CAFES;
   } catch (e) {
     console.warn('애견카페 검색 실패:', e);
@@ -993,12 +1017,9 @@ async function fetchVets() {
 // ⑤ 반려견 놀이터
 async function fetchPlaygrounds() {
   try {
-    const places = await fetchKakaoPlaces([
-      '반려견 놀이터',
-      '강아지 놀이터',
-      '펫파크',
-    ]);
-    console.log(`✅ 반려견 놀이터 검색: ${places.length}건`);
+    const raw    = await fetchKakaoPlaces(['반려견 놀이터', '강아지 놀이터', '펫파크']);
+    const places = filterPetCafeExclusions(raw);
+    console.log(`✅ 반려견 놀이터: ${raw.length}건 → 필터 후 ${places.length}건`);
     return places;
   } catch (e) {
     console.warn('반려견 놀이터 검색 실패:', e);
