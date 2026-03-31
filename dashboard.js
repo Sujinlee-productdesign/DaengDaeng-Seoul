@@ -130,6 +130,9 @@ function setupTabs() {
       if (target === 'commercial' && typeof initCommercial === 'function') {
         initCommercial();
       }
+
+      // 현재 탭을 URL hash에 저장 → 새로고침 시 복원
+      history.replaceState(null, '', '#' + target);
     });
   });
 }
@@ -741,7 +744,7 @@ function renderDistrictDetailCard(guName, score, data) {
       title:   `${guName}는 댕댕 살기 좋은 동네예요!`,
       msg:     `공원 여유도·펫 상권·시설 모두 상위권이에요.\n강아지와 함께 다양한 장소를 즐겨보세요! 🐾`,
       buttons: [
-        { label: '🗺️ 추천 산책 코스 보기', action: () => document.querySelector('.tab-btn[data-tab="map"]')?.click() },
+        { label: '🗺️ 추천 산책 코스 보기', mapNav: 'park' },
       ],
     },
     mid: {
@@ -750,7 +753,7 @@ function renderDistrictDetailCard(guName, score, data) {
       title:   `${guName}도 괜찮지만, 여기 가면 더 넓어요!`,
       msg:     `중위권 점수예요. 인근 상위 구의 공원에서\n더 여유로운 산책을 즐길 수 있어요!`,
       buttons: [
-        { label: '🌳 인근 공원 추천 보기', action: () => document.querySelector('.tab-btn[data-tab="map"]')?.click() },
+        { label: '🌳 인근 공원 추천 보기', mapNav: 'park' },
       ],
     },
     low: {
@@ -802,10 +805,16 @@ function renderDistrictDetailCard(guName, score, data) {
       </div>
     </div>
     <div class="ddc-buttons">
-      ${t.buttons.map(b => b.href
-        ? `<a href="${b.href}" target="_blank" rel="noopener" class="ddc-btn">${b.label}</a>`
-        : `<button class="ddc-btn" onclick="(${b.action.toString()})()">${b.label}</button>`
-      ).join('')}
+      ${t.buttons.map(b => {
+        if (b.href) {
+          return `<a href="${b.href}" target="_blank" rel="noopener" class="ddc-btn">${b.label}</a>`;
+        }
+        if (b.mapNav) {
+          const safeGu = guName.replace(/'/g, "\\'");
+          return `<button class="ddc-btn" onclick="window.navigateToMapWithFilter('${b.mapNav}','${safeGu}')">${b.label}</button>`;
+        }
+        return `<button class="ddc-btn" onclick="(${b.action.toString()})()">${b.label}</button>`;
+      }).join('')}
     </div>
   `;
 }
@@ -1023,12 +1032,12 @@ async function loadAdoptionSection() {
   if (!listEl) return;
 
   const DUMMY_ANIMALS = [
-    { photo: 'https://www.animal.go.kr/files/shelter/img/2024/202404_01.jpg', name:'콩이',  breed:'믹스견',          sex:'수컷', age:'2살 추정', neuter:'',         care:'서울동물복지지원센터 마포',    tel:'02-300-5947',  tmpOk:true, adoptOk:true },
-    { photo: 'https://www.animal.go.kr/files/shelter/img/2024/202404_02.jpg', name:'하루',  breed:'말티즈 믹스',     sex:'암컷', age:'1살 추정', neuter:'',         care:'서울동물복지지원센터 동대문', tel:'02-2127-5560', tmpOk:true, adoptOk:true },
-    { photo: 'https://www.animal.go.kr/files/shelter/img/2024/202404_03.jpg', name:'뭉치',  breed:'포메라니안 믹스', sex:'수컷', age:'4살',      neuter:'중성화 완료', care:'서울동물복지지원센터 강동',   tel:'02-3425-3390', tmpOk:true, adoptOk:true },
-    { photo: 'https://www.animal.go.kr/files/shelter/img/2024/202404_04.jpg', name:'보리',  breed:'진도 믹스',       sex:'수컷', age:'3살 추정', neuter:'중성화 완료', care:'서울동물복지지원센터 중랑',   tel:'02-2094-0616', tmpOk:true, adoptOk:true },
-    { photo: 'https://www.animal.go.kr/files/shelter/img/2024/202404_05.jpg', name:'솜이',  breed:'비숑 믹스',       sex:'암컷', age:'5살',      neuter:'중성화 완료', care:'서울동물복지지원센터 은평',   tel:'02-351-0590',  tmpOk:true, adoptOk:true },
-    { photo: 'https://www.animal.go.kr/files/shelter/img/2024/202404_06.jpg', name:'단비',  breed:'시바견 믹스',     sex:'암컷', age:'2살 추정', neuter:'',         care:'서울동물복지지원센터 동작',   tel:'02-820-0988',  tmpOk:true, adoptOk:true },
+    { photo: 'https://images.dog.ceo/breeds/shiba/shiba-18.jpg',        name:'콩이',  breed:'믹스견',          sex:'수컷', age:'2살 추정', neuter:'',            care:'서울동물복지지원센터 마포',    tel:'02-300-5947',  tmpOk:true, adoptOk:true },
+    { photo: 'https://images.dog.ceo/breeds/maltese/n02085936_3709.jpg', name:'하루',  breed:'말티즈 믹스',     sex:'암컷', age:'1살 추정', neuter:'',            care:'서울동물복지지원센터 동대문', tel:'02-2127-5560', tmpOk:true, adoptOk:true },
+    { photo: 'https://images.dog.ceo/breeds/pomeranian/n02112018_5685.jpg', name:'뭉치',  breed:'포메라니안 믹스', sex:'수컷', age:'4살',      neuter:'중성화 완료', care:'서울동물복지지원센터 강동',   tel:'02-3425-3390', tmpOk:true, adoptOk:true },
+    { photo: 'https://images.dog.ceo/breeds/jindo/n02085782_4946.jpg',  name:'보리',  breed:'진도 믹스',       sex:'수컷', age:'3살 추정', neuter:'중성화 완료', care:'서울동물복지지원센터 중랑',   tel:'02-2094-0616', tmpOk:true, adoptOk:true },
+    { photo: 'https://images.dog.ceo/breeds/bichon-frise/WhatsApp_Image_2022-04-20_at_5.32.02_PM.jpg', name:'솜이',  breed:'비숑 믹스',       sex:'암컷', age:'5살',      neuter:'중성화 완료', care:'서울동물복지지원센터 은평',   tel:'02-351-0590',  tmpOk:true, adoptOk:true },
+    { photo: 'https://images.dog.ceo/breeds/shiba/shiba-7.jpg',         name:'단비',  breed:'시바견 믹스',     sex:'암컷', age:'2살 추정', neuter:'',            care:'서울동물복지지원센터 동작',   tel:'02-820-0988',  tmpOk:true, adoptOk:true },
   ];
 
   function renderCards(animals) {
@@ -1075,7 +1084,9 @@ async function loadAdoptionSection() {
       const state   = item.processState || '';
       const isOpen  = state.includes('공고') || state === '';
       return {
-        photo:   item.popfile || item.filename || null,
+        photo:   (item.popfile || item.filename)
+                   ? `/img-proxy?url=${encodeURIComponent(item.popfile || item.filename)}`
+                   : null,
         name:    item.noticeNo ? `공고 ${item.noticeNo.split('-').pop()}` : '보호 중',
         breed:   cleanBreed(item.kindCd),
         sex:     sexLabel(item.sexCd),
@@ -1280,3 +1291,10 @@ function setupCorrectionModal() {
 // ----------------------------------------------------------------
 
 setupTabs();
+
+// 새로고침 시 이전 탭 복원 (URL hash 기반)
+const _savedTab = location.hash.replace('#', '');
+if (_savedTab) {
+  const _tabBtn = document.querySelector(`.tab-btn[data-tab="${_savedTab}"]`);
+  if (_tabBtn) _tabBtn.click();
+}

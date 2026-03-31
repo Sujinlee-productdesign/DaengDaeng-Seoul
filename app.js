@@ -1741,6 +1741,72 @@ function setupBottomSheet() {
   }, { passive: true });
 }
 
+// ----------------------------------------------------------------
+// 댕댕지도 외부 진입 함수
+//   다른 탭(대시보드 등)에서 카테고리 + 구 필터를 설정한 채 지도로 이동
+// ----------------------------------------------------------------
+
+// 서울 25개 구 중심 좌표
+const GU_CENTERS = {
+  '강남구':   { lat: 37.5172, lng: 127.0473 },
+  '강동구':   { lat: 37.5301, lng: 127.1238 },
+  '강북구':   { lat: 37.6396, lng: 127.0256 },
+  '강서구':   { lat: 37.5509, lng: 126.8495 },
+  '관악구':   { lat: 37.4784, lng: 126.9516 },
+  '광진구':   { lat: 37.5385, lng: 127.0823 },
+  '구로구':   { lat: 37.4954, lng: 126.8874 },
+  '금천구':   { lat: 37.4569, lng: 126.8956 },
+  '노원구':   { lat: 37.6542, lng: 127.0568 },
+  '도봉구':   { lat: 37.6688, lng: 127.0472 },
+  '동대문구': { lat: 37.5744, lng: 127.0396 },
+  '동작구':   { lat: 37.5124, lng: 126.9393 },
+  '마포구':   { lat: 37.5663, lng: 126.9014 },
+  '서대문구': { lat: 37.5791, lng: 126.9368 },
+  '서초구':   { lat: 37.4836, lng: 127.0327 },
+  '성동구':   { lat: 37.5633, lng: 127.0371 },
+  '성북구':   { lat: 37.5894, lng: 127.0167 },
+  '송파구':   { lat: 37.5145, lng: 127.1059 },
+  '양천구':   { lat: 37.5270, lng: 126.8561 },
+  '영등포구': { lat: 37.5264, lng: 126.8963 },
+  '용산구':   { lat: 37.5311, lng: 126.9810 },
+  '은평구':   { lat: 37.6176, lng: 126.9227 },
+  '종로구':   { lat: 37.5935, lng: 126.9779 },
+  '중구':     { lat: 37.5640, lng: 126.9974 },
+  '중랑구':   { lat: 37.6063, lng: 127.0927 },
+};
+
+/**
+ * 댕댕지도로 이동하며 카테고리 필터 + 구 필터를 활성화하고 지도를 해당 구로 포커싱
+ * @param {string} category - 카테고리 chip의 data-category 값 (예: 'park', 'vet')
+ * @param {string} guName   - 포커싱할 구 이름 (예: '서초구')
+ */
+window.navigateToMapWithFilter = function(category, guName) {
+  // 1. 지도 탭으로 전환
+  const mapTabBtn = document.querySelector('.tab-btn[data-tab="map"]');
+  if (mapTabBtn) mapTabBtn.click();
+
+  // 2. 탭 전환 렌더링 후 필터 + 지도 포커스 적용
+  setTimeout(() => {
+    // 카테고리 칩 클릭
+    const chip = document.querySelector(`.chip[data-category="${category}"]`);
+    if (chip) chip.click();
+
+    // 구 드롭다운 설정
+    const guSelect = document.getElementById('gu-select');
+    if (guSelect && guName) {
+      guSelect.value = guName;
+      guSelect.dispatchEvent(new Event('change'));
+    }
+
+    // 지도 중심 이동
+    if (map && guName && GU_CENTERS[guName]) {
+      const { lat, lng } = GU_CENTERS[guName];
+      map.setCenter(new kakao.maps.LatLng(lat, lng));
+      map.setLevel(6);
+    }
+  }, 150);
+};
+
 // 카카오맵 먼저 초기화
 initMap();
 

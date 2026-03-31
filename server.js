@@ -66,6 +66,30 @@ app.get('/adopt-api', async (req, res) => {
 });
 
 // ----------------------------------------------------------------
+// 2-1. 이미지 프록시 (유기동물 사진 CORS 우회)
+//      브라우저에서 www.animal.go.kr 이미지 직접 요청 시 CORS 차단됨
+//      /img-proxy?url=... → 서버가 대신 이미지 fetch → 클라이언트에 전달
+// ----------------------------------------------------------------
+app.get('/img-proxy', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !/^https?:\/\//.test(url)) {
+    return res.status(400).end();
+  }
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return res.status(502).end();
+    const buf = await response.arrayBuffer();
+    const ct  = response.headers.get('content-type') || 'image/jpeg';
+    res.set('Content-Type', ct);
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(Buffer.from(buf));
+  } catch (err) {
+    console.error('이미지 프록시 오류:', err.message);
+    res.status(502).end();
+  }
+});
+
+// ----------------------------------------------------------------
 // 3. Claude AI 챗봇 프록시
 //    환경변수: CLAUDE_API_KEY (Railway Variables에서 설정)
 //    /ai-chat POST → Anthropic API 호출 → 응답 반환
