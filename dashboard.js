@@ -1024,31 +1024,40 @@ async function loadAdoptionSection() {
 
   const DUMMY_ANIMALS = [
     {
-      photo: null,
-      name:  '콩이',
-      breed: '믹스견',
-      sex:   '수컷',
-      age:   '2살 추정',
-      neuter:'',
-      care:  '서울동물복지지원센터 마포',
+      photo:    null,
+      name:     '콩이',
+      breed:    '믹스견',
+      sex:      '수컷',
+      age:      '2살 추정',
+      neuter:   '',
+      care:     '서울동물복지지원센터 마포',
+      tel:      '02-300-5947',
+      tmpOk:    true,
+      adoptOk:  true,
     },
     {
-      photo: null,
-      name:  '하루',
-      breed: '말티즈 믹스',
-      sex:   '암컷',
-      age:   '1살 추정',
-      neuter:'',
-      care:  '서울동물복지지원센터 동대문',
+      photo:    null,
+      name:     '하루',
+      breed:    '말티즈 믹스',
+      sex:      '암컷',
+      age:      '1살 추정',
+      neuter:   '',
+      care:     '서울동물복지지원센터 동대문',
+      tel:      '02-2127-5560',
+      tmpOk:    true,
+      adoptOk:  true,
     },
     {
-      photo: null,
-      name:  '뭉치',
-      breed: '포메라니안 믹스',
-      sex:   '수컷',
-      age:   '4살',
-      neuter:'중성화 완료',
-      care:  '서울동물복지지원센터 강동',
+      photo:    null,
+      name:     '뭉치',
+      breed:    '포메라니안 믹스',
+      sex:      '수컷',
+      age:      '4살',
+      neuter:   '중성화 완료',
+      care:     '서울동물복지지원센터 강동',
+      tel:      '02-3425-3390',
+      tmpOk:    true,
+      adoptOk:  true,
     },
   ];
 
@@ -1063,13 +1072,26 @@ async function loadAdoptionSection() {
           <img src="icons/heart.svg" alt="">
         </div>`;
       const sub = [a.breed, a.sex, a.age, a.neuter].filter(Boolean).join(' · ');
+      const telLink = a.tel
+        ? `<a href="tel:${a.tel}" class="adoption-tel-link">${a.tel}</a>`
+        : '';
+      const badges = `
+        <div class="adoption-badges">
+          <span class="adoption-badge ${a.tmpOk ? 'badge-ok' : 'badge-ask'}">
+            임시보호 ${a.tmpOk ? '가능' : '문의'}
+          </span>
+          <span class="adoption-badge ${a.adoptOk ? 'badge-ok' : 'badge-ask'}">
+            입양문의 ${a.adoptOk ? '가능' : '마감'}
+          </span>
+        </div>`;
       return `
         <div class="adoption-card">
           ${photoHTML}${iconHTML}
           <div class="adoption-card-info">
             <div class="adoption-card-name">${a.name || '이름 미확인'}</div>
             <div class="adoption-card-sub">${sub}</div>
-            <div class="adoption-card-care">${a.care || ''}</div>
+            ${badges}
+            <div class="adoption-card-care">${a.care || ''}${telLink ? `<br>${telLink}` : ''}</div>
           </div>
         </div>`;
     }).join('');
@@ -1082,15 +1104,23 @@ async function loadAdoptionSection() {
 
     if (items.length === 0) throw new Error('데이터 없음');
 
-    const animals = items.slice(0, 6).map(item => ({
-      photo:  item.popfile || item.filename || null,
-      name:   item.noticeNo ? `공고 ${item.noticeNo.split('-').pop()}` : '보호 중',
-      breed:  cleanBreed(item.kindCd),
-      sex:    sexLabel(item.sexCd),
-      age:    cleanAge(item.age),
-      neuter: neuterLabel(item.neuterYn),
-      care:   item.careNm || '',
-    }));
+    // processState '공고중' = 임시보호·입양 모두 가능
+    const animals = items.slice(0, 6).map(item => {
+      const state   = item.processState || '';
+      const isOpen  = state.includes('공고') || state === '';
+      return {
+        photo:   item.popfile || item.filename || null,
+        name:    item.noticeNo ? `공고 ${item.noticeNo.split('-').pop()}` : '보호 중',
+        breed:   cleanBreed(item.kindCd),
+        sex:     sexLabel(item.sexCd),
+        age:     cleanAge(item.age),
+        neuter:  neuterLabel(item.neuterYn),
+        care:    item.careNm || '',
+        tel:     item.careTel || item.officetel || '',
+        tmpOk:   isOpen,
+        adoptOk: isOpen,
+      };
+    });
 
     renderCards(animals);
     console.log(`✅ 입양 대기 동물 ${animals.length}마리 로드`);
