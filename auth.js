@@ -1,15 +1,17 @@
 // ================================================================
 // 댕댕서울 — 인증 시스템 (localStorage 기반)
-// 관리자 계정: admin / daeng2024!
+// 관리자 계정: sjlee / 123456
 // 일반 계정: localStorage 저장
 // ================================================================
 
-const ADMIN_ID = 'admin';
-const ADMIN_PW = 'daeng2024!';
+const ADMIN_ID = 'sjlee';
+const ADMIN_PW = '123456';
 
-const KEY_USERS   = 'daengseoul_users';
-const KEY_SESSION = 'daengseoul_session';
-const KEY_BM      = (uid) => `daengseoul_bm_${uid}`;
+const KEY_USERS       = 'daengseoul_users';
+const KEY_SESSION     = 'daengseoul_session';
+const KEY_BM          = (uid) => `daengseoul_bm_${uid}`;
+const KEY_CORRECTIONS = 'daengseoul_corrections';   // 정정 요청 목록
+const KEY_EXCLUDED    = 'daengseoul_excluded';       // 관리자가 제외한 장소 이름 목록
 
 // 현재 세션 (전역 — app.js, ai.js에서도 참조)
 let currentUser = null; // { id, role: 'admin'|'user' }
@@ -352,7 +354,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ── 관리자 패널 ──────────────────────────────────────────────
-  document.getElementById('admin-refresh-btn')?.addEventListener('click', renderAdminUserList);
+  document.getElementById('admin-refresh-btn')?.addEventListener('click', () => {
+    renderAdminUserList();
+    renderCorrectionList();
+  });
 
   document.getElementById('admin-reset-submit')?.addEventListener('click', () => {
     const targetId = document.getElementById('admin-target-id')?.value.trim();
@@ -369,3 +374,104 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+
+// ================================================================
+//  정정 요청 & 장소 제외 관리
+// ================================================================
+
+// ── localStorage 헬퍼 ────────────────────────────────────────────
+function getCorrections() {
+  try { return JSON.parse(localStorage.getItem(KEY_CORRECTIONS) || '[]'); } catch { return []; }
+}
+function saveCorrections(list) {
+  localStorage.setItem(KEY_CORRECTIONS, JSON.stringify(list));
+}
+function getExcluded() {
+  try { return JSON.parse(localStorage.getItem(KEY_EXCLUDED) || '[]'); } catch { return []; }
+}
+function saveExcluded(list) {
+  localStorage.setItem(KEY_EXCLUDED, JSON.stringify(list));
+}
+
+// 제외 여부 확인 (app.js에서 마커 렌더 시 사용)
+window.isPlaceExcluded = function(placeName) {
+  return getExcluded().includes(placeName);
+};
+
+// ── 정정 요청 제출 (팝업 버튼 → 모달 → 여기 호출) ─────────────
+window.submitCorrectionReport = function(name, address, category, reason) {
+  if (!reason.trim()) return;
+  const list = getCorrections();
+  list.push({
+    id:        Date.now(),
+    name,
+    address,
+    category,
+    reason:    reason.trim(),
+    timestamp: new Date().toLocaleString('ko-KR'),
+    status:    'pending',
+  });
+  saveCorrections(list);
+};
+
+// ── 관리자: 장소 목록에서 제외 처리 ──────────────────────────────
+window.adminExcludePlace = function(correctionId, placeName) {
+  // 제외 목록에 추가
+  const excl = getExcluded();
+  if (!excl.includes(placeName)) {
+    excl.push(placeName);
+    saveExcluded(excl);
+    // 마커 즉시 숨김 (app.js의 allMarkers 순회)
+    if (window.allMarkers) {
+      window.allMarkers.forEach(m => {
+        if (m.placeData?.name === placeName) m.kakaoMarker?.setMap(null);
+      });
+    }
+  }
+  // 해당 정정 요청 resolved 처리
+  const list = getCorrections().map(c =>
+    c.id === correctionId ? { ...c, status: 'resolved', action: 'excluded' } : c
+  );
+  saveCorrections(list);
+  renderCorrectionList();
+};
+
+// ── 관리자: 정정 요청 무시 ───────────────────────────────────────
+window.adminIgnoreCorrection = function(correctionId) {
+  const list = getCorrections().map(c =>
+    c.id === correctionId ? { ...c, status: 'resolved', action: 'ignored' } : c
+  );
+  saveCorrections(list);
+  renderCorrectionList();
+};
+
+// ── 관리자 패널 정정 요청 목록 렌더 ─────────────────────────────
+function renderCorrectionList() {
+  const el = document.getElementById('admin-correction-list');
+  if (!el) return;
+  const pending = getCorrections().filter(c => c.status === 'pending');
+  if (pending.length === 0) {
+    el.innerHTML = '<div class="admin-empty">처리 대기 중인 요청이 없어요</div>';
+    return;
+  }
+  el.innerHTML = pending.map(c => `
+    <div class="admin-correction-item" id="corr-${c.id}">
+      <div class="corr-name">${c.name}</div>
+      <div class="corr-addr">${c.address || ''}</div>
+      <div class="corr-reason">${c.reason}</div>
+      <div class="corr-time">${c.timestamp}</div>
+      <div class="corr-actions">
+        <button class="corr-exclude-btn" onclick="adminExcludePlace(${c.id}, '${c.name.replace(/'/g, "\\'")}')">목록에서 제외</button>
+        <button class="corr-ignore-btn"  onclick="adminIgnoreCorrection(${c.id})">무시</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// updateAccountPanel 호출 시 정정 목록도 갱신
+const _origUpdateAccountPanel = typeof updateAccountPanel === 'function' ? updateAccountPanel : null;
+function updateAccountPanel() {
+  if (_origUpdateAccountPanel) _origUpdateAccountPanel();
+  if (currentUser?.role === 'admin') renderCorrectionList();
+}

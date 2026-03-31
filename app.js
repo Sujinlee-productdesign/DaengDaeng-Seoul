@@ -1194,9 +1194,28 @@ function buildPopupHTML(place, category, index) {
           <img src="icons/location-pin.svg" alt="">길찾기
         </a>
       </div>
+      <button class="info-report-btn"
+        onclick="openCorrectionModal('${escaped}','${(place.address||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}','${category}')">
+        <img src="icons/heart-off.svg" alt=""> 정정 요청
+      </button>
     </div>
   `;
 }
+
+// 정정 요청 모달 열기 (팝업 onclick에서 호출)
+window.openCorrectionModal = function(name, address, category) {
+  const modal = document.getElementById('correction-modal');
+  if (!modal) return;
+  document.getElementById('corr-place-name').textContent    = name;
+  document.getElementById('corr-place-address').textContent = address;
+  document.getElementById('corr-hidden-name').value         = name;
+  document.getElementById('corr-hidden-address').value      = address;
+  document.getElementById('corr-hidden-category').value     = category;
+  document.getElementById('corr-reason').value              = '';
+  document.getElementById('corr-error').textContent         = '';
+  document.getElementById('corr-success').classList.add('hidden');
+  modal.classList.remove('hidden');
+};
 
 // 북마크 토글 (팝업 onclick에서 호출)
 window.toggleBookmarkPlace = function(placeName) {
@@ -1258,6 +1277,9 @@ function closePopup() {
 
 function addMarkers(places, category) {
   places.forEach(place => {
+    // 관리자가 제외 처리한 장소 건너뜀
+    if (typeof window.isPlaceExcluded === 'function' && window.isPlaceExcluded(place.name)) return;
+
     // 마커가 놓일 좌표
     const position = new kakao.maps.LatLng(place.lat, place.lng);
 
@@ -1284,7 +1306,7 @@ function addMarkers(places, category) {
     // popup.setMap(map) 을 하지 않으면 숨겨진 상태
 
     // 전역 배열에 저장 (필터링 및 클릭 이벤트에 사용)
-    allMarkers.push({ marker, popup, category, place });
+    allMarkers.push({ marker, popup, category, place, placeData: place, kakaoMarker: marker });
 
     // 사이드바 리스트에도 저장
     sidebarPlaces.push({ ...place, category, markerIndex: allMarkers.length - 1 });

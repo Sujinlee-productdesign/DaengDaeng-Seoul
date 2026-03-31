@@ -1023,72 +1023,38 @@ async function loadAdoptionSection() {
   if (!listEl) return;
 
   const DUMMY_ANIMALS = [
-    {
-      photo:    null,
-      name:     '콩이',
-      breed:    '믹스견',
-      sex:      '수컷',
-      age:      '2살 추정',
-      neuter:   '',
-      care:     '서울동물복지지원센터 마포',
-      tel:      '02-300-5947',
-      tmpOk:    true,
-      adoptOk:  true,
-    },
-    {
-      photo:    null,
-      name:     '하루',
-      breed:    '말티즈 믹스',
-      sex:      '암컷',
-      age:      '1살 추정',
-      neuter:   '',
-      care:     '서울동물복지지원센터 동대문',
-      tel:      '02-2127-5560',
-      tmpOk:    true,
-      adoptOk:  true,
-    },
-    {
-      photo:    null,
-      name:     '뭉치',
-      breed:    '포메라니안 믹스',
-      sex:      '수컷',
-      age:      '4살',
-      neuter:   '중성화 완료',
-      care:     '서울동물복지지원센터 강동',
-      tel:      '02-3425-3390',
-      tmpOk:    true,
-      adoptOk:  true,
-    },
+    { photo: 'https://www.animal.go.kr/files/shelter/img/2024/202404_01.jpg', name:'콩이',  breed:'믹스견',          sex:'수컷', age:'2살 추정', neuter:'',         care:'서울동물복지지원센터 마포',    tel:'02-300-5947',  tmpOk:true, adoptOk:true },
+    { photo: 'https://www.animal.go.kr/files/shelter/img/2024/202404_02.jpg', name:'하루',  breed:'말티즈 믹스',     sex:'암컷', age:'1살 추정', neuter:'',         care:'서울동물복지지원센터 동대문', tel:'02-2127-5560', tmpOk:true, adoptOk:true },
+    { photo: 'https://www.animal.go.kr/files/shelter/img/2024/202404_03.jpg', name:'뭉치',  breed:'포메라니안 믹스', sex:'수컷', age:'4살',      neuter:'중성화 완료', care:'서울동물복지지원센터 강동',   tel:'02-3425-3390', tmpOk:true, adoptOk:true },
+    { photo: 'https://www.animal.go.kr/files/shelter/img/2024/202404_04.jpg', name:'보리',  breed:'진도 믹스',       sex:'수컷', age:'3살 추정', neuter:'중성화 완료', care:'서울동물복지지원센터 중랑',   tel:'02-2094-0616', tmpOk:true, adoptOk:true },
+    { photo: 'https://www.animal.go.kr/files/shelter/img/2024/202404_05.jpg', name:'솜이',  breed:'비숑 믹스',       sex:'암컷', age:'5살',      neuter:'중성화 완료', care:'서울동물복지지원센터 은평',   tel:'02-351-0590',  tmpOk:true, adoptOk:true },
+    { photo: 'https://www.animal.go.kr/files/shelter/img/2024/202404_06.jpg', name:'단비',  breed:'시바견 믹스',     sex:'암컷', age:'2살 추정', neuter:'',         care:'서울동물복지지원센터 동작',   tel:'02-820-0988',  tmpOk:true, adoptOk:true },
   ];
 
   function renderCards(animals) {
     listEl.innerHTML = animals.map(a => {
-      const photoHTML = a.photo
-        ? `<img src="${a.photo}" alt="${a.breed}" class="adoption-card-photo" loading="lazy"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-        : '';
-      const iconHTML = `
-        <div class="adoption-card-icon" ${a.photo ? 'style="display:none"' : ''}>
-          <img src="icons/heart.svg" alt="">
-        </div>`;
       const sub = [a.breed, a.sex, a.age, a.neuter].filter(Boolean).join(' · ');
       const telLink = a.tel
         ? `<a href="tel:${a.tel}" class="adoption-tel-link">${a.tel}</a>`
         : '';
       const badges = `
         <div class="adoption-badges">
-          <span class="adoption-badge ${a.tmpOk ? 'badge-ok' : 'badge-ask'}">
-            임시보호 ${a.tmpOk ? '가능' : '문의'}
-          </span>
-          <span class="adoption-badge ${a.adoptOk ? 'badge-ok' : 'badge-ask'}">
-            입양문의 ${a.adoptOk ? '가능' : '마감'}
-          </span>
+          <span class="adoption-badge ${a.tmpOk ? 'badge-ok' : 'badge-ask'}">임시보호 ${a.tmpOk ? '가능' : '문의'}</span>
+          <span class="adoption-badge ${a.adoptOk ? 'badge-ok' : 'badge-ask'}">입양문의 ${a.adoptOk ? '가능' : '마감'}</span>
         </div>`;
       return `
-        <div class="adoption-card">
-          ${photoHTML}${iconHTML}
-          <div class="adoption-card-info">
-            <div class="adoption-card-name">${a.name || '이름 미확인'}</div>
+        <div class="adoption-thumb-card">
+          <div class="adoption-thumb-photo-wrap">
+            ${a.photo
+              ? `<img src="${a.photo}" alt="${a.breed}" class="adoption-thumb-photo" loading="lazy"
+                   onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+              : ''}
+            <div class="adoption-thumb-placeholder" ${a.photo ? 'style="display:none"' : ''}>
+              <img src="icons/heart.svg" alt="">
+            </div>
+          </div>
+          <div class="adoption-thumb-info">
+            <div class="adoption-card-name">${a.name || '보호 중'}</div>
             <div class="adoption-card-sub">${sub}</div>
             ${badges}
             <div class="adoption-card-care">${a.care || ''}${telLink ? `<br>${telLink}` : ''}</div>
@@ -1104,7 +1070,7 @@ async function loadAdoptionSection() {
 
     if (items.length === 0) throw new Error('데이터 없음');
 
-    // processState '공고중' = 임시보호·입양 모두 가능
+    // processState '공고중' = 임시보호·입양 모두 가능 (최대 6마리 그리드)
     const animals = items.slice(0, 6).map(item => {
       const state   = item.processState || '';
       const isOpen  = state.includes('공고') || state === '';
@@ -1180,7 +1146,132 @@ async function initDashboard() {
   drawChoroplethMap();              // 점수 기반 색상으로 표시
   drawInsights();
   loadAdoptionSection();
+  loadPetEvents();                  // 반려견 행사·축제·교육
+  setupCorrectionModal();           // 정정 요청 모달 이벤트 바인딩
   console.log('✅ 대시보드 초기화 완료');
+}
+
+
+// ----------------------------------------------------------------
+// 16. 반려견 행사·축제·교육 — 서울시 문화행사 API
+// ----------------------------------------------------------------
+
+// 반려견 관련 키워드 필터
+const PET_KEYWORDS = ['반려견', '반려동물', '강아지', '펫', '애견', '댕댕', '멍멍'];
+
+async function loadPetEvents() {
+  const listEl = document.getElementById('pet-events-list');
+  if (!listEl) return;
+
+  // 서울시 문화행사정보 API (culturalEventInfo)
+  const url = `${SEOUL_API_BASE}/${SEOUL_API_KEY}/json/culturalEventInfo/1/100/`;
+
+  try {
+    const res  = await fetch(url);
+    const json = await res.json();
+    const rows = json?.culturalEventInfo?.row ?? [];
+
+    // 반려견 관련 키워드 필터링
+    const petRows = rows.filter(r => {
+      const text = (r.TITLE + r.PLACE + r.PROGRAM + r.ORG_NAME + (r.ETC_DESC || '')).toLowerCase();
+      return PET_KEYWORDS.some(kw => text.includes(kw));
+    });
+
+    if (petRows.length === 0) throw new Error('반려견 행사 없음');
+    renderPetEvents(petRows);
+    console.log(`✅ 반려견 행사 ${petRows.length}건 로드`);
+
+  } catch (err) {
+    console.warn('⚠️ 행사 API 실패, 대체 데이터 사용:', err.message);
+    renderPetEvents(DUMMY_PET_EVENTS);
+  }
+}
+
+// 행사 카드 렌더
+function renderPetEvents(events) {
+  const listEl = document.getElementById('pet-events-list');
+  if (!listEl) return;
+
+  if (!events.length) {
+    listEl.innerHTML = '<div class="adoption-loading">현재 등록된 반려견 행사가 없어요</div>';
+    return;
+  }
+
+  listEl.innerHTML = events.slice(0, 8).map(e => {
+    const title   = e.TITLE   || e.title   || '제목 없음';
+    const place   = e.PLACE   || e.place   || '';
+    const date    = e.DATE    || e.date    || (e.STRTDATE ? `${e.STRTDATE} ~ ${e.END_DATE || ''}` : '');
+    const org     = e.ORG_NAME|| e.org     || '';
+    const link    = e.HMPG_ADDR || e.url  || '';
+    const gu      = (place.match(/([가-힣]+구)/) || [])[1] || '';
+    const imgSrc  = e.MAIN_IMG || e.img    || '';
+
+    const guBadge = gu ? `<span class="event-gu-badge">${gu}</span>` : '';
+    const imgHTML = imgSrc
+      ? `<img src="${imgSrc}" alt="" class="event-card-img" loading="lazy" onerror="this.style.display='none'">`
+      : `<div class="event-card-img-placeholder"><img src="icons/heart.svg" alt="" class="icon-sm"></div>`;
+
+    return `
+      <div class="event-card">
+        ${imgHTML}
+        <div class="event-card-info">
+          <div class="event-card-header">
+            ${guBadge}
+            <span class="event-card-title">${title}</span>
+          </div>
+          ${date ? `<div class="event-card-date"><img src="icons/search.svg" alt="" class="icon-sm"> ${date}</div>` : ''}
+          ${place ? `<div class="event-card-place"><img src="icons/location-pin.svg" alt="" class="icon-sm"> ${place}</div>` : ''}
+          ${org ? `<div class="event-card-org">${org}</div>` : ''}
+          ${link ? `<a class="event-card-link" href="${link}" target="_blank" rel="noopener">자세히 보기 →</a>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// 대체 데이터 (API 실패 시)
+const DUMMY_PET_EVENTS = [
+  { TITLE:'서울 반려동물 문화축제', DATE:'2026-05-10 ~ 2026-05-11', PLACE:'서울 마포구 월드컵공원', ORG_NAME:'서울시 동물복지과', HMPG_ADDR:'https://news.seoul.go.kr/env/pet' },
+  { TITLE:'반려견 기초교육 프로그램', DATE:'2026-04-05 ~ 2026-06-28', PLACE:'서울 노원구 불암산 자락길', ORG_NAME:'노원구청', HMPG_ADDR:'https://yeyak.seoul.go.kr' },
+  { TITLE:'강아지와 함께하는 한강 피크닉', DATE:'2026-04-19', PLACE:'서울 영등포구 여의도한강공원', ORG_NAME:'한강사업본부', HMPG_ADDR:'https://hangang.seoul.go.kr' },
+  { TITLE:'반려동물 입양 캠페인', DATE:'2026-04-12', PLACE:'서울 성동구 서울숲', ORG_NAME:'서울시 동물복지지원센터', HMPG_ADDR:'https://news.seoul.go.kr/env/pet' },
+];
+
+
+// ----------------------------------------------------------------
+// 17. 정정 요청 모달 이벤트 바인딩
+// ----------------------------------------------------------------
+
+function setupCorrectionModal() {
+  document.getElementById('corr-submit-btn')?.addEventListener('click', () => {
+    const name     = document.getElementById('corr-hidden-name')?.value    || '';
+    const address  = document.getElementById('corr-hidden-address')?.value || '';
+    const category = document.getElementById('corr-hidden-category')?.value || '';
+    const reason   = document.getElementById('corr-reason')?.value         || '';
+    const errEl    = document.getElementById('corr-error');
+    const succEl   = document.getElementById('corr-success');
+
+    if (!reason.trim()) {
+      if (errEl) errEl.textContent = '사유를 입력해주세요';
+      return;
+    }
+    if (errEl) errEl.textContent = '';
+
+    if (typeof window.submitCorrectionReport === 'function') {
+      window.submitCorrectionReport(name, address, category, reason);
+    }
+
+    if (succEl) succEl.classList.remove('hidden');
+    document.getElementById('corr-reason').value = '';
+    setTimeout(() => {
+      document.getElementById('correction-modal')?.classList.add('hidden');
+      if (succEl) succEl.classList.add('hidden');
+    }, 1800);
+  });
+
+  // 백드롭 클릭으로 닫기
+  document.getElementById('correction-modal')?.addEventListener('click', e => {
+    if (e.target.id === 'correction-modal') e.target.classList.add('hidden');
+  });
 }
 
 

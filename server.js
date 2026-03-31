@@ -46,7 +46,7 @@ app.get('/adopt-api', async (req, res) => {
     upkind:     '417000',  // 개
     upr_cd:     '6110000', // 서울특별시
     state:      'notice',  // 공고 중 (입양 가능)
-    numOfRows:  '6',
+    numOfRows:  '12',
     pageNo:     '1',
     _type:      'json',
   });

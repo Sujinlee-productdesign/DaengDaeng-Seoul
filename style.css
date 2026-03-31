@@ -663,6 +663,28 @@ body {
   color: var(--text-2);
 }
 
+/* 정정 요청 버튼 */
+.info-report-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 0;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-3);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.info-report-btn img { width: 12px; height: 12px; filter: invert(50%); }
+.info-report-btn:hover { background: rgba(255,45,85,0.06); color: var(--restaurant); border-color: var(--restaurant); }
+.info-report-btn:hover img { filter: invert(30%) sepia(90%) saturate(700%) hue-rotate(320deg); }
+
 /* 기존 단일 버튼 (하위호환) */
 .info-naver-btn {
   display: flex;
@@ -2911,4 +2933,177 @@ body {
   padding: 4px 20px 8px;
   background: var(--surface);
   flex-shrink: 0;
+}
+
+
+/* ================================================================
+   정정 요청 모달
+================================================================ */
+.correction-modal-box { max-width: 400px; }
+.corr-modal-desc { font-size: 0.80rem; color: var(--text-3); margin: 6px 0 14px; line-height: 1.5; }
+.corr-place-box {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 4px;
+}
+.corr-place-name { font-size: 0.90rem; font-weight: 700; color: var(--text-1); }
+.corr-place-addr { font-size: 0.72rem; color: var(--text-3); margin-top: 2px; }
+.corr-textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--separator);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-family: 'Pretendard', sans-serif;
+  color: var(--text-1);
+  background: var(--surface);
+  resize: vertical;
+  box-sizing: border-box;
+}
+.corr-textarea:focus { outline: none; border-color: var(--brand); }
+
+/* ================================================================
+   관리자 패널 — 정정 요청 목록
+================================================================ */
+.admin-correction-list { max-height: 240px; overflow-y: auto; margin-bottom: 10px; }
+.admin-correction-item {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.corr-name  { font-size: 0.84rem; font-weight: 700; color: var(--text-1); }
+.corr-addr  { font-size: 0.70rem; color: var(--text-3); margin-top: 2px; }
+.corr-reason{ font-size: 0.78rem; color: var(--text-2); margin: 6px 0 4px; background: var(--surface); padding: 6px 8px; border-radius: 6px; }
+.corr-time  { font-size: 0.68rem; color: var(--text-4); margin-bottom: 8px; }
+.corr-actions { display: flex; gap: 6px; }
+.corr-exclude-btn {
+  flex: 1; padding: 6px; border: none; border-radius: 6px;
+  background: rgba(255,59,48,0.10); color: var(--restaurant);
+  font-size: 0.74rem; font-weight: 700; cursor: pointer;
+}
+.corr-exclude-btn:hover { background: rgba(255,59,48,0.20); }
+.corr-ignore-btn {
+  flex: 1; padding: 6px; border: 1px solid var(--separator); border-radius: 6px;
+  background: none; color: var(--text-3);
+  font-size: 0.74rem; font-weight: 600; cursor: pointer;
+}
+.corr-ignore-btn:hover { background: var(--surface-2); }
+.corr-count-badge {
+  display: inline-block; background: var(--restaurant); color: #fff;
+  border-radius: 10px; font-size: 0.68rem; font-weight: 700;
+  padding: 1px 7px; margin-left: 4px; vertical-align: middle;
+}
+
+/* ================================================================
+   입양 섹션 — 썸네일 그리드 (기존 리스트 → 카드 그리드)
+================================================================ */
+.adoption-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.adoption-thumb-card {
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.15s;
+}
+.adoption-thumb-card:hover { box-shadow: var(--shadow-sm); }
+.adoption-thumb-photo-wrap {
+  width: 100%;
+  aspect-ratio: 1/1;
+  position: relative;
+  background: rgba(255,45,85,0.08);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.adoption-thumb-photo {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.adoption-thumb-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+.adoption-thumb-placeholder img {
+  width: 28px; height: 28px;
+  filter: invert(30%) sepia(90%) saturate(700%) hue-rotate(320deg);
+}
+.adoption-thumb-info {
+  padding: 10px 10px 12px;
+}
+.adoption-thumb-info .adoption-card-name { font-size: 0.86rem; }
+.adoption-thumb-info .adoption-card-sub  { font-size: 0.68rem; white-space: normal; }
+.adoption-thumb-info .adoption-badges    { margin-top: 6px; }
+.adoption-thumb-info .adoption-card-care { font-size: 0.64rem; margin-top: 5px; white-space: normal; }
+
+@media (max-width: 600px) {
+  .adoption-list { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ================================================================
+   반려견 행사·축제·교육 섹션
+================================================================ */
+.pet-events-section { margin-top: 32px; }
+.pet-events-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.event-card {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow 0.15s;
+  display: flex;
+  flex-direction: column;
+}
+.event-card:hover { box-shadow: var(--shadow-sm); }
+.event-card-img {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  display: block;
+  background: var(--surface-2);
+}
+.event-card-img-placeholder {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: linear-gradient(135deg, var(--brand-light), rgba(52,199,89,0.10));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.event-card-img-placeholder img { width: 28px; height: 28px; filter: invert(62%) sepia(79%) saturate(546%) hue-rotate(342deg) brightness(106%); }
+.event-card-info { padding: 12px 14px 14px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.event-card-header { display: flex; align-items: flex-start; gap: 6px; flex-wrap: wrap; }
+.event-gu-badge {
+  font-size: 0.65rem; font-weight: 700;
+  background: var(--brand-light); color: var(--brand-dark);
+  padding: 2px 7px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+}
+.event-card-title { font-size: 0.84rem; font-weight: 700; color: var(--text-1); line-height: 1.4; }
+.event-card-date  { font-size: 0.70rem; color: var(--text-3); display: flex; align-items: center; gap: 4px; }
+.event-card-place { font-size: 0.70rem; color: var(--text-3); display: flex; align-items: center; gap: 4px; }
+.event-card-org   { font-size: 0.68rem; color: var(--text-4); }
+.event-card-link  {
+  display: inline-block; margin-top: auto; padding-top: 8px;
+  font-size: 0.72rem; font-weight: 700; color: var(--brand); text-decoration: none;
+}
+.event-card-link:hover { text-decoration: underline; }
+
+@media (max-width: 900px) {
+  .pet-events-list { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .pet-events-list { grid-template-columns: 1fr; }
 }

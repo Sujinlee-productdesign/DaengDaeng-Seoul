@@ -347,6 +347,17 @@
             <div id="insights-list" class="insights-list"></div>
           </div>
 
+          <!-- 반려견 행사·축제·교육 섹션 -->
+          <div class="pet-events-section">
+            <h3 class="insights-title">반려견 행사 · 축제 · 교육</h3>
+            <p class="insights-sub">서울시 공공문화행사 데이터 기반 · 반려견 관련 이벤트 모음</p>
+            <div id="pet-events-list" class="pet-events-list">
+              <div class="adoption-loading">행사 정보 불러오는 중...</div>
+            </div>
+            <a href="https://yeyak.seoul.go.kr/web/reservation/selectReservationList.do"
+               target="_blank" rel="noopener" class="adoption-more-btn">서울시 공공예약에서 더 보기 →</a>
+          </div>
+
           <p class="dashboard-note" id="dashboard-note">
             서울시 공공데이터 API 연결 중입니다...
           </p>
@@ -409,7 +420,8 @@
 
             <!-- 카테고리별 소비 비중 -->
             <div class="comm2-pie-section">
-              <h4 class="comm2-pie-title">업종별 소비 비중</h4>
+              <h4 class="comm2-pie-title">댕댕지도 카테고리별 장소 수</h4>
+            <p class="comm2-data-note" style="margin-top:2px">※ 댕댕지도 등록 장소 기준</p>
               <div class="comm2-pie-box">
                 <canvas id="chart-comm2-pie"></canvas>
               </div>
@@ -594,6 +606,14 @@
       <div id="admin-panel" class="hidden">
         <div class="admin-panel-divider"></div>
         <div class="admin-panel-title">관리자 패널</div>
+
+        <!-- 정정 요청 섹션 -->
+        <div class="admin-section-label">정정 요청 <span id="corr-badge" class="corr-count-badge"></span></div>
+        <div id="admin-correction-list" class="admin-correction-list">
+          <div class="admin-empty">처리 대기 중인 요청이 없어요</div>
+        </div>
+
+        <div class="admin-panel-divider"></div>
         <div class="admin-section-label">등록된 사용자</div>
         <div id="admin-user-list" class="admin-user-list"></div>
         <button class="auth-btn-secondary auth-submit-btn" id="admin-refresh-btn">목록 새로고침</button>
@@ -605,6 +625,39 @@
         <div class="auth-error" id="admin-error"></div>
         <button class="auth-submit-btn" id="admin-reset-submit">초기화</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       정정 요청 모달
+  ═══════════════════════════════════════ -->
+  <div id="correction-modal" class="modal-backdrop hidden">
+    <div class="modal-box correction-modal-box">
+      <button class="modal-close-x" onclick="document.getElementById('correction-modal').classList.add('hidden')">
+        <img src="icons/close.svg" alt="닫기" class="modal-close-img">
+      </button>
+      <div class="auth-modal-title">정정 요청</div>
+      <p class="corr-modal-desc">잘못 분류된 장소나 폐업/이전된 곳을 알려주세요. 관리자가 확인 후 처리해드릴게요.</p>
+
+      <div class="corr-place-box">
+        <div class="corr-place-name" id="corr-place-name"></div>
+        <div class="corr-place-addr" id="corr-place-address"></div>
+      </div>
+
+      <input type="hidden" id="corr-hidden-name">
+      <input type="hidden" id="corr-hidden-address">
+      <input type="hidden" id="corr-hidden-category">
+
+      <div class="auth-field" style="margin-top:14px">
+        <label class="auth-label">정정 사유</label>
+        <textarea id="corr-reason" class="corr-textarea"
+          placeholder="예: 애견 미용만 하는 곳으로 카페가 아니에요 / 폐업한 장소예요"></textarea>
+      </div>
+
+      <div class="auth-error" id="corr-error"></div>
+      <div class="auth-success hidden" id="corr-success">접수 완료! 관리자가 확인 후 처리해드릴게요.</div>
+
+      <button class="auth-submit-btn" id="corr-submit-btn">제출하기</button>
     </div>
   </div>
 

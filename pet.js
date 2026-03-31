@@ -200,24 +200,57 @@ function comm2FocusDong(dongName) {
   comm2Map.setLevel(5);
 }
 
-// ── 업종별 도넛 차트 ─────────────────────────────────────────────
+// ── 업종별 도넛 차트 (댕댕지도 카테고리 실수 기반) ─────────────
 function buildComm2Pie() {
   const canvas = document.getElementById('chart-comm2-pie');
   if (!canvas) return;
 
-  // 업종별 소비 합산
-  const totals = { hospital: 0, cafe: 0 };
-  DONG_PET_DATA.forEach(d => {
-    d.types.forEach(t => { if (t in totals) totals[t] += d.spending; });
-  });
+  // 댕댕지도 마커 카테고리별 수 집계 (실데이터)
+  const places = window.sidebarPlaces || [];
+  const CAT_MAP = {
+    park:       { label: '공원',         color: '#34C759' },
+    vet:        { label: '동물병원',      color: '#FF2D55' },
+    cafe:       { label: '애견카페',      color: '#FF8C42' },
+    'pf-cafe':  { label: '애견동반카페',  color: '#5856D6' },
+    restaurant: { label: '음식점',        color: '#30B0C7' },
+    playground: { label: '반려견놀이터',  color: '#34AADC' },
+  };
+
+  let labels = [], counts = [], colors = [];
+
+  if (places.length > 0) {
+    // 실데이터: sidebarPlaces 카테고리별 카운트
+    const cnt = {};
+    places.forEach(p => { cnt[p.category] = (cnt[p.category] || 0) + 1; });
+    Object.entries(CAT_MAP).forEach(([key, meta]) => {
+      if (cnt[key]) {
+        labels.push(meta.label);
+        counts.push(cnt[key]);
+        colors.push(meta.color);
+      }
+    });
+  } else {
+    // 마커 미로드 시: 동물병원+반려견카페 spending 합산 (기존 방식)
+    const totals = { hospital: 0, cafe: 0 };
+    DONG_PET_DATA.forEach(d => {
+      d.types.forEach(t => { if (t in totals) totals[t] += d.spending; });
+    });
+    labels = ['동물병원', '반려견카페'];
+    counts = [totals.hospital, totals.cafe];
+    colors = ['#FF2D55', '#FF8C42'];
+  }
+
+  // 파이차트 제목 업데이트
+  const titleEl = document.querySelector('.comm2-pie-title');
+  if (titleEl && places.length > 0) titleEl.textContent = '댕댕지도 카테고리별 장소 수';
 
   comm2PieChart = new Chart(canvas, {
     type: 'doughnut',
     data: {
-      labels: ['동물병원', '반려견카페'],
+      labels,
       datasets: [{
-        data: [totals.hospital, totals.cafe],
-        backgroundColor: ['#FF2D55', '#FF8C42'],
+        data: counts,
+        backgroundColor: colors,
         borderWidth: 2,
         borderColor: '#fff',
       }],
@@ -227,7 +260,7 @@ function buildComm2Pie() {
       maintainAspectRatio: false,
       plugins: {
         legend: { position: 'bottom', labels: { font: { family: 'Pretendard', size: 12 }, padding: 10 } },
-        tooltip: { callbacks: { label: c => ` ${c.raw.toLocaleString()}만원` } },
+        tooltip: { callbacks: { label: c => ` ${c.raw.toLocaleString()}${(window.sidebarPlaces||[]).length > 0 ? '곳' : '만원'}` } },
         datalabels: {
           color: '#fff',
           font: { weight: 'bold', size: 11 },
