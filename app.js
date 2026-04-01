@@ -1655,6 +1655,15 @@ function setupFilters() {
   applyFiltersRef = applyFilters;
   window.applyFiltersGlobal = applyFilters;
 
+  // 외부(dashboard 등)에서 카테고리+구 필터를 직접 설정하는 함수
+  window.setMapFilter = function(category, gu) {
+    currentCategory = category || 'all';
+    currentGu       = gu       || 'all';
+    chips.forEach(c => c.classList.toggle('active', c.dataset.category === currentCategory));
+    if (guSelect) guSelect.value = currentGu;
+    applyFilters();
+  };
+
   // 북마크 칩 카운트 새로고침
   window.refreshBookmarkChip = function() {
     const count = typeof getBookmarks === 'function' ? getBookmarks().length : 0;
@@ -1860,20 +1869,14 @@ window.navigateToMapWithFilter = function(category, guName) {
   const mapTabBtn = document.querySelector('.tab-btn[data-tab="map"]');
   if (mapTabBtn) mapTabBtn.click();
 
-  // 2. 탭 전환 후 지도 relayout + 필터 + 포커스 적용
+  // 2. 탭 전환 완료 후 지도 재계산 + 필터 적용
   setTimeout(() => {
-    // 숨김 상태에서 보임으로 전환된 경우 카카오맵 재계산
+    // 숨김(display:none)→보임 전환 시 카카오맵 뷰포트 재계산 필수
     if (map) map.relayout();
 
-    // 카테고리 칩 클릭
-    const chip = document.querySelector(`.chip[data-category="${category}"]`);
-    if (chip) chip.click();
-
-    // 구 드롭다운 설정
-    const guSelect = document.getElementById('gu-select');
-    if (guSelect && guName) {
-      guSelect.value = guName;
-      guSelect.dispatchEvent(new Event('change'));
+    // 카테고리 + 구 필터 직접 설정 (closure 변수 직접 변경 → 이벤트 타이밍 문제 방지)
+    if (typeof window.setMapFilter === 'function') {
+      window.setMapFilter(category, guName || 'all');
     }
 
     // 지도 중심 이동

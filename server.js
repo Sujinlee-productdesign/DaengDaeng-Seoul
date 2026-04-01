@@ -144,6 +144,96 @@ app.get('/shelter-animals', async (req, res) => {
 });
 
 // ----------------------------------------------------------------
+// 1-3. 카라(KARA) 유기동물 스크래퍼
+//      https://www.karma.or.kr 서울 지역, 강아지 필터링
+//      city=0(서울), keyfield1=1(개) → 최신 10마리
+// ----------------------------------------------------------------
+app.get('/karma-animals', async (req, res) => {
+  const BASE    = 'https://www.karma.or.kr';
+  const listUrl = `${BASE}/human_boardA/animal_board.php?pagenow=1&keyfield1=1&keyfield2=0&city=0&country=&sch1=&sch2=&sch3=&bid=animal`;
+
+  try {
+    const resp = await fetch(listUrl, {
+      headers: {
+        'User-Agent':      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer':         BASE,
+        'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ko-KR,ko;q=0.9',
+      },
+    });
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const html = await resp.text();
+
+    // 카드 단위로 분리: tx-animal-image 클래스 img 기준
+    // 이미지 파일명에 aidx(동물 ID)가 포함됨: /human_DB/files/animal/{aidx}_AAAA_{ts}.jpg
+    const cardSections = html.split(/(?=<img[^>]+tx-animal-image)/);
+    const animals = [];
+
+    for (const section of cardSections.slice(1)) {
+      if (animals.length >= 10) break;
+
+      // 이미지 src + aidx 추출
+      const imgM = section.match(/src="(\/human_DB\/files\/animal\/(\d+)_[^"]+)"/);
+      if (!imgM) continue;
+      const imgSrc = imgM[1];
+      const aidx   = imgM[2];
+
+      // 라벨 → 값 추출 헬퍼
+      const field = (label) => {
+        const re = new RegExp(`<strong>\\s*${label}\\s*<\\/strong>\\s*([^<]{1,80})`);
+        const m  = section.match(re);
+        return m ? m[1].trim() : '';
+      };
+
+      const speciesFull = field('축종');          // "개 / 말티즈"
+      const sex         = field('성별');           // "수컷" | "암컷" | "미상"
+      const age         = field('연령');           // "2개월" | "1살"
+      const color       = field('모색');           // "흰색"
+      const location    = field('구조장소');       // "서울 마포구"
+      const rescueDate  = field('구조일').replace(/\(SN:[^)]*\)/, '').trim();
+      const adoptDate   = field('입양가능일');
+
+      // 품종 파싱 ("개 / 말티즈" → "말티즈")
+      const breedParts = speciesFull.split('/');
+      const breed      = breedParts.length > 1 ? breedParts[1].trim() : (speciesFull || '믹스견');
+
+      // 성별 코드 변환
+      const sexCd = sex.includes('수컷') ? 'M' : sex.includes('암컷') ? 'F' : 'Q';
+
+      // 입양 가능 여부 (입양가능일이 오늘 이전이면 가능)
+      const today    = new Date().toISOString().slice(0, 10);
+      const adoptOk  = !adoptDate || adoptDate <= today;
+
+      animals.push({
+        aidx,
+        popfile:      `${BASE}${imgSrc}`,
+        kindCd:       breed || '믹스견',
+        sexCd,
+        neuterYn:     'U',
+        age,
+        color,
+        orgNm:        location,
+        noticeEdt:    adoptDate || '',
+        rescueDate,
+        careNm:       '카라(KARA) 동물보호소',
+        processState: adoptOk ? '입양가능' : '공고중',
+        detailUrl:    `${BASE}/human_boardB/animal_request2.php?bid=adoption&act=write&aidx=${aidx}`,
+      });
+    }
+
+    if (animals.length === 0) {
+      return res.json({ animals: [], source: 'parse_failed' });
+    }
+
+    res.json({ animals, source: 'karma' });
+  } catch (err) {
+    console.error('karma 스크래퍼 오류:', err.message);
+    res.json({ animals: [], source: 'error', error: err.message });
+  }
+});
+
+// ----------------------------------------------------------------
 // 2. 공공데이터포털 유기동물 API 프록시 (사진 포함)
 //    출처: 농림축산식품부 동물보호관리시스템 (포인핸드 등 동일 소스)
 //    환경변수: ADOPT_API_KEY (Railway Variables에서 설정)
