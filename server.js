@@ -150,77 +150,134 @@ app.get('/shelter-animals', async (req, res) => {
 // ----------------------------------------------------------------
 app.get('/karma-animals', async (req, res) => {
   const BASE    = 'https://www.karma.or.kr';
-  const listUrl = `${BASE}/human_boardA/animal_board.php?pagenow=1&keyfield1=1&keyfield2=0&city=0&country=&sch1=&sch2=&sch3=&bid=animal`;
+  const HEADERS = {
+    'User-Agent':      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Referer':         BASE,
+    'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'ko-KR,ko;q=0.9',
+  };
 
-  try {
-    const resp = await fetch(listUrl, {
-      headers: {
-        'User-Agent':      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer':         BASE,
-        'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.9',
-      },
-    });
+  // HTML에서 &nbsp; 제거 + 태그 제거 + 공백 정리
+  const clean = (s) => s.replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const html = await resp.text();
+  // 한 페이지 HTML에서 동물 카드 파싱
+  function parsePage(html) {
+    const results = [];
 
-    // 카드 단위로 분리: tx-animal-image 클래스 img 기준
-    // 이미지 파일명에 aidx(동물 ID)가 포함됨: /human_DB/files/animal/{aidx}_AAAA_{ts}.jpg
-    const cardSections = html.split(/(?=<img[^>]+tx-animal-image)/);
-    const animals = [];
+    // ─── 카드 분리 ───────────────────────────────────────────────────
+    // HTML 구조: <a href='#' img class='tx-animal-image' src='...' > ... </a> <ul> ... </ul> <button ...>
+    // tx-animal-image 는 <a> 태그의 class 속성에 있음 (img 태그 아님)
+    const sections = html.split(/(?=<a\b[^>]*class=['"][^'"]*tx-animal-image)/);
 
-    for (const section of cardSections.slice(1)) {
-      if (animals.length >= 10) break;
-
-      // 이미지 src + aidx 추출
-      const imgM = section.match(/src="(\/human_DB\/files\/animal\/(\d+)_[^"]+)"/);
+    for (const section of sections.slice(1)) {
+      // ── 이미지 src (단따옴표 / 쌍따옴표 모두 처리) ─────────────────
+      const imgM = section.match(/src=['"]?(\/human_DB\/files\/animal\/[^'">\s]+\.jpg)/i);
       if (!imgM) continue;
       const imgSrc = imgM[1];
-      const aidx   = imgM[2];
 
-      // 라벨 → 값 추출 헬퍼
-      const field = (label) => {
-        const re = new RegExp(`<strong>\\s*${label}\\s*<\\/strong>\\s*([^<]{1,80})`);
+      // ── aidx: ani_request 버튼 첫번째 인자 (좌측 0패딩 제거) ───────
+      // <button onclick="ani_request('0000104599','2026-04-10',...)">
+      const aidxM = section.match(/ani_request\(\s*['"]0*(\d+)['"]/);
+      if (!aidxM) continue;
+      const aidx = aidxM[1];
+
+      // ── 필드 추출 헬퍼들 ─────────────────────────────────────────────
+      // 패턴 A: <strong>라벨</strong> 다음줄 텍스트 (half li 방식)
+      //   예: <strong>축종</strong>\n\t\t개 / Mix
+      const fieldHalf = (label) => {
+        const re = new RegExp(`<strong>\\s*${label}\\s*<\\/strong>([\\s\\S]{0,200}?)(?=<(?:strong|li|ul|button|div))`);
         const m  = section.match(re);
-        return m ? m[1].trim() : '';
+        return m ? clean(m[1]) : '';
       };
 
-      const speciesFull = field('축종');          // "개 / 말티즈"
-      const sex         = field('성별');           // "수컷" | "암컷" | "미상"
-      const age         = field('연령');           // "2개월" | "1살"
-      const color       = field('모색');           // "흰색"
-      const location    = field('구조장소');       // "서울 마포구"
-      const rescueDate  = field('구조일').replace(/\(SN:[^)]*\)/, '').trim();
-      const adoptDate   = field('입양가능일');
+      // 패턴 B: <strong>라벨</strong> 다음 <i>값</i> (구조일)
+      const fieldITag = (label) => {
+        const re = new RegExp(`<strong>\\s*${label}\\s*<\\/strong>[\\s\\S]*?<i>([\\s\\S]*?)<\\/i>`);
+        const m  = section.match(re);
+        return m ? clean(m[1]) : '';
+      };
 
-      // 품종 파싱 ("개 / 말티즈" → "말티즈")
+      // 패턴 C: 라벨 li 다음 li의 텍스트 (구조장소, 특징)
+      const fieldNextLi = (label) => {
+        const re = new RegExp(`<strong>\\s*${label}\\s*<\\/strong>[\\s\\S]*?<\\/li>[\\s\\S]*?<li[^>]*>([\\s\\S]*?)<\\/li>`);
+        const m  = section.match(re);
+        return m ? clean(m[1]) : '';
+      };
+
+      // ── 각 필드 추출 ─────────────────────────────────────────────────
+      // 구조일: <strong>구조일</strong><i>2026-03-31&nbsp;&nbsp;(SN:...)</i>
+      const rescueDateRaw = fieldITag('구조일');
+      const rescueDate    = rescueDateRaw.split(/\s/)[0]; // "2026-03-31"
+
+      // 구조장소: 라벨 li 다음 li에 값
+      const location  = fieldNextLi('구조장소');
+
+      // half 필드들
+      const speciesFull = fieldHalf('축종');       // "개 / Mix" | "개 / 말티즈"
+      const sex         = fieldHalf('성별');        // "수컷" | "암컷" | "미상"
+      const age         = fieldHalf('연령');        // "0년 02개월(추정)"
+      const color       = fieldHalf('모색');        // "흰"
+      const neuter      = fieldHalf('중성화수술');  // "했음" | "안 했음"
+      const personality = fieldHalf('성격');        // "친화적"
+      const weight      = fieldHalf('체중');        // "1.54 Kg"
+      const health      = fieldHalf('건강상태');    // "양호"
+
+      // 특징: <span>온순. 활발. ...</span> (다음 li 안의 span)
+      const featureM = section.match(/<strong>\s*특징\s*<\/strong>[\s\S]*?<span>([\s\S]*?)<\/span>/);
+      const feature  = featureM ? clean(featureM[1]) : '';
+
+      // 입양 가능일: 버튼 텍스트 "YYYY-MM-DD부터 입양신청 가능"
+      const adoptDateM = section.match(/(\d{4}-\d{2}-\d{2})부터 입양신청 가능/);
+      const adoptDate  = adoptDateM ? adoptDateM[1] : '';
+
+      // ── 파생 값 ──────────────────────────────────────────────────────
       const breedParts = speciesFull.split('/');
-      const breed      = breedParts.length > 1 ? breedParts[1].trim() : (speciesFull || '믹스견');
+      const breed      = breedParts.length > 1 ? breedParts[1].trim() : (speciesFull || 'Mix');
+      const sexCd      = sex.includes('수컷') ? 'M' : sex.includes('암컷') ? 'F' : 'Q';
+      const neuterYn   = neuter.includes('안') ? 'N' : neuter.includes('했음') ? 'Y' : 'U';
+      const today      = new Date().toISOString().slice(0, 10);
+      const adoptOk    = !adoptDate || adoptDate <= today;
 
-      // 성별 코드 변환
-      const sexCd = sex.includes('수컷') ? 'M' : sex.includes('암컷') ? 'F' : 'Q';
-
-      // 입양 가능 여부 (입양가능일이 오늘 이전이면 가능)
-      const today    = new Date().toISOString().slice(0, 10);
-      const adoptOk  = !adoptDate || adoptDate <= today;
-
-      animals.push({
+      results.push({
         aidx,
         popfile:      `${BASE}${imgSrc}`,
-        kindCd:       breed || '믹스견',
+        kindCd:       breed || 'Mix',
         sexCd,
-        neuterYn:     'U',
+        neuterYn,
         age,
         color,
+        weight,
+        health,
+        personality,
+        feature,
         orgNm:        location,
-        noticeEdt:    adoptDate || '',
         rescueDate,
-        careNm:       '카라(KARA) 동물보호소',
+        noticeEdt:    adoptDate,
+        careNm:       '카라(KARA)',
         processState: adoptOk ? '입양가능' : '공고중',
         detailUrl:    `${BASE}/human_boardB/animal_request2.php?bid=adoption&act=write&aidx=${aidx}`,
       });
     }
+    return results;
+  }
+
+  try {
+    // 서울 지역 동물이 충분히 나오도록 1~2 페이지 동시 fetch
+    const fetchPage = (page) => fetch(
+      `${BASE}/human_boardA/animal_board.php?pagenow=${page}&keyfield1=1&keyfield2=0&city=0&country=&sch1=&sch2=&sch3=&bid=animal`,
+      { headers: HEADERS }
+    ).then(r => r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`)));
+
+    const [html1, html2] = await Promise.allSettled([fetchPage(1), fetchPage(2)]);
+
+    const all = [
+      ...(html1.status === 'fulfilled' ? parsePage(html1.value) : []),
+      ...(html2.status === 'fulfilled' ? parsePage(html2.value) : []),
+    ];
+
+    // 서울 지역만 필터링 (구조장소에 "서울" 포함)
+    const seoulOnly = all.filter(a => a.orgNm.includes('서울'));
+    const animals   = seoulOnly.length >= 5 ? seoulOnly.slice(0, 10) : all.slice(0, 10);
 
     if (animals.length === 0) {
       return res.json({ animals: [], source: 'parse_failed' });

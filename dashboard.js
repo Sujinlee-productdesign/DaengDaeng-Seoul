@@ -1079,19 +1079,18 @@ async function loadAdoptionSection() {
 
   // karma.or.kr 스크래핑 데이터 → 카드 포맷
   function mapKarmaAnimal(item) {
-    const breed = cleanBreed(item.kindCd);
-    // sub = 성별 · 나이 · 모색 (품종은 name에 표시하므로 breed는 비워서 중복 방지)
-    const ageColor = [item.age, item.color].filter(Boolean).join(' ');
+    const breed    = cleanBreed(item.kindCd);
+    const ageParts = [item.age, item.color].filter(Boolean).join(' · ');
     return {
       photo:     item.popfile
         ? `/img-proxy?url=${encodeURIComponent(item.popfile)}`
         : null,
       detailUrl: item.detailUrl || 'https://www.karma.or.kr',
       name:      breed || '믹스견',
-      breed:     '',                   // sub에서 중복 방지
+      breed:     '',                        // name에 품종 표시하므로 중복 방지
       sex:       sexLabel(item.sexCd),
-      age:       ageColor,
-      neuter:    '',
+      age:       ageParts,
+      neuter:    neuterLabel(item.neuterYn),
       care:      item.orgNm || item.careNm || '카라(KARA)',
       tel:       '',
       tmpOk:     true,
