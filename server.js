@@ -30,21 +30,56 @@ app.get('/seoul-api/*', async (req, res) => {
 });
 
 // ----------------------------------------------------------------
-// 1-2. 서울시 시립동물복지지원센터 입양 가능 반려견 스크래퍼
-//      animal.go.kr 공개 페이지 → HTML 파싱 → JSON 반환
-//      API 키 불필요 / 서울(upr_cd=6110000) + 개(upkind=417000) 필터
+// 1-2. 서울시 시립동물복지지원센터 입양 가능 반려견
+//      1순위: 공공데이터포털 API + care_nm 필터 (ADOPT_API_KEY 필요)
+//      2순위: animal.go.kr HTML 스크래핑 (API 키 불필요)
 // ----------------------------------------------------------------
 app.get('/shelter-animals', async (req, res) => {
+  const CARE_NAMES = ['서울특별시동물복지지원센터', '서울시립동물복지지원센터', '서울시동물복지지원센터'];
   const BASE = 'https://www.animal.go.kr';
-  // 서울 공고 중 강아지 목록 (1페이지, 최대 20마리)
+
+  // ── 1순위: 공공데이터포털 API (ADOPT_API_KEY가 있을 때만) ──
+  const serviceKey = process.env.ADOPT_API_KEY;
+  if (serviceKey) {
+    try {
+      const params = new URLSearchParams({
+        serviceKey,
+        upkind:    '417000',
+        upr_cd:    '6110000',
+        state:     'notice',
+        numOfRows: '12',
+        pageNo:    '1',
+        _type:     'json',
+      });
+      const apiUrl  = `https://apis.data.go.kr/1543061/abandonmentPublicService/abandonmentPublic?${params}`;
+      const apiResp = await fetch(apiUrl);
+      const apiJson = await apiResp.json();
+      let items     = apiJson?.response?.body?.items?.item ?? [];
+      if (!Array.isArray(items)) items = [items];
+
+      // 서울시 시립동물복지지원센터 소속만 필터
+      const filtered = items.filter(it =>
+        CARE_NAMES.some(n => (it.careNm || '').includes(n.slice(0, 8)))
+      );
+      const result = (filtered.length > 0 ? filtered : items).slice(0, 12);
+
+      if (result.length > 0) {
+        return res.json({ animals: result, source: 'api' });
+      }
+    } catch (apiErr) {
+      console.warn('공공데이터 API 실패, 스크래핑 시도:', apiErr.message);
+    }
+  }
+
+  // ── 2순위: animal.go.kr HTML 스크래핑 ──
   const listUrl = `${BASE}/front/awtis/public/publicList.do?searchState=notice&searchUprCd=6110000&searchUpkind=417000&pageNo=1&numOfRows=12`;
 
   try {
     const resp = await fetch(listUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer':    BASE,
-        'Accept':     'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent':      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer':         BASE,
+        'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'ko-KR,ko;q=0.9',
       },
     });
@@ -52,72 +87,54 @@ app.get('/shelter-animals', async (req, res) => {
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const html = await resp.text();
 
-    // 동물 카드 파싱 — animal.go.kr 구조:
-    // <a href="/front/awtis/public/publicDtl.do?desertionNo=XXX&menuNo=...">
-    //   <img src="/front/fileMng/imageView.do?f=...">
-    //   <h4>공고기간</h4><h3>품종</h3>
-    //   <p>발견장소: ...</p><p>특징: ...</p>
-    // </a>
-    const animals = [];
-    const linkRe  = /href="(\/front\/awtis\/public\/publicDtl\.do\?desertionNo=(\d+)[^"]*?)"/g;
-    const imgRe   = /src="(\/front\/fileMng\/imageView\.do\?f=[^"]+)"/;
-    const h3Re    = /<h3[^>]*>([^<]+)<\/h3>/;
-    const h4Re    = /<h4[^>]*>([^<]+)<\/h4>/;
-    const pRe     = /<p[^>]*>([^<]+)<\/p>/g;
+    // desertionNo 전체 목록 추출 (global match로 중복 없이)
+    const deserNos = [...html.matchAll(/desertionNo=(\d+)/g)].map(m => m[1]);
+    const unique   = [...new Set(deserNos)].slice(0, 12);
 
-    // 카드 단위로 분리 (li 또는 dt 태그 기반)
-    const cardRe = /<li[^>]*>([\s\S]*?)<\/li>/g;
-    let cardMatch;
-    while ((cardMatch = cardRe.exec(html)) !== null && animals.length < 12) {
-      const chunk = cardMatch[1];
-      if (!chunk.includes('desertionNo')) continue;
+    if (unique.length === 0) {
+      return res.json({ animals: [], source: 'parse_failed' });
+    }
 
-      const linkM = linkRe.exec(chunk) || (() => { linkRe.lastIndex = 0; return linkRe.exec(chunk); })();
-      if (!linkM) continue;
+    // 각 desertionNo 주변 HTML 블록에서 상세 정보 추출
+    const animals = unique.map(desertionNo => {
+      // desertionNo가 포함된 400자 컨텍스트 추출
+      const idx   = html.indexOf(`desertionNo=${desertionNo}`);
+      const start = Math.max(0, idx - 50);
+      const end   = Math.min(html.length, idx + 600);
+      const chunk = html.slice(start, end);
 
-      const desertionNo = linkM[2];
-      const imgM    = imgRe.exec(chunk);
-      const h3M     = h3Re.exec(chunk);
-      const h4M     = h4Re.exec(chunk);
+      const imgM    = chunk.match(/src="(\/front\/fileMng\/imageView\.do\?[^"]+)"/);
+      const h3M     = chunk.match(/<h3[^>]*>\s*([^<]+?)\s*<\/h3>/);
+      const h4M     = chunk.match(/<h4[^>]*>\s*([^<]+?)\s*<\/h4>/);
 
-      // p 태그 여러 개 (발견장소, 특징 등)
+      // p 태그 텍스트 수집
       const paras = [];
-      let pm;
-      const pReLocal = /<p[^>]*>([^<]+)<\/p>/g;
-      while ((pm = pReLocal.exec(chunk)) !== null) paras.push(pm[1].trim());
+      for (const m of chunk.matchAll(/<p[^>]*>\s*([^<]+?)\s*<\/p>/g)) {
+        paras.push(m[1].trim());
+      }
 
       const breed    = h3M ? h3M[1].trim() : '믹스견';
       const period   = h4M ? h4M[1].trim() : '';
-      const location = paras.find(p => p.includes('발견장소') || p.includes('장소')) || '';
-      const feature  = paras.find(p => p.includes('특징') || p.includes('색상') || p.includes('kg')) || '';
+      const location = paras.find(p => p.includes('발견') || p.includes('장소')) || '';
+      const feature  = paras.find(p => p.includes('특징') || p.includes('kg') || p.includes('색상')) || '';
 
-      const photoUrl = imgM
-        ? `${BASE}${imgM[1]}`
-        : null;
-
-      // 성별/중성화/나이 파싱 (특징 문자열에서)
       const sexM    = feature.match(/수컷|암컷|미상/);
       const neuterM = feature.match(/중성화O|중성화X|중성화\s*(완료|미실시)/);
       const ageM    = feature.match(/(\d+)년생|(\d+)살|(\d+)개월/);
 
-      animals.push({
+      return {
         desertionNo,
-        popfile:      photoUrl,
+        popfile:      imgM ? `${BASE}${imgM[1]}` : null,
         kindCd:       breed,
-        sexCd:        sexM   ? (sexM[0] === '수컷' ? 'M' : sexM[0] === '암컷' ? 'F' : 'Q') : 'Q',
+        sexCd:        sexM ? (sexM[0] === '수컷' ? 'M' : sexM[0] === '암컷' ? 'F' : 'Q') : 'Q',
         neuterYn:     neuterM ? (neuterM[0].includes('O') || neuterM[0].includes('완료') ? 'Y' : 'N') : 'U',
-        age:          ageM   ? ageM[0] : '',
+        age:          ageM ? ageM[0] : '',
         noticeEdt:    period,
         careNm:       '서울시립동물복지지원센터',
-        orgNm:        location.replace('발견장소:', '').trim(),
+        orgNm:        location.replace(/발견장소[:：]?\s*/, '').trim(),
         processState: '공고중',
-      });
-    }
-
-    if (animals.length === 0) {
-      // 파싱 실패 시 대체 — API 키가 있으면 거기서 가져옴
-      return res.json({ animals: [], source: 'parse_failed' });
-    }
+      };
+    });
 
     res.json({ animals, source: 'scraped' });
   } catch (err) {

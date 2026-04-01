@@ -132,16 +132,19 @@ function updateAuthUI() {
   const userName  = document.getElementById('auth-user-name');
   const gnbLabel  = document.getElementById('gnb-mypage-label');
 
+  const adminTabBtn = document.getElementById('admin-tab-btn');
   if (currentUser) {
     loginBtn?.classList.add('hidden');
     userChip?.classList.remove('hidden');
     const displayName = currentUser.role === 'admin' ? `👑 ${currentUser.id}` : currentUser.id;
     if (userName) userName.textContent = displayName;
     if (gnbLabel) gnbLabel.textContent = currentUser.id;
+    if (adminTabBtn) adminTabBtn.classList.toggle('hidden', currentUser.role !== 'admin');
   } else {
     loginBtn?.classList.remove('hidden');
     userChip?.classList.add('hidden');
     if (gnbLabel) gnbLabel.textContent = '로그인';
+    adminTabBtn?.classList.add('hidden');
   }
 }
 
@@ -208,10 +211,10 @@ function clearAuthErrors() {
 // ────────────────────────────────────────────────────────────────
 function updateAccountPanel() {
   if (!currentUser) return;
-  const idEl    = document.getElementById('account-user-id');
-  const roleEl  = document.getElementById('account-role-badge');
-  const adminEl = document.getElementById('admin-panel');
-  const pwEl    = document.getElementById('mypage-pw-section');
+  const idEl       = document.getElementById('account-user-id');
+  const roleEl     = document.getElementById('account-role-badge');
+  const pwEl       = document.getElementById('mypage-pw-section');
+  const adminTabBtn = document.getElementById('admin-tab-btn');
 
   if (idEl)   idEl.textContent   = currentUser.id;
   if (roleEl) roleEl.textContent = currentUser.role === 'admin' ? '관리자' : '일반';
@@ -219,8 +222,9 @@ function updateAccountPanel() {
   // 관리자는 비밀번호 변경 숨김 (하드코딩이므로)
   if (pwEl) pwEl.classList.toggle('hidden', currentUser.role === 'admin');
 
-  if (adminEl) {
-    adminEl.classList.toggle('hidden', currentUser.role !== 'admin');
+  // 관리 탭 버튼 — 관리자에게만 표시
+  if (adminTabBtn) {
+    adminTabBtn.classList.toggle('hidden', currentUser.role !== 'admin');
     if (currentUser.role === 'admin') renderAdminUserList();
   }
 }

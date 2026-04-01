@@ -762,8 +762,7 @@ function renderDistrictDetailCard(guName, score, data) {
       title:   `${guName}는 댕댕 인프라가 부족해요`,
       msg:     `공원 면적이나 반려동물 시설이 상대적으로\n부족해요. 우리 동네 목소리를 높여봐요!`,
       buttons: [
-        { label: '📢 서울시 주민청원 바로가기', href: 'https://petition.seoul.go.kr' },
-        { label: '📂 공공데이터 제공신청 바로가기', href: 'https://data.seoul.go.kr/together/applyDataRequest.do' },
+        { label: '📢 서울시 주민청원 바로가기', href: 'https://idea.seoul.go.kr/front/index.do' },
       ],
     },
   };
@@ -1126,10 +1125,13 @@ async function loadAdoptionSection() {
     const scrapeRes  = await fetch('/shelter-animals');
     const scrapeJson = await scrapeRes.json();
     const scraped    = scrapeJson?.animals ?? [];
+    const source     = scrapeJson?.source  ?? '';
 
     if (scraped.length > 0) {
-      renderCards(scraped.slice(0, 6).map(mapScrapedAnimal));
-      console.log(`✅ 입양 동물 스크래핑 ${scraped.length}마리 로드`);
+      // source='api'이면 공공API 구조(noticeNo, careTel 포함), 'scraped'이면 스크래핑 구조
+      const mapper = source === 'api' ? mapApiAnimal : mapScrapedAnimal;
+      renderCards(scraped.slice(0, 6).map(mapper));
+      console.log(`✅ 입양 동물 ${source} ${scraped.length}마리 로드`);
       return;
     }
   } catch (e) {

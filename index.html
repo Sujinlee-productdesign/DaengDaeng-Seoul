@@ -52,6 +52,7 @@
       <button class="tab-btn" data-tab="dashboard">우리동네 댕댕</button>
       <button class="tab-btn" data-tab="commercial">펫 상권 분석</button>
       <button class="tab-btn" data-tab="aichat">AI 산책 추천</button>
+      <button class="tab-btn hidden" data-tab="admin" id="admin-tab-btn">관리</button>
     </nav>
 
     <div class="header-auth">
@@ -521,6 +522,44 @@
         </div>
       </section>
 
+      <!-- ═══════════════════════════════════════
+           관리자 탭 (관리자 전용)
+      ═══════════════════════════════════════ -->
+      <section id="tab-admin" class="tab-content admin-tab-section">
+        <div class="admin-tab-inner">
+          <div class="admin-tab-title">관리자 패널</div>
+
+          <!-- 장소 등록 제안 -->
+          <div class="admin-section-label">장소 등록 제안 <span id="sugg-badge" class="corr-count-badge hidden"></span></div>
+          <div id="admin-suggestion-list" class="admin-correction-list">
+            <div class="admin-empty">등록 제안이 없어요</div>
+          </div>
+
+          <div class="admin-panel-divider"></div>
+
+          <!-- 정정 요청 -->
+          <div class="admin-section-label">정정 요청 <span id="corr-badge" class="corr-count-badge"></span></div>
+          <div id="admin-correction-list" class="admin-correction-list">
+            <div class="admin-empty">처리 대기 중인 요청이 없어요</div>
+          </div>
+
+          <div class="admin-panel-divider"></div>
+
+          <!-- 사용자 관리 -->
+          <div class="admin-section-label">등록된 사용자</div>
+          <div id="admin-user-list" class="admin-user-list"></div>
+          <button class="auth-btn-secondary auth-submit-btn" id="admin-refresh-btn">목록 새로고침</button>
+
+          <div class="admin-section-label" style="margin-top:14px">비밀번호 초기화</div>
+          <div class="admin-reset-row">
+            <input type="text" id="admin-target-id" class="auth-input" placeholder="아이디">
+            <input type="password" id="admin-new-pw" class="auth-input" placeholder="새 비밀번호">
+          </div>
+          <div class="auth-error" id="admin-error"></div>
+          <button class="auth-submit-btn" id="admin-reset-submit">초기화</button>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -597,37 +636,7 @@
         <button class="auth-delete-btn" id="account-delete-btn">계정 삭제</button>
       </div>
 
-      <!-- 관리자 전용 -->
-      <div id="admin-panel" class="hidden">
-        <div class="admin-panel-divider"></div>
-        <div class="admin-panel-title">관리자 패널</div>
-
-        <!-- 장소 등록 제안 섹션 -->
-        <div class="admin-section-label">장소 등록 제안 <span id="sugg-badge" class="corr-count-badge hidden"></span></div>
-        <div id="admin-suggestion-list" class="admin-correction-list">
-          <div class="admin-empty">등록 제안이 없어요</div>
-        </div>
-
-        <div class="admin-panel-divider"></div>
-
-        <!-- 정정 요청 섹션 -->
-        <div class="admin-section-label">정정 요청 <span id="corr-badge" class="corr-count-badge"></span></div>
-        <div id="admin-correction-list" class="admin-correction-list">
-          <div class="admin-empty">처리 대기 중인 요청이 없어요</div>
-        </div>
-
-        <div class="admin-panel-divider"></div>
-        <div class="admin-section-label">등록된 사용자</div>
-        <div id="admin-user-list" class="admin-user-list"></div>
-        <button class="auth-btn-secondary auth-submit-btn" id="admin-refresh-btn">목록 새로고침</button>
-        <div class="admin-section-label" style="margin-top:14px">비밀번호 초기화</div>
-        <div class="admin-reset-row">
-          <input type="text" id="admin-target-id" class="auth-input" placeholder="아이디">
-          <input type="password" id="admin-new-pw" class="auth-input" placeholder="새 비밀번호">
-        </div>
-        <div class="auth-error" id="admin-error"></div>
-        <button class="auth-submit-btn" id="admin-reset-submit">초기화</button>
-      </div>
+      <!-- 관리자는 상단 '관리' 탭 메뉴를 이용해주세요 -->
     </div>
   </div>
 

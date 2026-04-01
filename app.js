@@ -1860,8 +1860,11 @@ window.navigateToMapWithFilter = function(category, guName) {
   const mapTabBtn = document.querySelector('.tab-btn[data-tab="map"]');
   if (mapTabBtn) mapTabBtn.click();
 
-  // 2. 탭 전환 렌더링 후 필터 + 지도 포커스 적용
+  // 2. 탭 전환 후 지도 relayout + 필터 + 포커스 적용
   setTimeout(() => {
+    // 숨김 상태에서 보임으로 전환된 경우 카카오맵 재계산
+    if (map) map.relayout();
+
     // 카테고리 칩 클릭
     const chip = document.querySelector(`.chip[data-category="${category}"]`);
     if (chip) chip.click();
@@ -1879,7 +1882,7 @@ window.navigateToMapWithFilter = function(category, guName) {
       map.setCenter(new kakao.maps.LatLng(lat, lng));
       map.setLevel(6);
     }
-  }, 150);
+  }, 300);
 };
 
 // 카카오맵 먼저 초기화

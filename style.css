@@ -1965,6 +1965,19 @@ body {
 
 /* ── 관리자 패널 ─── */
 .admin-panel.hidden { display: none; }
+
+/* 관리자 탭 섹션 */
+.admin-tab-section { padding: 32px 24px; }
+.admin-tab-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.admin-tab-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-1);
+  margin-bottom: 24px;
+}
 .admin-panel-divider {
   height: 1px;
   background: var(--separator);
