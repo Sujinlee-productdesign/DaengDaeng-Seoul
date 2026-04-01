@@ -946,7 +946,8 @@ async function fetchKakaoPlaces(keywords) {
       lng:          parseFloat(p.x),
       address:      p.road_address_name || p.address_name || '',
       url:          p.place_url || '',
-      categoryName: p.category_name || '', // 카테고리 필터링용
+      categoryName: p.category_name || '',
+      placeId:      p.id || '',            // 주차 정보 조회용
     }))
     .filter(p => !isNaN(p.lat) && !isNaN(p.lng));
 }
@@ -1134,6 +1135,46 @@ function getTrafficInfo(address) {
   return { label, color, roads };
 }
 
+// 주차 정보 캐시 (placeId → 'free'|'paid'|'none'|null)
+const parkingCache = new Map();
+
+// 주차 상태 → 뱃지 HTML
+function parkingBadgeHTML(status) {
+  if (!status) return '';
+  const MAP = {
+    free:    { label: '무료주차', cls: 'parking-free' },
+    paid:    { label: '주차 가능', cls: 'parking-paid' },
+    none:    { label: '주차장없음', cls: 'parking-none' },
+    unknown: { label: '주차 가능', cls: 'parking-paid' },
+  };
+  const b = MAP[status];
+  return b ? `<span class="parking-badge ${b.cls}">${b.label}</span>` : '';
+}
+
+// 팝업 내 주차 뱃지를 비동기로 업데이트
+async function loadPopupParking(placeId) {
+  if (!placeId) return;
+  const el = document.getElementById(`parking-badge-${placeId}`);
+  if (!el) return;
+
+  // 캐시 HIT
+  if (parkingCache.has(placeId)) {
+    el.outerHTML = parkingBadgeHTML(parkingCache.get(placeId));
+    return;
+  }
+
+  try {
+    const res  = await fetch(`/place-detail?id=${placeId}`);
+    const data = await res.json();
+    parkingCache.set(placeId, data.parking);
+    if (el.isConnected) el.outerHTML = parkingBadgeHTML(data.parking);
+  } catch {
+    el.remove();
+  }
+}
+
+window.loadPopupParking = loadPopupParking;
+
 function buildPopupHTML(place, category, index) {
   const label = getCategoryLabel(category);
 
@@ -1205,6 +1246,11 @@ function buildPopupHTML(place, category, index) {
       <div class="info-tag ${category}">${label}</div>
       <div class="info-name">${place.name}</div>
       <div class="info-addr"><img src="icons/location-pin.svg" alt="">${place.address || '주소 정보 없음'}</div>
+      ${place.placeId
+        ? (parkingCache.has(place.placeId)
+            ? parkingBadgeHTML(parkingCache.get(place.placeId))
+            : `<span id="parking-badge-${place.placeId}" class="parking-badge parking-loading">주차 확인 중…</span>`)
+        : ''}
       ${extraHTML}
       ${trafficHTML}
       <div class="info-btn-row">
@@ -1277,6 +1323,12 @@ function onMarkerClick(index) {
   // 팝업을 지도에 표시
   popup.setMap(map);
   activePopup = popup;
+
+  // 주차 정보 비동기 로드 (placeId 있을 때만)
+  const markerData = allMarkers[index];
+  if (markerData?.place?.placeId) {
+    setTimeout(() => loadPopupParking(markerData.place.placeId), 0);
+  }
 }
 
 
@@ -1469,6 +1521,7 @@ function renderSidebar(places) {
         : `${km.toFixed(1)}km`;
     }
 
+    const cachedParking = item.placeId ? (parkingCache.has(item.placeId) ? parkingCache.get(item.placeId) : null) : null;
     el.innerHTML = `
       <div class="place-item-icon ${item.category}">
         <img src="${getCategoryIconSrc(item.category)}" alt="${getCategoryLabel(item.category)}">
@@ -1476,6 +1529,7 @@ function renderSidebar(places) {
       <div class="place-item-info">
         <div class="place-item-name">${item.name}</div>
         <div class="place-item-addr">${item.address || '주소 정보 없음'}</div>
+        ${cachedParking ? parkingBadgeHTML(cachedParking) : ''}
       </div>
       ${distLabel ? `<span class="place-item-dist">${distLabel}</span>` : ''}
       <img src="icons/arrow-right.svg" class="place-item-arrow" alt="">

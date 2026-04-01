@@ -1328,7 +1328,6 @@ body {
 .adoption-title { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.3px; color: var(--text-1); }
 .adoption-sub   { font-size: 0.75rem; color: var(--text-3); margin-top: 3px; }
 
-.adoption-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
 .adoption-loading { font-size: 0.80rem; color: var(--text-4); padding: 8px 0; }
 
 .adoption-card {
@@ -2998,28 +2997,30 @@ body {
 }
 
 /* ================================================================
-   입양 섹션 — 썸네일 그리드 (기존 리스트 → 카드 그리드)
+   입양 섹션 — 썸네일 그리드
 ================================================================ */
 .adoption-list {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 .adoption-thumb-card {
-  background: var(--surface-2);
-  border-radius: var(--radius-md);
+  background: var(--surface);
+  border-radius: 14px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: box-shadow 0.15s;
+  border: 1px solid var(--separator-2);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  transition: box-shadow 0.18s, transform 0.18s;
 }
-.adoption-thumb-card:hover { box-shadow: var(--shadow-sm); }
+.adoption-thumb-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
 .adoption-thumb-photo-wrap {
   width: 100%;
-  aspect-ratio: 1/1;
+  aspect-ratio: 4/3;
   position: relative;
-  background: rgba(255,45,85,0.08);
+  background: var(--surface-2);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -3027,25 +3028,42 @@ body {
   width: 100%; height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.22s;
 }
+.adoption-thumb-card:hover .adoption-thumb-photo { transform: scale(1.04); }
 .adoption-thumb-placeholder {
-  width: 100%; height: 100%;
+  position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2);
 }
 .adoption-thumb-placeholder img {
-  width: 28px; height: 28px;
-  filter: invert(30%) sepia(90%) saturate(700%) hue-rotate(320deg);
+  width: 32px; height: 32px;
+  opacity: 0.35;
 }
 .adoption-thumb-info {
-  padding: 10px 10px 12px;
+  padding: 10px 12px 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
-.adoption-thumb-info .adoption-card-name { font-size: 0.86rem; }
-.adoption-thumb-info .adoption-card-sub  { font-size: 0.68rem; white-space: normal; }
-.adoption-thumb-info .adoption-badges    { margin-top: 6px; }
-.adoption-thumb-info .adoption-card-care { font-size: 0.64rem; margin-top: 5px; white-space: normal; }
+.adoption-thumb-info .adoption-card-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.adoption-thumb-info .adoption-card-sub  { font-size: 0.70rem; color: var(--text-3); white-space: normal; line-height: 1.4; }
+.adoption-thumb-info .adoption-badges    { margin-top: 5px; }
+.adoption-thumb-info .adoption-card-care { font-size: 0.65rem; color: var(--text-4); margin-top: 4px; white-space: normal; line-height: 1.4; }
 
-@media (max-width: 600px) {
+@media (max-width: 900px) {
   .adoption-list { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .adoption-list { grid-template-columns: repeat(2, 1fr); gap: 8px; }
 }
 
 /* ================================================================
@@ -3109,10 +3127,11 @@ body {
 }
 
 /* ── 장소 등록 제안 FAB ─────────────────────────────────────── */
+/* PC: 우측 하단 워터마크(bottom:24 + height:100 + gap:16 = 140) 바로 위 */
 .map-suggest-fab {
   position: absolute;
-  bottom: 64px;
-  right: 16px;
+  bottom: 148px;   /* 워터마크 top + 16px */
+  right: 20px;
   z-index: 200;
   display: flex;
   align-items: center;
@@ -3127,11 +3146,26 @@ body {
   color: var(--brand-dark);
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
 }
 .map-suggest-fab img { width: 16px; height: 16px;
   filter: invert(34%) sepia(78%) saturate(671%) hue-rotate(342deg) brightness(96%); }
 .map-suggest-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.18); }
 .map-suggest-fab:active { transform: translateY(0); }
+
+/* Mobile: 바텀시트 위 가운데 정렬 (바텀시트 핸들 ~68px + 12px 여유) */
+@media (max-width: 768px) {
+  .map-suggest-fab {
+    bottom: 80px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.80rem;
+    padding: 9px 18px;
+  }
+  .map-suggest-fab:hover { transform: translateX(-50%) translateY(-2px); }
+  .map-suggest-fab:active { transform: translateX(-50%) translateY(0); }
+}
 
 /* ── 장소 등록 제안 모달 ────────────────────────────────────── */
 .suggest-modal-box { max-width: 420px; width: 92%; }
@@ -3173,3 +3207,25 @@ a.adoption-thumb-card--link { transition: transform 0.15s, box-shadow 0.15s; }
   color: var(--brand);
   font-weight: 700;
 }
+
+/* ── 주차 정보 뱃지 ─────────────────────────────────────────── */
+.parking-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  margin: 4px 0 2px;
+  letter-spacing: -0.2px;
+}
+.parking-free    { background: rgba(52,199,89,0.14);  color: #1A8A36; }
+.parking-paid    { background: rgba(0,122,255,0.10);  color: #0055CC; }
+.parking-none    { background: rgba(142,142,147,0.14); color: #636366; }
+.parking-loading { background: var(--surface-2); color: var(--text-4); font-weight: 400; }
+
+/* 팝업 내 주차 뱃지 */
+.info-popup .parking-badge { margin: 2px 0 6px; }
+
+/* 사이드바 아이템 내 주차 뱃지 */
+.place-item-info .parking-badge { margin: 2px 0 0; font-size: 0.63rem; }

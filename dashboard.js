@@ -1078,40 +1078,77 @@ async function loadAdoptionSection() {
     }).join('');
   }
 
+  function mapScrapedAnimal(item) {
+    const photoSrc = item.popfile
+      ? `/img-proxy?url=${encodeURIComponent(item.popfile)}`
+      : null;
+    return {
+      photo:     photoSrc,
+      detailUrl: item.desertionNo
+        ? `https://www.animal.go.kr/front/awtis/public/publicDtl.do?desertionNo=${item.desertionNo}`
+        : 'https://www.animal.go.kr',
+      name:    `공고 ${item.desertionNo ? item.desertionNo.slice(-4) : '중'}`,
+      breed:   cleanBreed(item.kindCd),
+      sex:     sexLabel(item.sexCd),
+      age:     item.age || '',
+      neuter:  neuterLabel(item.neuterYn),
+      care:    item.careNm || '서울시립동물복지지원센터',
+      tel:     '',
+      tmpOk:   true,
+      adoptOk: true,
+    };
+  }
+
+  function mapApiAnimal(item) {
+    const state  = item.processState || '';
+    const isOpen = state.includes('공고') || state === '';
+    return {
+      photo:     (item.popfile || item.filename)
+        ? `/img-proxy?url=${encodeURIComponent(item.popfile || item.filename)}`
+        : null,
+      detailUrl: item.desertionNo
+        ? `https://www.animal.go.kr/front/anim/animalView.do?desertionNo=${item.desertionNo}`
+        : 'https://news.seoul.go.kr/env/pet',
+      name:    item.noticeNo ? `공고 ${item.noticeNo.split('-').pop()}` : '보호 중',
+      breed:   cleanBreed(item.kindCd),
+      sex:     sexLabel(item.sexCd),
+      age:     cleanAge(item.age),
+      neuter:  neuterLabel(item.neuterYn),
+      care:    item.careNm || '',
+      tel:     item.careTel || item.officetel || '',
+      tmpOk:   isOpen,
+      adoptOk: isOpen,
+    };
+  }
+
   try {
-    const res  = await fetch('/adopt-api');
-    const json = await res.json();
+    // 1순위: 서울시립동물복지지원센터 직접 스크래핑
+    const scrapeRes  = await fetch('/shelter-animals');
+    const scrapeJson = await scrapeRes.json();
+    const scraped    = scrapeJson?.animals ?? [];
+
+    if (scraped.length > 0) {
+      renderCards(scraped.slice(0, 6).map(mapScrapedAnimal));
+      console.log(`✅ 입양 동물 스크래핑 ${scraped.length}마리 로드`);
+      return;
+    }
+  } catch (e) {
+    console.warn('⚠️ 스크래퍼 실패:', e.message);
+  }
+
+  try {
+    // 2순위: 공공데이터포털 API
+    const res   = await fetch('/adopt-api');
+    const json  = await res.json();
     const items = json?.items ?? [];
 
     if (items.length === 0) throw new Error('데이터 없음');
 
-    // processState '공고중' = 임시보호·입양 모두 가능 (최대 6마리 그리드)
-    const animals = items.slice(0, 6).map(item => {
-      const state   = item.processState || '';
-      const isOpen  = state.includes('공고') || state === '';
-      return {
-        photo:     (item.popfile || item.filename)
-                     ? `/img-proxy?url=${encodeURIComponent(item.popfile || item.filename)}`
-                     : null,
-        detailUrl: item.desertionNo
-                     ? `https://www.animal.go.kr/front/anim/animalView.do?desertionNo=${item.desertionNo}`
-                     : 'https://news.seoul.go.kr/env/pet',
-        name:    item.noticeNo ? `공고 ${item.noticeNo.split('-').pop()}` : '보호 중',
-        breed:   cleanBreed(item.kindCd),
-        sex:     sexLabel(item.sexCd),
-        age:     cleanAge(item.age),
-        neuter:  neuterLabel(item.neuterYn),
-        care:    item.careNm || '',
-        tel:     item.careTel || item.officetel || '',
-        tmpOk:   isOpen,
-        adoptOk: isOpen,
-      };
-    });
-
-    renderCards(animals);
-    console.log(`✅ 입양 대기 동물 ${animals.length}마리 로드`);
+    renderCards(items.slice(0, 6).map(mapApiAnimal));
+    console.log(`✅ 입양 대기 동물 API ${items.length}마리 로드`);
 
   } catch (e) {
+    // 3순위: 더미 데이터
     console.warn('⚠️ 유기동물 API 실패, 더미 사용:', e.message);
     renderCards(DUMMY_ANIMALS);
   }
@@ -1166,99 +1203,13 @@ async function initDashboard() {
   drawChoroplethMap();              // 점수 기반 색상으로 표시
   drawInsights();
   loadAdoptionSection();
-  loadPetEvents();                  // 반려견 행사·축제·교육
   setupCorrectionModal();           // 정정 요청 모달 이벤트 바인딩
   console.log('✅ 대시보드 초기화 완료');
 }
 
 
 // ----------------------------------------------------------------
-// 16. 반려견 행사·축제·교육 — 서울시 문화행사 API
-// ----------------------------------------------------------------
-
-// 반려견 관련 키워드 필터
-const PET_KEYWORDS = ['반려견', '반려동물', '강아지', '펫', '애견', '댕댕', '멍멍'];
-
-async function loadPetEvents() {
-  const listEl = document.getElementById('pet-events-list');
-  if (!listEl) return;
-
-  // 서울시 문화행사정보 API (culturalEventInfo)
-  const url = `${SEOUL_API_BASE}/${SEOUL_API_KEY}/json/culturalEventInfo/1/100/`;
-
-  try {
-    const res  = await fetch(url);
-    const json = await res.json();
-    const rows = json?.culturalEventInfo?.row ?? [];
-
-    // 반려견 관련 키워드 필터링
-    const petRows = rows.filter(r => {
-      const text = (r.TITLE + r.PLACE + r.PROGRAM + r.ORG_NAME + (r.ETC_DESC || '')).toLowerCase();
-      return PET_KEYWORDS.some(kw => text.includes(kw));
-    });
-
-    if (petRows.length === 0) throw new Error('반려견 행사 없음');
-    renderPetEvents(petRows);
-    console.log(`✅ 반려견 행사 ${petRows.length}건 로드`);
-
-  } catch (err) {
-    console.warn('⚠️ 행사 API 실패, 대체 데이터 사용:', err.message);
-    renderPetEvents(DUMMY_PET_EVENTS);
-  }
-}
-
-// 행사 카드 렌더
-function renderPetEvents(events) {
-  const listEl = document.getElementById('pet-events-list');
-  if (!listEl) return;
-
-  if (!events.length) {
-    listEl.innerHTML = '<div class="adoption-loading">현재 등록된 반려견 행사가 없어요</div>';
-    return;
-  }
-
-  listEl.innerHTML = events.slice(0, 8).map(e => {
-    const title   = e.TITLE   || e.title   || '제목 없음';
-    const place   = e.PLACE   || e.place   || '';
-    const date    = e.DATE    || e.date    || (e.STRTDATE ? `${e.STRTDATE} ~ ${e.END_DATE || ''}` : '');
-    const org     = e.ORG_NAME|| e.org     || '';
-    const link    = e.HMPG_ADDR || e.url  || '';
-    const gu      = (place.match(/([가-힣]+구)/) || [])[1] || '';
-    const imgSrc  = e.MAIN_IMG || e.img    || '';
-
-    const guBadge = gu ? `<span class="event-gu-badge">${gu}</span>` : '';
-    const imgHTML = imgSrc
-      ? `<img src="${imgSrc}" alt="" class="event-card-img" loading="lazy" onerror="this.style.display='none'">`
-      : `<div class="event-card-img-placeholder"><img src="icons/heart.svg" alt="" class="icon-sm"></div>`;
-
-    return `
-      <div class="event-card">
-        ${imgHTML}
-        <div class="event-card-info">
-          <div class="event-card-header">
-            ${guBadge}
-            <span class="event-card-title">${title}</span>
-          </div>
-          ${date ? `<div class="event-card-date"><img src="icons/search.svg" alt="" class="icon-sm"> ${date}</div>` : ''}
-          ${place ? `<div class="event-card-place"><img src="icons/location-pin.svg" alt="" class="icon-sm"> ${place}</div>` : ''}
-          ${org ? `<div class="event-card-org">${org}</div>` : ''}
-          ${link ? `<a class="event-card-link" href="${link}" target="_blank" rel="noopener">자세히 보기 →</a>` : ''}
-        </div>
-      </div>`;
-  }).join('');
-}
-
-// 대체 데이터 (API 실패 시)
-const DUMMY_PET_EVENTS = [
-  { TITLE:'서울 반려동물 문화축제', DATE:'2026-05-10 ~ 2026-05-11', PLACE:'서울 마포구 월드컵공원', ORG_NAME:'서울시 동물복지과', HMPG_ADDR:'https://news.seoul.go.kr/env/pet' },
-  { TITLE:'반려견 기초교육 프로그램', DATE:'2026-04-05 ~ 2026-06-28', PLACE:'서울 노원구 불암산 자락길', ORG_NAME:'노원구청', HMPG_ADDR:'https://yeyak.seoul.go.kr' },
-  { TITLE:'강아지와 함께하는 한강 피크닉', DATE:'2026-04-19', PLACE:'서울 영등포구 여의도한강공원', ORG_NAME:'한강사업본부', HMPG_ADDR:'https://hangang.seoul.go.kr' },
-  { TITLE:'반려동물 입양 캠페인', DATE:'2026-04-12', PLACE:'서울 성동구 서울숲', ORG_NAME:'서울시 동물복지지원센터', HMPG_ADDR:'https://news.seoul.go.kr/env/pet' },
-];
-
-
-// ----------------------------------------------------------------
-// 17. 정정 요청 모달 이벤트 바인딩
+// 16. 정정 요청 모달 이벤트 바인딩
 // ----------------------------------------------------------------
 
 function setupCorrectionModal() {

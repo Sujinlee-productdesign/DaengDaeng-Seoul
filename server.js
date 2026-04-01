@@ -30,6 +30,103 @@ app.get('/seoul-api/*', async (req, res) => {
 });
 
 // ----------------------------------------------------------------
+// 1-2. 서울시 시립동물복지지원센터 입양 가능 반려견 스크래퍼
+//      animal.go.kr 공개 페이지 → HTML 파싱 → JSON 반환
+//      API 키 불필요 / 서울(upr_cd=6110000) + 개(upkind=417000) 필터
+// ----------------------------------------------------------------
+app.get('/shelter-animals', async (req, res) => {
+  const BASE = 'https://www.animal.go.kr';
+  // 서울 공고 중 강아지 목록 (1페이지, 최대 20마리)
+  const listUrl = `${BASE}/front/awtis/public/publicList.do?searchState=notice&searchUprCd=6110000&searchUpkind=417000&pageNo=1&numOfRows=12`;
+
+  try {
+    const resp = await fetch(listUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer':    BASE,
+        'Accept':     'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ko-KR,ko;q=0.9',
+      },
+    });
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const html = await resp.text();
+
+    // 동물 카드 파싱 — animal.go.kr 구조:
+    // <a href="/front/awtis/public/publicDtl.do?desertionNo=XXX&menuNo=...">
+    //   <img src="/front/fileMng/imageView.do?f=...">
+    //   <h4>공고기간</h4><h3>품종</h3>
+    //   <p>발견장소: ...</p><p>특징: ...</p>
+    // </a>
+    const animals = [];
+    const linkRe  = /href="(\/front\/awtis\/public\/publicDtl\.do\?desertionNo=(\d+)[^"]*?)"/g;
+    const imgRe   = /src="(\/front\/fileMng\/imageView\.do\?f=[^"]+)"/;
+    const h3Re    = /<h3[^>]*>([^<]+)<\/h3>/;
+    const h4Re    = /<h4[^>]*>([^<]+)<\/h4>/;
+    const pRe     = /<p[^>]*>([^<]+)<\/p>/g;
+
+    // 카드 단위로 분리 (li 또는 dt 태그 기반)
+    const cardRe = /<li[^>]*>([\s\S]*?)<\/li>/g;
+    let cardMatch;
+    while ((cardMatch = cardRe.exec(html)) !== null && animals.length < 12) {
+      const chunk = cardMatch[1];
+      if (!chunk.includes('desertionNo')) continue;
+
+      const linkM = linkRe.exec(chunk) || (() => { linkRe.lastIndex = 0; return linkRe.exec(chunk); })();
+      if (!linkM) continue;
+
+      const desertionNo = linkM[2];
+      const imgM    = imgRe.exec(chunk);
+      const h3M     = h3Re.exec(chunk);
+      const h4M     = h4Re.exec(chunk);
+
+      // p 태그 여러 개 (발견장소, 특징 등)
+      const paras = [];
+      let pm;
+      const pReLocal = /<p[^>]*>([^<]+)<\/p>/g;
+      while ((pm = pReLocal.exec(chunk)) !== null) paras.push(pm[1].trim());
+
+      const breed    = h3M ? h3M[1].trim() : '믹스견';
+      const period   = h4M ? h4M[1].trim() : '';
+      const location = paras.find(p => p.includes('발견장소') || p.includes('장소')) || '';
+      const feature  = paras.find(p => p.includes('특징') || p.includes('색상') || p.includes('kg')) || '';
+
+      const photoUrl = imgM
+        ? `${BASE}${imgM[1]}`
+        : null;
+
+      // 성별/중성화/나이 파싱 (특징 문자열에서)
+      const sexM    = feature.match(/수컷|암컷|미상/);
+      const neuterM = feature.match(/중성화O|중성화X|중성화\s*(완료|미실시)/);
+      const ageM    = feature.match(/(\d+)년생|(\d+)살|(\d+)개월/);
+
+      animals.push({
+        desertionNo,
+        popfile:      photoUrl,
+        kindCd:       breed,
+        sexCd:        sexM   ? (sexM[0] === '수컷' ? 'M' : sexM[0] === '암컷' ? 'F' : 'Q') : 'Q',
+        neuterYn:     neuterM ? (neuterM[0].includes('O') || neuterM[0].includes('완료') ? 'Y' : 'N') : 'U',
+        age:          ageM   ? ageM[0] : '',
+        noticeEdt:    period,
+        careNm:       '서울시립동물복지지원센터',
+        orgNm:        location.replace('발견장소:', '').trim(),
+        processState: '공고중',
+      });
+    }
+
+    if (animals.length === 0) {
+      // 파싱 실패 시 대체 — API 키가 있으면 거기서 가져옴
+      return res.json({ animals: [], source: 'parse_failed' });
+    }
+
+    res.json({ animals, source: 'scraped' });
+  } catch (err) {
+    console.error('동물 스크래퍼 오류:', err.message);
+    res.json({ animals: [], source: 'error', error: err.message });
+  }
+});
+
+// ----------------------------------------------------------------
 // 2. 공공데이터포털 유기동물 API 프록시 (사진 포함)
 //    출처: 농림축산식품부 동물보호관리시스템 (포인핸드 등 동일 소스)
 //    환경변수: ADOPT_API_KEY (Railway Variables에서 설정)
@@ -62,6 +159,64 @@ app.get('/adopt-api', async (req, res) => {
   } catch (err) {
     console.error('유기동물 API 프록시 오류:', err.message);
     res.json({ items: [] });
+  }
+});
+
+// ----------------------------------------------------------------
+// 1-1. 카카오 장소 상세 프록시 (CORS 우회 + 주차 정보 추출)
+//      클라이언트에서 직접 호출 시 CORS 차단 → 서버가 대신 호출
+// ----------------------------------------------------------------
+app.get('/place-detail', async (req, res) => {
+  const { id } = req.query;
+  if (!id || !/^\d+$/.test(id)) return res.status(400).json({ error: 'invalid id' });
+
+  try {
+    const response = await fetch(`https://place.map.kakao.com/main/v/${id}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Referer': 'https://map.kakao.com/',
+        'Accept': 'application/json',
+      },
+    });
+    if (!response.ok) return res.status(502).json({ parking: null });
+
+    const data = await response.json();
+
+    // 주차 정보 추출 (Kakao Place Detail 응답 구조)
+    const basic   = data?.basicInfo || {};
+    const parking = basic?.parking
+                 || basic?.openHour?.parking
+                 || data?.moreInfo?.parking
+                 || null;
+
+    // 주차 상태 판정
+    let parkingStatus = null; // null = 정보 없음
+    if (parking) {
+      const parkStr = JSON.stringify(parking).toLowerCase();
+      if (parkStr.includes('무료') || parkStr.includes('free')) {
+        parkingStatus = 'free';
+      } else if (parkStr.includes('유료') || parkStr.includes('가능') || parkStr.includes('있음') || parkStr.includes('주차장')) {
+        parkingStatus = 'paid';
+      } else if (parkStr.includes('불가') || parkStr.includes('없음') || parkStr.includes('no')) {
+        parkingStatus = 'none';
+      } else {
+        parkingStatus = 'unknown';
+      }
+    }
+
+    // 추가로 basicInfo.facilityInfo 확인
+    const fac = basic?.facilityInfo;
+    if (!parkingStatus && fac) {
+      const facStr = JSON.stringify(fac).toLowerCase();
+      if (facStr.includes('주차')) {
+        parkingStatus = facStr.includes('무료') ? 'free' : 'paid';
+      }
+    }
+
+    res.json({ parking: parkingStatus, raw: parking });
+  } catch (err) {
+    console.error('장소 상세 프록시 오류:', err.message);
+    res.json({ parking: null });
   }
 });
 
