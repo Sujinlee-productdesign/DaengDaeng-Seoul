@@ -52,6 +52,12 @@ const API_RESTAURANTS = `${SEOUL_API_BASE}/${SEOUL_API_KEY}/json/LOCALDATA_07240
 // ③ 서울 실시간 대기환경 (측정소 25개)
 const API_AIR = `${SEOUL_API_BASE}/${SEOUL_API_KEY}/json/RealtimeCityAir/1/25/`;
 
+// ④ 서울시 공영주차장 안내 정보 (OA-13122)
+const API_PUBLIC_PARKING = `${SEOUL_API_BASE}/${SEOUL_API_KEY}/json/GetParkInfo/1/1000/`;
+
+// 전역 공영주차장 데이터 (인근 주차장 검색용)
+let publicParkingData = [];
+
 
 // ----------------------------------------------------------------
 // 3. 더미(Fallback) 데이터
@@ -472,12 +478,13 @@ let currentPm10     = null;   // 서울 평균 PM10 (산책 가능도 계산용)
 // 카테고리 → 마커 배경색
 function getCategoryColor(category) {
   const colors = {
-    park:       '#43A047',
-    restaurant: '#EF5350',
-    cafe:       '#8D6E63',
-    'pf-cafe':  '#5856D6',
-    vet:        '#FF2D55',
-    playground: '#30B0C7',
+    park:             '#43A047',
+    restaurant:       '#EF5350',
+    cafe:             '#8D6E63',
+    'pf-cafe':        '#5856D6',
+    vet:              '#FF2D55',
+    playground:       '#30B0C7',
+    'public-parking': '#1565C0',
   };
   return colors[category] || '#888';
 }
@@ -485,12 +492,13 @@ function getCategoryColor(category) {
 // 카테고리 → 한글 라벨
 function getCategoryLabel(category) {
   const labels = {
-    park:       '공원',
-    restaurant: '음식점',
-    cafe:       '애견카페/운동장',
-    'pf-cafe':  '애견동반 카페',
-    vet:        '동물병원',
-    playground: '반려견 놀이터',
+    park:             '공원',
+    restaurant:       '음식점',
+    cafe:             '애견카페/운동장',
+    'pf-cafe':        '애견동반 카페',
+    vet:              '동물병원',
+    playground:       '반려견 놀이터',
+    'public-parking': '공영주차장',
   };
   return labels[category] || '장소';
 }
@@ -889,6 +897,120 @@ async function fetchParks() {
 
 
 // ----------------------------------------------------------------
+// 9-1. 서울시 공영주차장 데이터 (Seoul Open API OA-13122 + Kakao 보완)
+// ----------------------------------------------------------------
+
+async function fetchPublicParking() {
+  const lots = [];
+
+  // ─── 1순위: 서울시 공영주차장 안내정보 API ────────────────────
+  try {
+    const res  = await fetch(API_PUBLIC_PARKING);
+    const json = await res.json();
+    const rows = json?.GetParkInfo?.row ?? [];
+
+    for (const r of rows) {
+      // 위도/경도 — 필드명 변형 대응
+      const lat  = parseFloat(r.LAT  || r.GRS80_LT  || r.Y_DNTS  || 0);
+      const lng  = parseFloat(r.LNG  || r.GRS80_LO  || r.X_DNTS  || 0);
+      const name = (r.PKLT_NM || r.PARKING_NAME || '').trim();
+      const addr = (r.ADDR    || r.ROAD_ADDR_NEW || r.ADRES || '').trim();
+      const pay  = (r.PAY_NM  || r.FREE_YN      || '').trim();
+      const cap  = parseInt(r.CAPACITY || r.PRK_CPCTY || 0, 10);
+      const tel  = (r.TELNO   || r.TEL || '').trim();
+      const type = (r.PKLT_TYPE_NM || '').trim(); // 노외, 노상, 부설 등
+
+      if (!name || !lat || !lng) continue;
+      // 서울 경계 체크
+      if (lat < 37.4 || lat > 37.8 || lng < 126.7 || lng > 127.3) continue;
+
+      lots.push({
+        name, lat, lng, address: addr,
+        isPaid:   !pay.includes('무료'),
+        isFree:   pay.includes('무료'),
+        capacity: cap,
+        tel,
+        type,
+        source:   'seoul-api',
+      });
+    }
+    console.log(`✅ 공영주차장 Seoul API: ${lots.length}개`);
+  } catch (e) {
+    console.warn('⚠️ 공영주차장 Seoul API 실패:', e.message);
+  }
+
+  // ─── 2순위: 카카오 Places "공영주차장" 키워드 검색 보완 ────────
+  try {
+    const kakaoLots = await kakaoPlacesKeyword('공영주차장');
+    let added = 0;
+    for (const p of kakaoLots) {
+      const lat = parseFloat(p.y);
+      const lng = parseFloat(p.x);
+      if (isNaN(lat) || isNaN(lng)) continue;
+      // 50m 이내 중복 제거
+      const dup = lots.some(s => calcDistance(lat, lng, s.lat, s.lng) < 0.05);
+      if (!dup) {
+        lots.push({
+          name:     p.place_name,
+          lat, lng,
+          address:  p.road_address_name || p.address_name || '',
+          isPaid:   true,
+          isFree:   false,
+          capacity: 0,
+          tel:      p.phone || '',
+          type:     '공영',
+          source:   'kakao',
+          url:      p.place_url || '',
+        });
+        added++;
+      }
+    }
+    console.log(`✅ 공영주차장 카카오 보완: +${added}개 (총 ${lots.length}개)`);
+  } catch (e) {
+    console.warn('⚠️ 카카오 공영주차장 검색 실패:', e.message);
+  }
+
+  publicParkingData = lots;
+  return lots;
+}
+
+
+// ----------------------------------------------------------------
+// 9-2. 인근 공영주차장 검색 (Haversine, 반경 내 최대 3개)
+// ----------------------------------------------------------------
+
+function findNearbyParking(lat, lng, radiusKm = 0.6) {
+  return publicParkingData
+    .map(p => ({ ...p, dist: calcDistance(lat, lng, p.lat, p.lng) }))
+    .filter(p => p.dist <= radiusKm)
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, 3);
+}
+
+function nearbyParkingHTML(lots) {
+  if (!lots.length) return '';
+  return `
+    <div class="nearby-parking-section">
+      <div class="nearby-parking-label">🅿️ 인근 공영주차장</div>
+      ${lots.map(p => {
+        const distM  = Math.round(p.dist * 1000);
+        const naviUrl = `https://map.kakao.com/link/to/${encodeURIComponent(p.name)},${p.lat},${p.lng}`;
+        const typeTag = p.isFree
+          ? `<span class="npk-tag npk-free">무료</span>`
+          : `<span class="npk-tag npk-paid">유료</span>`;
+        const capTag  = p.capacity > 0
+          ? `<span class="npk-cap">${p.capacity}면</span>` : '';
+        return `
+          <a class="nearby-parking-item" href="${naviUrl}" target="_blank" rel="noopener">
+            <span class="npk-name">${p.name}</span>
+            <span class="npk-meta">${distM}m ${typeTag}${capTag}</span>
+          </a>`;
+      }).join('')}
+    </div>`;
+}
+
+
+// ----------------------------------------------------------------
 // 10. 카카오 Places 장소 검색 (services 라이브러리 활용)
 //     키워드 검색 → 서울 bounds 내 최대 3페이지(45건) 수집
 // ----------------------------------------------------------------
@@ -1151,25 +1273,40 @@ function parkingBadgeHTML(status) {
   return b ? `<span class="parking-badge ${b.cls}">${b.label}</span>` : '';
 }
 
-// 팝업 내 주차 뱃지를 비동기로 업데이트
-async function loadPopupParking(placeId) {
+// 팝업 내 주차 뱃지 + 인근 공영주차장을 비동기로 업데이트
+async function loadPopupParking(placeId, placeLat, placeLng) {
   if (!placeId) return;
   const el = document.getElementById(`parking-badge-${placeId}`);
-  if (!el) return;
 
-  // 캐시 HIT
-  if (parkingCache.has(placeId)) {
-    el.outerHTML = parkingBadgeHTML(parkingCache.get(placeId));
-    return;
+  // ── 주차 뱃지 업데이트 ──────────────────────────────────────
+  let parkingStatus = null;
+  if (el) {
+    if (parkingCache.has(placeId)) {
+      parkingStatus = parkingCache.get(placeId);
+      el.outerHTML = parkingBadgeHTML(parkingStatus);
+    } else {
+      try {
+        const res  = await fetch(`/place-detail?id=${placeId}`);
+        const data = await res.json();
+        parkingStatus = data.parking;
+        parkingCache.set(placeId, parkingStatus);
+        const freshEl = document.getElementById(`parking-badge-${placeId}`);
+        if (freshEl?.isConnected) freshEl.outerHTML = parkingBadgeHTML(parkingStatus);
+      } catch {
+        el.remove();
+      }
+    }
+  } else if (parkingCache.has(placeId)) {
+    parkingStatus = parkingCache.get(placeId);
   }
 
-  try {
-    const res  = await fetch(`/place-detail?id=${placeId}`);
-    const data = await res.json();
-    parkingCache.set(placeId, data.parking);
-    if (el.isConnected) el.outerHTML = parkingBadgeHTML(data.parking);
-  } catch {
-    el.remove();
+  // ── 주차장 없음 → 인근 공영주차장 표시 ────────────────────────
+  if (parkingStatus === 'none' && placeLat && placeLng && publicParkingData.length > 0) {
+    const nearbyEl = document.getElementById(`nearby-parking-${placeId}`);
+    if (nearbyEl?.isConnected) {
+      const lots = findNearbyParking(placeLat, placeLng);
+      if (lots.length) nearbyEl.innerHTML = nearbyParkingHTML(lots);
+    }
   }
 }
 
@@ -1209,6 +1346,20 @@ function buildPopupHTML(place, category, index) {
     }
   }
 
+  // 공영주차장: 주차 정보 표시
+  if (category === 'public-parking') {
+    const isFree   = place.isFree;
+    const capacity = place.capacity > 0 ? `${place.capacity}면` : '';
+    const type     = place.type || '';
+    extraHTML += `
+      <div class="parking-lot-info">
+        <span class="npk-tag ${isFree ? 'npk-free' : 'npk-paid'}">${isFree ? '무료' : '유료'}</span>
+        ${capacity ? `<span class="npk-cap">${capacity}</span>` : ''}
+        ${type     ? `<span class="npk-type">${type}</span>`    : ''}
+        ${place.tel ? `<a href="tel:${place.tel}" class="npk-tel">${place.tel}</a>` : ''}
+      </div>`;
+  }
+
   // 동물병원: 24시간 배지
   if (category === 'vet') {
     const is24h = /24|야간|응급/.test(place.name);
@@ -1246,10 +1397,13 @@ function buildPopupHTML(place, category, index) {
       <div class="info-tag ${category}">${label}</div>
       <div class="info-name">${place.name}</div>
       <div class="info-addr"><img src="icons/location-pin.svg" alt="">${place.address || '주소 정보 없음'}</div>
-      ${place.placeId
+      ${place.placeId && category !== 'public-parking'
         ? (parkingCache.has(place.placeId)
             ? parkingBadgeHTML(parkingCache.get(place.placeId))
             : `<span id="parking-badge-${place.placeId}" class="parking-badge parking-loading">주차 확인 중…</span>`)
+        : ''}
+      ${place.placeId && category !== 'public-parking'
+        ? `<div id="nearby-parking-${place.placeId}"></div>`
         : ''}
       ${extraHTML}
       ${trafficHTML}
@@ -1324,10 +1478,11 @@ function onMarkerClick(index) {
   popup.setMap(map);
   activePopup = popup;
 
-  // 주차 정보 비동기 로드 (placeId 있을 때만)
+  // 주차 정보 + 인근 공영주차장 비동기 로드 (placeId 있을 때만)
   const markerData = allMarkers[index];
-  if (markerData?.place?.placeId) {
-    setTimeout(() => loadPopupParking(markerData.place.placeId), 0);
+  if (markerData?.place?.placeId && markerData.category !== 'public-parking') {
+    const { placeId, lat, lng } = markerData.place;
+    setTimeout(() => loadPopupParking(placeId, lat, lng), 0);
   }
 }
 
@@ -1483,12 +1638,13 @@ function populateGuDropdown() {
 // 카테고리별 아이콘 이미지 경로 반환 (사이드바용)
 function getCategoryIconSrc(category) {
   const icons = {
-    park:       'icons/location.svg',
-    restaurant: 'icons/location-pin.svg',
-    cafe:       'icons/location-pin.svg',
-    'pf-cafe':  'icons/location-pin.svg',
-    vet:        'icons/heart.svg',
-    playground: 'icons/location.svg',
+    park:             'icons/location.svg',
+    restaurant:       'icons/location-pin.svg',
+    cafe:             'icons/location-pin.svg',
+    'pf-cafe':        'icons/location-pin.svg',
+    vet:              'icons/heart.svg',
+    playground:       'icons/location.svg',
+    'public-parking': 'icons/location-pin.svg',
   };
   return icons[category] || 'icons/location-pin.svg';
 }
@@ -1702,6 +1858,7 @@ async function main() {
       vetsResult,
       playgroundsResult,
       weatherResult,
+      publicParkingResult,
     ] = await Promise.allSettled([
       fetchParks(),              // ① 공원 (서울 공공데이터)
       fetchPetRestaurants(),     // ② 애견동반 음식점 (카카오 Places)
@@ -1711,6 +1868,7 @@ async function main() {
       fetchVets(),               // ⑥ 동물병원 (카카오 Places)
       fetchPlaygrounds(),        // ⑦ 반려견 놀이터 (카카오 Places)
       fetchWeather(),            // ⑧ 날씨 (Open-Meteo)
+      fetchPublicParking(),      // ⑨ 공영주차장 (Seoul API + 카카오)
     ]);
 
     // 공원 마커 추가
@@ -1736,6 +1894,10 @@ async function main() {
     // 반려견 놀이터 마커 추가
     const playgrounds = playgroundsResult.status === 'fulfilled' ? playgroundsResult.value : [];
     addMarkers(playgrounds, 'playground');
+
+    // 공영주차장 마커 추가 (addMarkers 전에 publicParkingData 이미 fetchPublicParking에서 설정됨)
+    const publicParkingLots = publicParkingResult.status === 'fulfilled' ? publicParkingResult.value : [];
+    addMarkers(publicParkingLots, 'public-parking');
 
     // 날씨 배너 업데이트
     const weather = weatherResult?.status === 'fulfilled' ? weatherResult.value : null;

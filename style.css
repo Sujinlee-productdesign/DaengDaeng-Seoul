@@ -555,7 +555,8 @@ body {
 .custom-marker.cafe       { background: var(--cafe); }
 .custom-marker.pf-cafe    { background: var(--pf-cafe); }
 .custom-marker.vet        { background: var(--vet); }
-.custom-marker.playground { background: var(--playground); }
+.custom-marker.playground     { background: var(--playground); }
+.custom-marker.public-parking { background: #1565C0; }
 
 .custom-marker .marker-icon { width: 14px; height: 14px; filter: brightness(0) invert(1); }
 
@@ -3245,3 +3246,72 @@ a.adoption-thumb-card--link { transition: transform 0.15s, box-shadow 0.15s; }
 
 /* 사이드바 아이템 내 주차 뱃지 */
 .place-item-info .parking-badge { margin: 2px 0 0; font-size: 0.63rem; }
+
+/* ── 인근 공영주차장 섹션 ────────────────────────────────────── */
+.nearby-parking-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.nearby-parking-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-3);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.nearby-parking-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  margin-bottom: 5px;
+}
+.nearby-parking-item:last-child { margin-bottom: 0; }
+.npk-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.npk-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.npk-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.npk-free { background: #e8f5e9; color: #2e7d32; }
+.npk-paid { background: #fff3e0; color: #e65100; }
+.npk-cap  { font-size: 0.68rem; color: var(--text-3); }
+.npk-dist { font-size: 0.68rem; color: var(--text-4); margin-left: auto; }
+.npk-tel  { font-size: 0.68rem; color: var(--text-4); }
+
+/* 공영주차장 팝업 상세 정보 */
+.parking-lot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+.parking-lot-info .pli-row {
+  display: flex;
+  gap: 6px;
+}
+.parking-lot-info .pli-label {
+  color: var(--text-4);
+  min-width: 44px;
+}
