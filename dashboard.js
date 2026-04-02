@@ -121,9 +121,9 @@ function setupTabs() {
         dashboardInitialized = true;
       }
 
-      if (target === 'recommend' && !recommendInitialized) {
+      if (target === 'adopt' && !adoptInitialized) {
         loadAdoptionSection();
-        recommendInitialized = true;
+        adoptInitialized = true;
       }
 
       // 펫 상권 분석 탭 초기화 (pet.js)
@@ -139,6 +139,7 @@ function setupTabs() {
 
 let dashboardInitialized  = false;
 let recommendInitialized  = false;
+let adoptInitialized      = false;
 
 
 // ----------------------------------------------------------------
@@ -1077,6 +1078,8 @@ async function loadAdoptionSection() {
     }).join('');
   }
 
+  const KARMA_LIST_URL = 'https://www.karma.or.kr/human_boardA/animal_board.php?act=list&bid=animal&r=267319719';
+
   // karma.or.kr 스크래핑 데이터 → 카드 포맷
   function mapKarmaAnimal(item) {
     const breed    = cleanBreed(item.kindCd);
@@ -1085,7 +1088,7 @@ async function loadAdoptionSection() {
       photo:     item.popfile
         ? `/img-proxy?url=${encodeURIComponent(item.popfile)}`
         : null,
-      detailUrl: item.detailUrl || 'https://www.karma.or.kr',
+      detailUrl: KARMA_LIST_URL,            // 목록 페이지로 연결
       name:      breed || '믹스견',
       breed:     '',                        // name에 품종 표시하므로 중복 방지
       sex:       sexLabel(item.sexCd),
@@ -1126,7 +1129,7 @@ async function loadAdoptionSection() {
     const karmaList = karmaJson?.animals ?? [];
 
     if (karmaList.length > 0) {
-      renderCards(karmaList.slice(0, 10).map(mapKarmaAnimal));
+      renderCards(karmaList.slice(0, 15).map(mapKarmaAnimal));
       console.log(`✅ karma 입양동물 ${karmaList.length}마리 로드`);
       return;
     }
@@ -1204,7 +1207,6 @@ async function initDashboard() {
   drawParkChart();
   drawChoroplethMap();              // 점수 기반 색상으로 표시
   drawInsights();
-  loadAdoptionSection();
   setupCorrectionModal();           // 정정 요청 모달 이벤트 바인딩
 
   if (loadingEl) loadingEl.classList.add('hidden');

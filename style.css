@@ -1967,6 +1967,19 @@ body {
 /* ── 관리자 패널 ─── */
 .admin-panel.hidden { display: none; }
 
+/* 가족을 찾아요 탭 */
+.adopt-tab-section { padding: 32px 24px; }
+.adopt-tab-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.adoption-section--full {
+  max-width: 100%;
+  background: none;
+  padding: 0;
+  box-shadow: none;
+}
+
 /* 관리자 탭 섹션 */
 .admin-tab-section { padding: 32px 24px; }
 .admin-tab-inner {
@@ -3015,8 +3028,8 @@ body {
 ================================================================ */
 .adoption-list {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
   margin-bottom: 16px;
 }
 .adoption-thumb-card {
@@ -3073,14 +3086,11 @@ body {
 .adoption-thumb-info .adoption-badges    { margin-top: 5px; }
 .adoption-thumb-info .adoption-card-care { font-size: 0.65rem; color: var(--text-4); margin-top: 4px; white-space: normal; line-height: 1.4; }
 
-@media (max-width: 1100px) {
-  .adoption-list { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 700px) {
+  .adoption-list { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 }
-@media (max-width: 900px) {
-  .adoption-list { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 600px) {
-  .adoption-list { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (max-width: 440px) {
+  .adoption-list { grid-template-columns: 1fr; gap: 8px; }
 }
 
 /* ================================================================

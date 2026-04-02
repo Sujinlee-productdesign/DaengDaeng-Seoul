@@ -277,7 +277,7 @@ app.get('/karma-animals', async (req, res) => {
 
     // 서울 지역만 필터링 (구조장소에 "서울" 포함)
     const seoulOnly = all.filter(a => a.orgNm.includes('서울'));
-    const animals   = seoulOnly.length >= 5 ? seoulOnly.slice(0, 10) : all.slice(0, 10);
+    const animals   = seoulOnly.length >= 5 ? seoulOnly.slice(0, 15) : all.slice(0, 15);
 
     if (animals.length === 0) {
       return res.json({ animals: [], source: 'parse_failed' });

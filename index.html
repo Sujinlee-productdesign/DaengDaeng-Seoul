@@ -52,6 +52,7 @@
       <button class="tab-btn" data-tab="dashboard">우리동네 댕댕</button>
       <button class="tab-btn" data-tab="commercial">펫 상권 분석</button>
       <button class="tab-btn" data-tab="aichat">AI 산책 추천</button>
+      <button class="tab-btn" data-tab="adopt">가족을 찾아요</button>
       <button class="tab-btn hidden" data-tab="admin" id="admin-tab-btn">관리</button>
     </nav>
 
@@ -262,23 +263,7 @@
             <div id="recommend-place-list" class="recommend-place-list"></div>
           </div>
 
-          <!-- ④ 입양 연계 섹션 -->
-          <div class="adoption-section">
-            <div class="adoption-header">
-              <div class="adoption-icon-wrap">
-                <img src="icons/heart.svg" alt="" class="adoption-icon-img">
-              </div>
-              <div>
-                <div class="adoption-title">서울 지역 입양 가능 반려견</div>
-                <div class="adoption-sub">카라(KARA) · 클릭하면 입양 신청 페이지로 이동해요</div>
-              </div>
-            </div>
-            <div id="adoption-list" class="adoption-list">
-              <div class="adoption-loading">입양 정보 불러오는 중...</div>
-            </div>
-            <a href="https://www.karma.or.kr/human_boardA/animal_board.php?pagenow=1&keyfield1=1&keyfield2=0&city=0&country=&sch1=&sch2=&sch3=&bid=animal" target="_blank" rel="noopener"
-               class="adoption-more-btn">카라에서 더 많은 아이들 보기 →</a>
-          </div>
+          <!-- ④ 입양 연계 섹션 — tab-adopt로 이동됨 -->
 
         </div>
       </section>
@@ -531,6 +516,28 @@
         </div>
       </section>
 
+      <!-- 탭 6: 가족을 찾아요 -->
+      <section id="tab-adopt" class="tab-content adopt-tab-section">
+        <div class="adopt-tab-inner">
+          <div class="adoption-section adoption-section--full">
+            <div class="adoption-header">
+              <div class="adoption-icon-wrap">
+                <img src="icons/heart.svg" alt="" class="adoption-icon-img">
+              </div>
+              <div>
+                <div class="adoption-title">서울 지역 입양 가능 반려견</div>
+                <div class="adoption-sub">카라(KARA) · 클릭하면 입양 목록 페이지로 이동해요</div>
+              </div>
+            </div>
+            <div id="adoption-list" class="adoption-list">
+              <div class="adoption-loading">입양 정보 불러오는 중...</div>
+            </div>
+            <a href="https://www.karma.or.kr/human_boardA/animal_board.php?act=list&bid=animal&r=267319719"
+               target="_blank" rel="noopener" class="adoption-more-btn">카라에서 더 많은 아이들 보기 →</a>
+          </div>
+        </div>
+      </section>
+
       <!-- ═══════════════════════════════════════
            관리자 탭 (관리자 전용)
       ═══════════════════════════════════════ -->
@@ -766,6 +773,10 @@
     <button class="tab-btn" data-tab="aichat">
       <span class="gnb-icon"><img src="icons/search.svg" alt="" class="gnb-icon-img"></span>
       <span class="gnb-label">AI추천</span>
+    </button>
+    <button class="tab-btn" data-tab="adopt">
+      <span class="gnb-icon"><img src="icons/heart.svg" alt="" class="gnb-icon-img"></span>
+      <span class="gnb-label">입양</span>
     </button>
     <button class="gnb-mypage-btn" id="gnb-mypage-btn" onclick="currentUser ? openMyPageModal() : openAuthModal('login')">
       <span class="gnb-icon"><img src="icons/bookmark.svg" alt="" class="gnb-icon-img"></span>
