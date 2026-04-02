@@ -341,7 +341,9 @@ function showRecommendResult(breed) {
   placeList.innerHTML = recommended.length === 0
     ? '<p style="color:var(--text-3);font-size:0.85rem;">추천 장소를 불러오는 중이에요...</p>'
     : recommended.map(p => `
-        <div class="recommend-place-item">
+        <div class="recommend-place-item recommend-place-item--clickable"
+             onclick="if(typeof window.focusMapMarker==='function')window.focusMapMarker(${p.markerIndex})"
+             title="지도에서 보기">
           <div class="place-item-icon ${p.category}">
             <img src="${CATEGORY_ICON_SRC[p.category] || 'icons/location-pin.svg'}" alt="">
           </div>
@@ -349,6 +351,7 @@ function showRecommendResult(breed) {
             <div class="place-item-name">${p.name}</div>
             <div class="place-item-addr">${p.address || '주소 정보 없음'}</div>
           </div>
+          <span class="place-item-map-hint">지도 →</span>
         </div>
       `).join('');
 
@@ -558,7 +561,9 @@ function showUnifiedResult(breed, weightKg, neutered) {
   placeList.innerHTML = recommended.length === 0
     ? '<p style="color:var(--text-3);font-size:0.85rem;">추천 장소를 불러오는 중이에요...</p>'
     : recommended.map(p => `
-        <div class="recommend-place-item">
+        <div class="recommend-place-item recommend-place-item--clickable"
+             onclick="if(typeof window.focusMapMarker==='function')window.focusMapMarker(${p.markerIndex})"
+             title="지도에서 보기">
           <div class="place-item-icon ${p.category}">
             <img src="${CATEGORY_ICON_SRC[p.category] || 'icons/location-pin.svg'}" alt="">
           </div>
@@ -566,6 +571,7 @@ function showUnifiedResult(breed, weightKg, neutered) {
             <div class="place-item-name">${p.name}</div>
             <div class="place-item-addr">${p.address || '주소 정보 없음'}</div>
           </div>
+          <span class="place-item-map-hint">지도 →</span>
         </div>
       `).join('');
 

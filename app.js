@@ -2050,6 +2050,24 @@ window.navigateToMapWithFilter = function(category, guName) {
   }, 300);
 };
 
+// 추천 장소 클릭 → 댕댕지도에서 해당 마커 포커싱 + 말풍선
+window.focusMapMarker = function(index) {
+  const mapTabBtn = document.querySelector('.tab-btn[data-tab="map"]');
+  if (mapTabBtn) mapTabBtn.click();
+
+  setTimeout(() => {
+    if (map) map.relayout();
+    const markerData = allMarkers[index];
+    if (!markerData) return;
+    const pos = markerData.marker.getPosition();
+    if (map) {
+      map.setCenter(pos);
+      map.setLevel(3);
+    }
+    onMarkerClick(index);
+  }, 300);
+};
+
 // 카카오맵 먼저 초기화
 initMap();
 

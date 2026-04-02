@@ -1968,7 +1968,8 @@ body {
 .admin-panel.hidden { display: none; }
 
 /* 가족을 찾아요 탭 */
-.adopt-tab-section { padding: 32px 24px; }
+#tab-adopt { overflow-y: auto; }
+.adopt-tab-section { padding: 28px 24px 40px; }
 .adopt-tab-inner {
   max-width: 1100px;
   margin: 0 auto;
@@ -1978,6 +1979,163 @@ body {
   background: none;
   padding: 0;
   box-shadow: none;
+}
+
+/* ── 입양 로딩 ────────────────────────────────────────────────── */
+.adoption-loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  gap: 14px;
+}
+.adoption-loading-dog {
+  width: 72px;
+  animation: dog-run 0.55s steps(1) infinite;
+}
+@keyframes dog-run {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+.adoption-loading-text {
+  font-size: 0.85rem;
+  color: var(--text-3);
+}
+
+/* ── 카르마 카드 ────────────────────────────────────────────────── */
+.karma-card {
+  background: var(--surface);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-decoration: none;
+  color: inherit;
+}
+.karma-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+.karma-photo-wrap {
+  width: 100%;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: var(--surface-2);
+  flex-shrink: 0;
+  position: relative;
+}
+.karma-photo {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.22s;
+}
+.karma-card:hover .karma-photo { transform: scale(1.04); }
+.karma-photo-placeholder {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2);
+}
+.karma-photo-placeholder img { width: 36px; opacity: 0.3; }
+.karma-body { padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.karma-breed {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.karma-location {
+  font-size: 0.72rem;
+  color: var(--text-4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.karma-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 8px;
+  margin-top: 2px;
+}
+.karma-field {
+  font-size: 0.68rem;
+  color: var(--text-3);
+  display: flex;
+  gap: 3px;
+}
+.karma-field-key { color: var(--text-4); flex-shrink: 0; }
+.karma-field-val { color: var(--text-2); font-weight: 500; }
+.karma-feature {
+  font-size: 0.68rem;
+  color: var(--text-3);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  border-top: 1px solid var(--separator);
+  padding-top: 5px;
+  margin-top: 2px;
+}
+.karma-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top: 1px solid var(--separator);
+  padding-top: 5px;
+  margin-top: 2px;
+}
+.karma-date-row {
+  font-size: 0.67rem;
+  color: var(--text-4);
+  display: flex;
+  gap: 4px;
+}
+.karma-date-row .kd-label { flex-shrink: 0; }
+.karma-date-row .kd-adopt { color: #e65100; font-weight: 600; }
+.karma-neuter-y { color: #2e7d32; font-weight: 600; }
+.karma-neuter-n { color: #c62828; font-weight: 600; }
+.karma-health-good { color: #2e7d32; }
+.karma-health-bad  { color: #c62828; }
+
+/* ── 페이지네이션 ─────────────────────────────────────────────── */
+.adopt-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+.adopt-page-btn {
+  width: 36px; height: 36px;
+  border: 1.5px solid var(--separator);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.adopt-page-btn:hover { border-color: var(--brand); color: var(--brand); }
+.adopt-page-btn.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.adopt-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* 추천장소 클릭 힌트 */
+.recommend-place-item--clickable { cursor: pointer; }
+.place-item-map-hint {
+  font-size: 0.68rem;
+  color: var(--brand);
+  white-space: nowrap;
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 
 /* 관리자 탭 섹션 */
@@ -2252,7 +2410,7 @@ body {
 /* 히트맵 지도 */
 .comm2-map-box {
   flex-shrink: 0;
-  height: 360px;
+  height: 540px;
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--surface-2);
@@ -2341,7 +2499,7 @@ body {
 @media (max-width: 768px) {
   .comm2-layout { flex-direction: column; }
   .comm2-rank-col { width: 100%; border-left: none; border-top: 0.5px solid var(--separator); }
-  .comm2-map-box { height: 280px; }
+  .comm2-map-box { height: 360px; }
 }
 
 
@@ -2395,17 +2553,29 @@ body {
 }
 .aiw-form.hidden { display: none; }
 
+.aiw-field {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
 .aiw-field-label {
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--text-2);
-  margin-bottom: 8px;
+  min-width: 110px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
+.aiw-field-label .icon-sm { flex-shrink: 0; }
 
 .aiw-btn-group {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  flex: 1;
 }
 .aiw-opt-btn {
   padding: 8px 16px;

@@ -122,7 +122,7 @@ function setupTabs() {
       }
 
       if (target === 'adopt' && !adoptInitialized) {
-        loadAdoptionSection();
+        loadAdoptionSection(1);
         adoptInitialized = true;
       }
 
@@ -924,7 +924,7 @@ async function fetchDogRegistrationData() {
     const descEl = document.getElementById('chart-dogs-desc');
     const noteEl = document.getElementById('dashboard-note');
     if (descEl) descEl.textContent = '서울시 반려동물 등록 현황 (공공데이터 실시간)';
-    if (noteEl) noteEl.textContent = '서울시 공공데이터 API 기반 실시간 데이터입니다.';
+    if (noteEl) noteEl.style.display = 'none';
 
     console.log('✅ 반려견 등록 실데이터 로드 완료');
 
@@ -1027,134 +1027,122 @@ function cleanBreed(kind) {
   return (kind || '').replace(/^\[개\]\s*/, '').trim();
 }
 
-async function loadAdoptionSection() {
+const KARMA_LIST_URL = 'https://www.karma.or.kr/human_boardA/animal_board.php?act=list&bid=animal&r=267319719';
+
+// 카르마 원본 데이터 → karma 카드 HTML
+function buildKarmaCard(item) {
+  const photo   = item.popfile ? `/img-proxy?url=${encodeURIComponent(item.popfile)}` : null;
+  const breed   = cleanBreed(item.kindCd) || 'Mix';
+  const sexTxt  = sexLabel(item.sexCd);
+  const neuterTxt = item.neuterYn === 'Y' ? '<span class="karma-neuter-y">완료</span>'
+                  : item.neuterYn === 'N' ? '<span class="karma-neuter-n">미완료</span>'
+                  : '-';
+  const healthCls = (item.health || '').includes('양호') ? 'karma-health-good' : 'karma-health-bad';
+
+  const fields = [
+    ['성별', sexTxt],
+    ['연령', item.age   || '-'],
+    ['모색', item.color || '-'],
+    ['체중', item.weight ? item.weight + ' Kg' : '-'],
+    ['중성화', neuterTxt],
+    ['성격', item.personality || '-'],
+  ];
+
+  const gridHtml = fields.map(([k, v]) =>
+    `<div class="karma-field"><span class="karma-field-key">${k}</span><span class="karma-field-val">${v}</span></div>`
+  ).join('');
+
+  const featureHtml = item.feature
+    ? `<div class="karma-feature">${item.feature}</div>`
+    : '';
+
+  const datesHtml = `
+    <div class="karma-dates">
+      ${item.rescueDate ? `<div class="karma-date-row"><span class="kd-label">구조일</span><span>${item.rescueDate}</span></div>` : ''}
+      ${item.orgNm      ? `<div class="karma-date-row"><span class="kd-label">구조장소</span><span>${item.orgNm}</span></div>` : ''}
+      ${item.noticeEdt  ? `<div class="karma-date-row"><span class="kd-label">입양가능</span><span class="kd-adopt">${item.noticeEdt}부터</span></div>` : ''}
+      <div class="karma-date-row"><span class="kd-label">건강</span><span class="${healthCls}">${item.health || '-'}</span></div>
+    </div>`;
+
+  return `
+    <a class="karma-card" href="${KARMA_LIST_URL}" target="_blank" rel="noopener">
+      <div class="karma-photo-wrap">
+        ${photo
+          ? `<img src="${photo}" alt="${breed}" class="karma-photo" loading="lazy"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          : ''}
+        <div class="karma-photo-placeholder" ${photo ? 'style="display:none"' : ''}>
+          <img src="icons/heart.svg" alt="">
+        </div>
+      </div>
+      <div class="karma-body">
+        <div class="karma-breed">${breed}</div>
+        ${item.orgNm ? `<div class="karma-location">${item.orgNm}</div>` : ''}
+        <div class="karma-grid">${gridHtml}</div>
+        ${featureHtml}
+        ${datesHtml}
+      </div>
+    </a>`;
+}
+
+function showAdoptLoading() {
+  const listEl = document.getElementById('adoption-list');
+  if (listEl) listEl.innerHTML = `
+    <div class="adoption-loading-wrap" style="grid-column:1/-1;">
+      <img src="img/dog_motion_run.svg" alt="로딩 중" class="adoption-loading-dog">
+      <span class="adoption-loading-text">입양 정보 불러오는 중...</span>
+    </div>`;
+}
+
+function renderAdoptPagination(currentPage, hasMore) {
+  const paginEl = document.getElementById('adopt-pagination');
+  if (!paginEl) return;
+
+  const maxShown = 3; // 최대 페이지 버튼 수
+  let html = '';
+
+  // prev
+  html += `<button class="adopt-page-btn" ${currentPage <= 1 ? 'disabled' : ''}
+    onclick="loadAdoptionSection(${currentPage - 1})">‹</button>`;
+
+  // numbered pages
+  for (let p = 1; p <= maxShown; p++) {
+    if (p > currentPage && !hasMore && p > currentPage) break;
+    if (p === currentPage + 1 && !hasMore) break;
+    html += `<button class="adopt-page-btn ${p === currentPage ? 'active' : ''}"
+      onclick="loadAdoptionSection(${p})">${p}</button>`;
+  }
+
+  // next
+  html += `<button class="adopt-page-btn" ${!hasMore ? 'disabled' : ''}
+    onclick="loadAdoptionSection(${currentPage + 1})">›</button>`;
+
+  paginEl.innerHTML  = html;
+  paginEl.style.display = 'flex';
+}
+
+async function loadAdoptionSection(page = 1) {
   const listEl = document.getElementById('adoption-list');
   if (!listEl) return;
 
-  // 더미 데이터 — ADOPT_API_KEY 미설정 시 표시 (서울시 동물복지지원센터 실제 연락처)
-  // 상세 페이지: 서울시 반려동물 입양 안내 페이지로 연결
-  const DUMMY_ANIMALS = [
-    { photo: 'https://images.dog.ceo/breeds/shiba/shiba-18.jpg',           name:'콩이',  breed:'믹스견',          sex:'수컷', age:'2살 추정', neuter:'',            care:'서울동물복지지원센터 마포',    tel:'02-300-5947',  tmpOk:true, adoptOk:true, detailUrl:'https://news.seoul.go.kr/env/pet' },
-    { photo: 'https://images.dog.ceo/breeds/maltese/n02085936_3709.jpg',   name:'하루',  breed:'말티즈 믹스',     sex:'암컷', age:'1살 추정', neuter:'',            care:'서울동물복지지원센터 동대문', tel:'02-2127-5560', tmpOk:true, adoptOk:true, detailUrl:'https://news.seoul.go.kr/env/pet' },
-    { photo: 'https://images.dog.ceo/breeds/pomeranian/n02112018_5685.jpg',name:'뭉치',  breed:'포메라니안 믹스', sex:'수컷', age:'4살',      neuter:'중성화 완료', care:'서울동물복지지원센터 강동',   tel:'02-3425-3390', tmpOk:true, adoptOk:true, detailUrl:'https://news.seoul.go.kr/env/pet' },
-    { photo: 'https://images.dog.ceo/breeds/jindo/n02085782_4946.jpg',     name:'보리',  breed:'진도 믹스',       sex:'수컷', age:'3살 추정', neuter:'중성화 완료', care:'서울동물복지지원센터 중랑',   tel:'02-2094-0616', tmpOk:true, adoptOk:true, detailUrl:'https://news.seoul.go.kr/env/pet' },
-    { photo: 'https://images.dog.ceo/breeds/bichon-frise/WhatsApp_Image_2022-04-20_at_5.32.02_PM.jpg', name:'솜이', breed:'비숑 믹스', sex:'암컷', age:'5살', neuter:'중성화 완료', care:'서울동물복지지원센터 은평', tel:'02-351-0590', tmpOk:true, adoptOk:true, detailUrl:'https://news.seoul.go.kr/env/pet' },
-    { photo: 'https://images.dog.ceo/breeds/shiba/shiba-7.jpg',            name:'단비',  breed:'시바견 믹스',     sex:'암컷', age:'2살 추정', neuter:'',            care:'서울동물복지지원센터 동작',   tel:'02-820-0988',  tmpOk:true, adoptOk:true, detailUrl:'https://news.seoul.go.kr/env/pet' },
-  ];
-
-  function renderCards(animals) {
-    listEl.innerHTML = animals.map(a => {
-      const sub = [a.breed, a.sex, a.age, a.neuter].filter(Boolean).join(' · ');
-      const telLink = a.tel
-        ? `<a href="tel:${a.tel}" class="adoption-tel-link" onclick="event.stopPropagation()">${a.tel}</a>`
-        : '';
-      const badges = `
-        <div class="adoption-badges">
-          <span class="adoption-badge ${a.tmpOk ? 'badge-ok' : 'badge-ask'}">임시보호 ${a.tmpOk ? '가능' : '문의'}</span>
-          <span class="adoption-badge ${a.adoptOk ? 'badge-ok' : 'badge-ask'}">입양문의 ${a.adoptOk ? '가능' : '마감'}</span>
-        </div>`;
-      const cardTag  = a.detailUrl ? 'a' : 'div';
-      const cardAttr = a.detailUrl
-        ? `href="${a.detailUrl}" target="_blank" rel="noopener"`
-        : '';
-      return `
-        <${cardTag} class="adoption-thumb-card${a.detailUrl ? ' adoption-thumb-card--link' : ''}" ${cardAttr}>
-          <div class="adoption-thumb-photo-wrap">
-            ${a.photo
-              ? `<img src="${a.photo}" alt="${a.breed}" class="adoption-thumb-photo" loading="lazy"
-                   onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-              : ''}
-            <div class="adoption-thumb-placeholder" ${a.photo ? 'style="display:none"' : ''}>
-              <img src="icons/heart.svg" alt="">
-            </div>
-          </div>
-          <div class="adoption-thumb-info">
-            <div class="adoption-card-name">${a.name || '보호 중'}${a.detailUrl ? '<span class="adoption-detail-arrow">→</span>' : ''}</div>
-            <div class="adoption-card-sub">${sub}</div>
-            ${badges}
-            <div class="adoption-card-care">${a.care || ''}${telLink ? `<br>${telLink}` : ''}</div>
-          </div>
-        </${cardTag}>`;
-    }).join('');
-  }
-
-  const KARMA_LIST_URL = 'https://www.karma.or.kr/human_boardA/animal_board.php?act=list&bid=animal&r=267319719';
-
-  // karma.or.kr 스크래핑 데이터 → 카드 포맷
-  function mapKarmaAnimal(item) {
-    const breed    = cleanBreed(item.kindCd);
-    const ageParts = [item.age, item.color].filter(Boolean).join(' · ');
-    return {
-      photo:     item.popfile
-        ? `/img-proxy?url=${encodeURIComponent(item.popfile)}`
-        : null,
-      detailUrl: KARMA_LIST_URL,            // 목록 페이지로 연결
-      name:      breed || '믹스견',
-      breed:     '',                        // name에 품종 표시하므로 중복 방지
-      sex:       sexLabel(item.sexCd),
-      age:       ageParts,
-      neuter:    neuterLabel(item.neuterYn),
-      care:      item.orgNm || item.careNm || '카라(KARA)',
-      tel:       '',
-      tmpOk:     true,
-      adoptOk:   item.processState === '입양가능',
-    };
-  }
-
-  // shelter-animals / 공공API 구조
-  function mapApiAnimal(item) {
-    const state  = item.processState || '';
-    const isOpen = state.includes('공고') || state.includes('입양') || state === '';
-    const photo  = item.popfile || item.filename;
-    return {
-      photo:     photo ? `/img-proxy?url=${encodeURIComponent(photo)}` : null,
-      detailUrl: item.detailUrl
-        || (item.desertionNo ? `https://www.animal.go.kr/front/anim/animalView.do?desertionNo=${item.desertionNo}` : 'https://www.animal.go.kr'),
-      name:    item.noticeNo ? `공고 ${item.noticeNo.split('-').pop()}` : '보호 중',
-      breed:   cleanBreed(item.kindCd),
-      sex:     sexLabel(item.sexCd),
-      age:     cleanAge(item.age || ''),
-      neuter:  neuterLabel(item.neuterYn),
-      care:    item.careNm || '',
-      tel:     item.careTel || '',
-      tmpOk:   isOpen,
-      adoptOk: isOpen,
-    };
-  }
+  showAdoptLoading();
 
   try {
-    // 1순위: karma.or.kr (서울 지역 강아지)
-    const karmaRes  = await fetch('/karma-animals');
-    const karmaJson = await karmaRes.json();
-    const karmaList = karmaJson?.animals ?? [];
+    const res  = await fetch(`/karma-animals?page=${page}`);
+    const data = await res.json();
+    const list = data?.animals ?? [];
 
-    if (karmaList.length > 0) {
-      renderCards(karmaList.slice(0, 15).map(mapKarmaAnimal));
-      console.log(`✅ karma 입양동물 ${karmaList.length}마리 로드`);
+    if (list.length > 0) {
+      listEl.innerHTML = list.map(buildKarmaCard).join('');
+      renderAdoptPagination(page, data.hasMore === true);
+      console.log(`✅ karma p${page} ${list.length}마리`);
       return;
     }
   } catch (e) {
     console.warn('⚠️ karma 스크래퍼 실패:', e.message);
   }
 
-  try {
-    // 2순위: shelter-animals (animal.go.kr 스크래핑 or 공공API)
-    const scrapeRes  = await fetch('/shelter-animals');
-    const scrapeJson = await scrapeRes.json();
-    const scraped    = scrapeJson?.animals ?? [];
-
-    if (scraped.length > 0) {
-      renderCards(scraped.slice(0, 6).map(mapApiAnimal));
-      console.log(`✅ shelter 입양동물 ${scraped.length}마리 로드`);
-      return;
-    }
-  } catch (e) {
-    console.warn('⚠️ shelter 스크래퍼 실패:', e.message);
-  }
-
-  // 3순위: 더미 데이터
-  console.warn('⚠️ 모든 입양 API 실패, 더미 사용');
-  renderCards(DUMMY_ANIMALS);
+  listEl.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-3);padding:40px 0;">데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.</p>';
 }
 
 

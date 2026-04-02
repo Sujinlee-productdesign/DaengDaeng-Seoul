@@ -262,31 +262,37 @@ app.get('/karma-animals', async (req, res) => {
   }
 
   try {
-    // 서울 지역 동물이 충분히 나오도록 1~2 페이지 동시 fetch
-    const fetchPage = (page) => fetch(
-      `${BASE}/human_boardA/animal_board.php?pagenow=${page}&keyfield1=1&keyfield2=0&city=0&country=&sch1=&sch2=&sch3=&bid=animal`,
+    // 클라이언트 page=N → karma pagenow (2N-1), (2N)
+    // page=1: karma 1,2 / page=2: karma 3,4 / page=3: karma 5,6
+    const clientPage = Math.max(1, parseInt(req.query.page) || 1);
+    const k1 = clientPage * 2 - 1;
+    const k2 = clientPage * 2;
+
+    const fetchKarmaPage = (p) => fetch(
+      `${BASE}/human_boardA/animal_board.php?pagenow=${p}&keyfield1=1&keyfield2=0&city=0&country=&sch1=&sch2=&sch3=&bid=animal`,
       { headers: HEADERS }
     ).then(r => r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`)));
 
-    const [html1, html2] = await Promise.allSettled([fetchPage(1), fetchPage(2)]);
+    const [html1, html2] = await Promise.allSettled([fetchKarmaPage(k1), fetchKarmaPage(k2)]);
 
     const all = [
       ...(html1.status === 'fulfilled' ? parsePage(html1.value) : []),
       ...(html2.status === 'fulfilled' ? parsePage(html2.value) : []),
     ];
 
-    // 서울 지역만 필터링 (구조장소에 "서울" 포함)
+    // 서울 지역만 필터링, 부족하면 전체 사용
     const seoulOnly = all.filter(a => a.orgNm.includes('서울'));
-    const animals   = seoulOnly.length >= 5 ? seoulOnly.slice(0, 15) : all.slice(0, 15);
+    const animals   = seoulOnly.length >= 3 ? seoulOnly.slice(0, 9) : all.slice(0, 9);
+    const hasMore   = all.length >= 9; // 다음 페이지 힌트
 
     if (animals.length === 0) {
-      return res.json({ animals: [], source: 'parse_failed' });
+      return res.json({ animals: [], source: 'parse_failed', page: clientPage, hasMore: false });
     }
 
-    res.json({ animals, source: 'karma' });
+    res.json({ animals, source: 'karma', page: clientPage, hasMore });
   } catch (err) {
     console.error('karma 스크래퍼 오류:', err.message);
-    res.json({ animals: [], source: 'error', error: err.message });
+    res.json({ animals: [], source: 'error', error: err.message, page: 1, hasMore: false });
   }
 });
 
