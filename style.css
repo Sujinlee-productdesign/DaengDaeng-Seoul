@@ -2055,7 +2055,7 @@ body {
 }
 .karma-location {
   font-size: 0.72rem;
-  color: var(--text-4);
+  color: var(--text-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2068,15 +2068,15 @@ body {
 }
 .karma-field {
   font-size: 0.68rem;
-  color: var(--text-3);
+  color: var(--text-2);
   display: flex;
   gap: 3px;
 }
-.karma-field-key { color: var(--text-4); flex-shrink: 0; }
-.karma-field-val { color: var(--text-2); font-weight: 500; }
+.karma-field-key { color: var(--text-3); flex-shrink: 0; }
+.karma-field-val { color: var(--text-1); font-weight: 500; }
 .karma-feature {
   font-size: 0.68rem;
-  color: var(--text-3);
+  color: var(--text-2);
   line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -2096,12 +2096,14 @@ body {
 }
 .karma-date-row {
   font-size: 0.67rem;
-  color: var(--text-4);
+  color: var(--text-3);
   display: flex;
   gap: 4px;
 }
 .karma-date-row .kd-label { flex-shrink: 0; }
-.karma-date-row .kd-adopt { color: #e65100; font-weight: 600; }
+.karma-date-row--adopt { margin-top: 4px; }
+.karma-date-row .kd-adopt-label { color: #e65100; font-weight: 700; font-size: 0.78rem; }
+.karma-date-row .kd-adopt { color: #e65100; font-weight: 700; font-size: 0.82rem; }
 .karma-neuter-y { color: #2e7d32; font-weight: 600; }
 .karma-neuter-n { color: #c62828; font-weight: 600; }
 .karma-health-good { color: #2e7d32; }
