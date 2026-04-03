@@ -494,6 +494,63 @@ app.post('/ai-chat', async (req, res) => {
 });
 
 // ----------------------------------------------------------------
+// 4-1. 쿠팡 파트너스 상품 이미지 추출
+//      /coupang-img?url=<파트너링크>
+//      파트너링크 → 리다이렉트 따라가 상품 페이지 HTML 파싱 → 대표 이미지 URL 반환
+// ----------------------------------------------------------------
+const coupangImgCache = new Map();
+
+app.get('/coupang-img', async (req, res) => {
+  const partnerUrl = req.query.url;
+  if (!partnerUrl || !/^https?:\/\//.test(partnerUrl)) {
+    return res.status(400).json({ error: 'invalid url' });
+  }
+
+  if (coupangImgCache.has(partnerUrl)) {
+    return res.json({ imgUrl: coupangImgCache.get(partnerUrl) });
+  }
+
+  try {
+    // 파트너 링크 → 실제 상품 페이지로 리다이렉트 따라가기
+    const resp = await fetch(partnerUrl, {
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ko-KR,ko;q=0.9',
+      }
+    });
+
+    const html = await resp.text();
+
+    // thumbnail.coupangcdn.com 492x492ex 이미지 우선 추출
+    const patterns = [
+      /src="(\/\/thumbnail[^"]*\/492x492ex\/[^"]+\.(?:jpg|jpeg|png|webp))"/i,
+      /src="(\/\/thumbnail[^"]*\/[^"]+\.(?:jpg|jpeg|png|webp))"/i,
+      /"(https?:\/\/thumbnail[^"]*\.(?:jpg|jpeg|png|webp))"/i,
+    ];
+
+    let imgUrl = null;
+    for (const pat of patterns) {
+      const m = html.match(pat);
+      if (m) {
+        imgUrl = m[1].startsWith('//') ? 'https:' + m[1] : m[1];
+        break;
+      }
+    }
+
+    if (!imgUrl) return res.status(404).json({ error: 'image not found' });
+
+    coupangImgCache.set(partnerUrl, imgUrl);
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.json({ imgUrl });
+  } catch (err) {
+    console.error('쿠팡 이미지 추출 오류:', err.message);
+    res.status(502).json({ error: err.message });
+  }
+});
+
+// ----------------------------------------------------------------
 // 4. 정적 파일 서빙 (HTML, CSS, JS, 이미지 등)
 //    현재 폴더의 모든 파일을 그대로 제공
 // ----------------------------------------------------------------

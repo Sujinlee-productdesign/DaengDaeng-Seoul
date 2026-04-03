@@ -1269,12 +1269,47 @@ function setupCorrectionModal() {
 
 
 // ----------------------------------------------------------------
-// 14. 멍템추천 카테고리 필터 + 상품명 검색
+// 14. 멍템추천 카테고리 필터 + 상품명 검색 + 쿠팡 이미지 로딩
 // ----------------------------------------------------------------
+
+// 쿠팡 이미지 병렬 로딩 (IntersectionObserver로 뷰포트 진입 시 fetch)
+function loadMerchImages() {
+  const cards = document.querySelectorAll('.merch-card[data-link]');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const card = entry.target;
+      const link = card.dataset.link;
+      const img  = card.querySelector('.merch-img');
+      if (!img || img.src) return;
+
+      fetch(`/coupang-img?url=${encodeURIComponent(link)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && data.imgUrl) {
+            img.src = data.imgUrl;
+          } else {
+            // 폴백: 이모지 배경
+            const wrap = card.querySelector('.merch-img-wrap');
+            if (wrap) { wrap.innerHTML = '<div class="merch-img-fallback">🐾</div>'; }
+          }
+        })
+        .catch(() => {
+          const wrap = card.querySelector('.merch-img-wrap');
+          if (wrap) { wrap.innerHTML = '<div class="merch-img-fallback">🐾</div>'; }
+        });
+
+      observer.unobserve(card);
+    });
+  }, { rootMargin: '200px' });
+
+  cards.forEach(card => observer.observe(card));
+}
+
 function setupMerchFilter() {
-  const filterBtns = document.querySelectorAll('.merch-filter-btn');
-  const cards      = document.querySelectorAll('.merch-card');
-  const searchInput = document.getElementById('merch-search');
+  const filterBtns  = document.querySelectorAll('.merch-filter-btn');
+  const cards        = document.querySelectorAll('.merch-card');
+  const searchInput  = document.getElementById('merch-search');
 
   let activeCat  = 'all';
   let searchText = '';
@@ -1305,7 +1340,9 @@ function setupMerchFilter() {
     });
   }
 }
+
 setupMerchFilter();
+loadMerchImages();
 
 // ----------------------------------------------------------------
 // 15. 탭 설정은 DOM 로드 후 바로 실행
