@@ -3,19 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>댕댕서울</title>
 
-  <!-- 파비콘 -->
+  <!-- ─── SEO 핵심 메타 ──────────────────────────────────────────── -->
+  <title>댕댕서울 — 서울 반려견 동반 지도 | 강아지 카페·애견카페·애견운동장·반려견 동반 식당</title>
+  <meta name="description" content="서울 반려견 동반 장소를 한눈에! 강아지 카페, 애견카페, 애견운동장, 반려견 동반 식당, 강아지 동반 가게를 지도로 확인하세요. 강아지와 함께 갈 수 있는 서울의 모든 애견 동반 장소를 댕댕서울에서 찾아보세요.">
+  <meta name="keywords" content="강아지, 반려견, 강아지 카페, 애견카페, 애견운동장, 강아지 어디가지, 강아지 외출, 강아지 동반, 반려견 동반, 반려견 동반 가게, 반려견 지도, 강아지 동반 가게, 애견동반 지도, 애견 동반 장소, 애견 동반 식당, 서울 강아지, 서울 반려견, 펫 프렌들리, 반려동물 동반, 애견 동반 카페">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="댕댕서울">
+  <link rel="canonical" href="https://daengdaeng-seoul-production.up.railway.app/">
+
+  <!-- ─── 지역 메타 (서울 로컬 SEO) ──────────────────────────────── -->
+  <meta name="geo.region" content="KR-11">
+  <meta name="geo.placename" content="서울특별시">
+  <meta name="geo.position" content="37.5665;126.9780">
+  <meta name="ICBM" content="37.5665, 126.9780">
+
+  <!-- ─── 파비콘 ──────────────────────────────────────────────────── -->
   <link rel="icon" type="image/png" href="img/favicon_daeng_Seoul.png">
 
-  <!-- OG / SNS 메타 -->
-  <meta property="og:title"       content="댕댕서울 — 서울 반려견 동반 지도">
-  <meta property="og:description" content="댕댕아 우리 어디갈까?">
-  <meta property="og:image"       content="img/og_img_daeng_Seoul.png">
+  <!-- ─── Open Graph (카카오·페이스북·슬랙 등) ───────────────────── -->
   <meta property="og:type"        content="website">
-  <meta name="twitter:card"       content="summary_large_image">
-  <meta name="twitter:title"      content="댕댕서울">
-  <meta name="twitter:image"      content="img/og_img_daeng_Seoul.png">
+  <meta property="og:site_name"   content="댕댕서울">
+  <meta property="og:locale"      content="ko_KR">
+  <meta property="og:url"         content="https://daengdaeng-seoul-production.up.railway.app/">
+  <meta property="og:title"       content="댕댕서울 — 서울 반려견 동반 지도">
+  <meta property="og:description" content="강아지 카페, 애견카페, 애견운동장, 반려견 동반 식당·가게를 지도로 한눈에! 강아지와 함께 갈 수 있는 서울의 모든 애견 동반 장소를 찾아보세요.">
+  <meta property="og:image"       content="https://daengdaeng-seoul-production.up.railway.app/img/og_img_daeng_Seoul.png">
+  <meta property="og:image:width"  content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt"    content="댕댕서울 — 서울 반려견 동반 지도 서비스">
+
+  <!-- ─── Twitter Card ──────────────────────────────────────────── -->
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="댕댕서울 — 서울 반려견 동반 지도">
+  <meta name="twitter:description" content="강아지 카페, 애견카페, 애견운동장, 반려견 동반 식당을 지도로 확인하세요.">
+  <meta name="twitter:image"       content="https://daengdaeng-seoul-production.up.railway.app/img/og_img_daeng_Seoul.png">
+
+  <!-- ─── JSON-LD 구조화 데이터 ──────────────────────────────────── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://daengdaeng-seoul-production.up.railway.app/#website",
+        "url": "https://daengdaeng-seoul-production.up.railway.app/",
+        "name": "댕댕서울",
+        "description": "서울 반려견 동반 장소 지도 서비스 — 강아지 카페, 애견카페, 애견운동장, 반려견 동반 식당·가게",
+        "inLanguage": "ko",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://daengdaeng-seoul-production.up.railway.app/#map"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "WebApplication",
+        "@id": "https://daengdaeng-seoul-production.up.railway.app/#app",
+        "name": "댕댕서울",
+        "url": "https://daengdaeng-seoul-production.up.railway.app/",
+        "description": "강아지 카페, 애견카페, 애견운동장, 반려견 동반 식당·가게를 지도에서 검색하는 서울 반려견 동반 지도 서비스",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "ko",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "KRW"
+        },
+        "featureList": [
+          "서울 반려견 동반 장소 지도",
+          "강아지 카페·애견카페 검색",
+          "애견운동장 위치 안내",
+          "반려견 동반 식당 검색",
+          "강아지 동반 가게 검색",
+          "날씨 기반 산책 지수",
+          "유기견 입양 정보",
+          "반려견 용품 추천"
+        ],
+        "areaServed": {
+          "@type": "City",
+          "name": "서울특별시",
+          "addressCountry": "KR"
+        },
+        "keywords": "강아지, 반려견, 강아지 카페, 애견카페, 애견운동장, 반려견 동반, 강아지 동반, 애견 동반 장소, 반려견 동반 식당, 반려견 지도"
+      }
+    ]
+  }
+  </script>
 
   <!-- Pretendard 폰트 -->
   <link rel="stylesheet" as="style" crossorigin

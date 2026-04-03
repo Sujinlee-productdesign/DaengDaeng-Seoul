@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://daengdaeng-seoul-production.up.railway.app/sitemap.xml
