@@ -1075,9 +1075,9 @@ function buildKarmaCard(item) {
     <div class="karma-dates">
       ${item.rescueDate ? `<div class="karma-date-row"><span class="kd-label">구조일</span><span>${item.rescueDate}</span></div>` : ''}
       ${item.orgNm      ? `<div class="karma-date-row"><span class="kd-label">구조장소</span><span>${item.orgNm}</span></div>` : ''}
-      ${item.serialNo   ? `<div class="karma-date-row"><span class="kd-label">고유번호</span><span>${item.serialNo}</span></div>` : ''}
-      ${item.noticeNo   ? `<div class="karma-date-row"><span class="kd-label">공고번호</span><span>${item.noticeNo}</span></div>` : ''}
-      ${item.noticeEdt  ? `<div class="karma-date-row karma-date-row--adopt"><span class="kd-label kd-adopt-label">입양신청</span><span class="kd-adopt">${item.noticeEdt}</span></div>` : ''}
+      ${item.serialNo   ? `<div class="karma-date-row karma-date-row--id"><span class="kd-label">고유번호</span><span>${item.serialNo}</span></div>` : ''}
+      ${item.noticeNo   ? `<div class="karma-date-row karma-date-row--id"><span class="kd-label">공고번호</span><span>${item.noticeNo}</span></div>` : ''}
+      ${item.noticeEdt  ? `<div class="karma-date-row karma-date-row--adopt"><span class="kd-label kd-adopt-label">입양신청</span><span class="kd-adopt">${item.noticeEdt} 부터 가능</span></div>` : ''}
       <div class="karma-date-row"><span class="kd-label">건강</span><span class="${healthCls}">${item.health || '-'}</span></div>
     </div>`;
 
@@ -1269,26 +1269,41 @@ function setupCorrectionModal() {
 
 
 // ----------------------------------------------------------------
-// 14. 멍템추천 카테고리 필터
+// 14. 멍템추천 카테고리 필터 + 상품명 검색
 // ----------------------------------------------------------------
 function setupMerchFilter() {
   const filterBtns = document.querySelectorAll('.merch-filter-btn');
-  const cards = document.querySelectorAll('.merch-card');
+  const cards      = document.querySelectorAll('.merch-card');
+  const searchInput = document.getElementById('merch-search');
+
+  let activeCat  = 'all';
+  let searchText = '';
+
+  function applyFilter() {
+    cards.forEach(card => {
+      const catMatch  = activeCat === 'all' || card.dataset.cat === activeCat;
+      const nameEl    = card.querySelector('.merch-name');
+      const nameText  = nameEl ? nameEl.textContent : '';
+      const textMatch = nameText.includes(searchText);
+      card.classList.toggle('hidden', !(catMatch && textMatch));
+    });
+  }
 
   filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       filterBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      const cat = btn.dataset.cat;
-      cards.forEach(card => {
-        if (cat === 'all' || card.dataset.cat === cat) {
-          card.classList.remove('hidden');
-        } else {
-          card.classList.add('hidden');
-        }
-      });
+      activeCat = btn.dataset.cat;
+      applyFilter();
     });
   });
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      searchText = searchInput.value.trim();
+      applyFilter();
+    });
+  }
 }
 setupMerchFilter();
 
