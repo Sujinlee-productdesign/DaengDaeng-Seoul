@@ -738,47 +738,46 @@ function updateWeatherLine(weatherData) {
   const { temp, feelsLike, weatherCode, precipProb } = weatherData;
   const rain = isRainCode(weatherCode) || precipProb >= 50;
 
-  // 산책 온도 기준 (수의학 권장)
-  // < 0°C: 영하 위험  /  0~7°C: 쌀쌀 주의  /  25~32°C: 더위 주의  /  ≥ 32°C: 폭염 위험
   const tooHot  = temp >= 32;
   const warmish = temp >= 25 && temp < 32;
   const cold    = temp > 0  && temp <= 7;
   const tooCold = temp <= 0;
 
-  let cls = '', msg = '';
+  const wl = weatherCodeLabel(weatherCode);
+  const weatherEmoji = wl ? wl.emoji : (rain ? '🌧' : (tooHot ? '☀️' : (tooCold ? '❄️' : '🌤')));
+
+  let cls = 'normal', tip = '';
 
   if (rain) {
     cls = 'rain';
-    const wl = weatherCodeLabel(weatherCode);
-    msg = `${wl ? wl.emoji : '🌧'} ${wl ? wl.text : '비'} 예보 · 실내에서 많이 놀아주세요`;
+    tip = `${wl ? wl.text : '비'} 예보 · 실내에서 많이 놀아주세요`;
   } else if (tooHot) {
     cls = 'hot';
-    msg = `🌡 ${Math.round(temp)}°C · 폭염 위험 · 이른 아침·저녁 산책 추천`;
+    tip = `폭염 위험 · 이른 아침·저녁 산책 추천`;
   } else if (warmish) {
     cls = 'hot';
-    msg = `☀️ ${Math.round(temp)}°C · 아스팔트 화상 주의 · 그늘 산책하세요`;
+    tip = `아스팔트 화상 주의 · 그늘 산책하세요`;
   } else if (tooCold) {
     cls = 'cold';
-    msg = `🥶 ${Math.round(temp)}°C · 영하 날씨 · 방한용품 필수`;
+    tip = `영하 날씨 · 방한용품 필수`;
   } else if (cold) {
     cls = 'cold';
-    msg = `🧥 ${Math.round(temp)}°C · 소형견은 옷을 입혀주세요`;
+    tip = `소형견은 옷을 입혀주세요`;
   }
 
-  if (msg) {
-    lineEl.className = `weather-line ${cls}`;
-    lineEl.textContent = msg;
-  } else {
-    // 적정 날씨: 기온만 표시, 경고 없음
-    lineEl.className = 'weather-line hidden';
-  }
+  // 항상 현재 기온 표시 (경고가 없어도)
+  const tempStr = `${weatherEmoji} ${Math.round(temp)}°C`;
+  lineEl.className = `weather-line ${cls}`;
+  lineEl.textContent = tip ? `${tempStr} · ${tip}` : tempStr;
+  lineEl.classList.remove('hidden');
 
-  // 산책 가능도 카드에도 기온 정보 반영
-  const walkSub = document.getElementById('walk-index-sub');
-  if (walkSub && msg) {
-    const existing = walkSub.textContent;
-    // 날씨 주의가 있으면 앞에 붙이기 (air quality 메시지 유지)
-    walkSub.textContent = msg.replace(/^[^\s]+\s/, '') + ' · ' + existing;
+  // 산책 가능도 카드에도 기온 정보 반영 (경고가 있는 경우만)
+  if (tip) {
+    const walkSub = document.getElementById('walk-index-sub');
+    if (walkSub) {
+      const existing = walkSub.textContent;
+      walkSub.textContent = tip + ' · ' + existing;
+    }
   }
 }
 

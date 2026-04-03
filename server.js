@@ -262,22 +262,24 @@ app.get('/karma-animals', async (req, res) => {
   }
 
   try {
-    // karma pages 1~4 병렬 fetch → 최신순 27건 확보
+    // karma pages 1~10 을 2배치로 나눠 fetch (과부하 방지)
     const fetchKarmaPage = (p) => fetch(
       `${BASE}/human_boardA/animal_board.php?pagenow=${p}&keyfield1=1&keyfield2=0&city=0&country=&sch1=&sch2=&sch3=&bid=animal`,
       { headers: HEADERS }
     ).then(r => r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`)));
 
-    const results = await Promise.allSettled([
-      fetchKarmaPage(1), fetchKarmaPage(2),
-      fetchKarmaPage(3), fetchKarmaPage(4),
-    ]);
+    // 배치 1: pages 1-5
+    const batch1 = await Promise.allSettled([1,2,3,4,5].map(fetchKarmaPage));
+    await new Promise(r => setTimeout(r, 150)); // 짧은 딜레이
+    // 배치 2: pages 6-10
+    const batch2 = await Promise.allSettled([6,7,8,9,10].map(fetchKarmaPage));
 
-    const all = results.flatMap(r => r.status === 'fulfilled' ? parsePage(r.value) : []);
+    const all = [...batch1, ...batch2]
+      .flatMap(r => r.status === 'fulfilled' ? parsePage(r.value) : []);
 
-    // 서울 지역 우선, 부족하면 전체에서 채움
+    // 서울 지역 우선, 부족하면 전체에서 채움 (최대 90건)
     const seoulOnly = all.filter(a => a.orgNm.includes('서울'));
-    const animals   = (seoulOnly.length >= 10 ? seoulOnly : all).slice(0, 27);
+    const animals   = (seoulOnly.length >= 20 ? seoulOnly : all).slice(0, 90);
 
     if (animals.length === 0) {
       return res.json({ animals: [], source: 'parse_failed' });

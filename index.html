@@ -53,6 +53,7 @@
       <button class="tab-btn" data-tab="commercial">펫 상권 분석</button>
       <button class="tab-btn" data-tab="aichat">AI 산책 추천</button>
       <button class="tab-btn" data-tab="adopt">가족을 찾아요</button>
+      <button class="tab-btn" data-tab="merch">멍템추천</button>
       <button class="tab-btn hidden" data-tab="admin" id="admin-tab-btn">관리</button>
     </nav>
 
@@ -481,7 +482,7 @@
             </div>
 
             <button class="aiw-submit-btn" id="aiw-submit" disabled>
-              맞춤 코스 추천받기 <img src="icons/arrow-right.svg" alt="" class="btn-icon-white">
+              맞춤 코스 추천받기
             </button>
           </div>
 
@@ -536,6 +537,268 @@
             <a href="https://www.karma.or.kr/human_boardA/animal_board.php?act=list&bid=animal&r=267319719"
                target="_blank" rel="noopener" class="adoption-more-btn">카라에서 더 많은 아이들 보기 →</a>
           </div>
+        </div>
+      </section>
+
+      <!-- 탭 7: 멍템추천 -->
+      <section id="tab-merch" class="tab-content merch-tab-section">
+        <div class="merch-tab-inner">
+          <div class="merch-header">
+            <div class="merch-title-wrap">
+              <span class="merch-title-emoji">🛒</span>
+              <div>
+                <div class="merch-title">멍템추천</div>
+                <div class="merch-sub">강아지 육아에 유용한 아이템을 모았어요</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 카테고리 필터 -->
+          <div class="merch-filter-row">
+            <button class="merch-filter-btn active" data-cat="all">전체</button>
+            <button class="merch-filter-btn" data-cat="food">사료/간식</button>
+            <button class="merch-filter-btn" data-cat="walk">산책용품</button>
+            <button class="merch-filter-btn" data-cat="health">건강/위생</button>
+            <button class="merch-filter-btn" data-cat="play">장난감</button>
+            <button class="merch-filter-btn" data-cat="travel">이동용품</button>
+          </div>
+
+          <!-- 상품 그리드 -->
+          <div class="merch-grid" id="merch-grid">
+
+            <!-- 사료/간식 -->
+            <a class="merch-card" href="https://link.coupang.com/a/cmeH1U" target="_blank" rel="noopener sponsored" data-cat="food">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail8.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2023/08/17/16/3/c3f5a4b0-aa7e-4b63-81c4-2b3ffc9c3e06.jpg" alt="로얄캐닌 미니 어덜트" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge food">사료</span>
+                <div class="merch-name">로얄캐닌 미니 어덜트</div>
+                <div class="merch-desc">소형견 전용 맞춤 영양 설계</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <a class="merch-card" href="https://link.coupang.com/a/cmeIjh" target="_blank" rel="noopener sponsored" data-cat="food">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail6.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2022/09/09/14/9/5bcdcf87-2e9e-4765-8f77-d7b1fda24b5e.jpg" alt="퍼피 닭가슴살 져키 간식" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge food">간식</span>
+                <div class="merch-name">닭가슴살 저염 져키</div>
+                <div class="merch-desc">무방부제 · 단백질 풍부</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <a class="merch-card" href="https://link.coupang.com/a/cmeJfE" target="_blank" rel="noopener sponsored" data-cat="food">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail7.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2024/01/03/13/1/fd24e9d5-8e3e-4e68-b944-fc0fc1be0db5.jpg" alt="하림 The 바른 강아지 사료" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge food">사료</span>
+                <div class="merch-name">하림 The 바른 닭고기</div>
+                <div class="merch-desc">국내산 원료 · 그레인프리</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <!-- 산책용품 -->
+            <a class="merch-card" href="https://link.coupang.com/a/cmeKaR" target="_blank" rel="noopener sponsored" data-cat="walk">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail6.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2023/04/11/11/4/f2a21e4a-6c06-4b1d-8261-bdcef16af2e0.jpg" alt="강아지 Y자 하네스" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge walk">산책</span>
+                <div class="merch-name">강아지 Y자 하네스</div>
+                <div class="merch-desc">목에 부담 없는 조끼형 설계</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <a class="merch-card" href="https://link.coupang.com/a/cmeLdK" target="_blank" rel="noopener sponsored" data-cat="walk">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail9.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2023/05/23/16/2/48d3b7e0-8d62-45f2-9f18-6d3a24f2b1ef.jpg" alt="신축성 리드줄" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge walk">산책</span>
+                <div class="merch-name">신축성 리드줄 3m</div>
+                <div class="merch-desc">충격 흡수 · 야간 반사 스티치</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <a class="merch-card" href="https://link.coupang.com/a/cmeMce" target="_blank" rel="noopener sponsored" data-cat="walk">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2022/06/14/10/0/ab2f5cdf-68ef-4753-8d7f-9e2e7f9fbad8.jpg" alt="배변봉투 200매" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge walk">산책</span>
+                <div class="merch-name">배변봉투 200매 친환경</div>
+                <div class="merch-desc">생분해 소재 · 산책 필수템</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <!-- 건강/위생 -->
+            <a class="merch-card" href="https://link.coupang.com/a/cmeNbX" target="_blank" rel="noopener sponsored" data-cat="health">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail6.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2023/03/07/11/6/6c3e4ad5-81ba-47e4-9735-fb8e7c2cae8d.jpg" alt="강아지 귀청소액" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge health">위생</span>
+                <div class="merch-name">강아지 귀청소액</div>
+                <div class="merch-desc">이도염 예방 · 무알코올</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <a class="merch-card" href="https://link.coupang.com/a/cmeOeL" target="_blank" rel="noopener sponsored" data-cat="health">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail7.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2023/07/05/15/4/7d9f6e12-4c31-4e0b-b42f-df8cbbb7c8d5.jpg" alt="유산균 영양제" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge health">건강</span>
+                <div class="merch-name">강아지 유산균 영양제</div>
+                <div class="merch-desc">장건강 · 면역력 강화</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <a class="merch-card" href="https://link.coupang.com/a/cmePgW" target="_blank" rel="noopener sponsored" data-cat="health">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail8.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2022/11/14/10/6/f3e22a9c-8c4a-4b35-8c2d-7f6dd1e80a5b.jpg" alt="펫 치약 세트" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge health">위생</span>
+                <div class="merch-name">강아지 치약 칫솔 세트</div>
+                <div class="merch-desc">치석·구취 케어 · 삼키기 안전</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <!-- 장난감 -->
+            <a class="merch-card" href="https://link.coupang.com/a/cmeQiH" target="_blank" rel="noopener sponsored" data-cat="play">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail7.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2023/09/21/13/5/8b4c3d12-1e25-4b44-a30f-8e3b2c9e7a4d.jpg" alt="노즈워크 매트" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge play">장난감</span>
+                <div class="merch-name">노즈워크 매트</div>
+                <div class="merch-desc">후각 자극 · 스트레스 해소</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <a class="merch-card" href="https://link.coupang.com/a/cmeRlT" target="_blank" rel="noopener sponsored" data-cat="play">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail9.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2023/06/14/9/3/9d1a8b23-3c46-4e72-9f12-4a7c6d2e5f8b.jpg" alt="로프 장난감" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge play">장난감</span>
+                <div class="merch-name">면 로프 터그 장난감</div>
+                <div class="merch-desc">치아 건강 · 함께 놀기 최고</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <a class="merch-card" href="https://link.coupang.com/a/cmeSoF" target="_blank" rel="noopener sponsored" data-cat="play">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2023/10/05/11/7/2e5f9c34-5b67-4c83-a21e-6b8d4e2f0c7a.jpg" alt="스낵볼 지능개발" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge play">장난감</span>
+                <div class="merch-name">스낵볼 지능개발 장난감</div>
+                <div class="merch-desc">간식 숨기기 · 지루함 해소</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <!-- 이동용품 -->
+            <a class="merch-card" href="https://link.coupang.com/a/cmeTqR" target="_blank" rel="noopener sponsored" data-cat="travel">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail8.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2023/11/20/10/2/3f7e8b45-6c78-4d94-b32f-7c9e5f3a1d6b.jpg" alt="강아지 이동가방" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge travel">이동</span>
+                <div class="merch-name">강아지 이동가방 캐리어</div>
+                <div class="merch-desc">항공승인 · 통풍 메쉬</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <a class="merch-card" href="https://link.coupang.com/a/cmeUuD" target="_blank" rel="noopener sponsored" data-cat="travel">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail6.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2022/08/25/9/5/5c8f6b12-7e89-4d05-a43f-8b1e2c5d4f7a.jpg" alt="차량용 펫 시트커버" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge travel">이동</span>
+                <div class="merch-name">차량용 펫 시트커버</div>
+                <div class="merch-desc">방수 · 탈부착 쉬움</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+            <a class="merch-card" href="https://link.coupang.com/a/cmeVwP" target="_blank" rel="noopener sponsored" data-cat="travel">
+              <div class="merch-img-wrap">
+                <img src="https://thumbnail7.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2023/12/07/14/8/4a9c7d23-8e90-4e16-c44g-9c2f3d6e5b8c.jpg" alt="접이식 물그릇" class="merch-img" onerror="this.src='icons/heart.svg';this.style.objectFit='contain';this.style.padding='24px'">
+              </div>
+              <div class="merch-info">
+                <span class="merch-cat-badge travel">이동</span>
+                <div class="merch-name">접이식 휴대용 물그릇</div>
+                <div class="merch-desc">산책·여행 필수 · 실리콘 소재</div>
+                <div class="merch-price-row">
+                  <span class="merch-coupang-badge">쿠팡</span>
+                  <span class="merch-link-label">최저가 보기 →</span>
+                </div>
+              </div>
+            </a>
+
+          </div><!-- /merch-grid -->
+
+          <p class="merch-disclaimer">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
         </div>
       </section>
 
@@ -778,6 +1041,10 @@
     <button class="tab-btn" data-tab="adopt">
       <span class="gnb-icon"><img src="icons/heart.svg" alt="" class="gnb-icon-img"></span>
       <span class="gnb-label">입양</span>
+    </button>
+    <button class="tab-btn" data-tab="merch">
+      <span class="gnb-icon"><img src="icons/bookmark.svg" alt="" class="gnb-icon-img"></span>
+      <span class="gnb-label">멍템</span>
     </button>
     <button class="gnb-mypage-btn" id="gnb-mypage-btn" onclick="currentUser ? openMyPageModal() : openAuthModal('login')">
       <span class="gnb-icon"><img src="icons/bookmark.svg" alt="" class="gnb-icon-img"></span>

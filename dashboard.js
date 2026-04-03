@@ -97,46 +97,58 @@ function getScoreTier(score) {
 // 2. 탭 전환 로직
 // ----------------------------------------------------------------
 
-function setupTabs() {
+// 탭 활성화 내부 로직 (URL 이력 push 없이 UI만 전환)
+function activateTab(target, { pushHistory = true } = {}) {
   const tabBtns     = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
   const sidebar     = document.getElementById('sidebar');
 
-  tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = btn.dataset.tab;
+  tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === target));
+  tabContents.forEach(c => c.classList.remove('active'));
 
-      // 헤더 + GNB 모든 탭버튼 동기화
-      tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === target));
-      tabContents.forEach(c => c.classList.remove('active'));
+  const tabEl = document.getElementById(`tab-${target}`);
+  if (!tabEl) return;
+  tabEl.classList.add('active');
 
-      document.getElementById(`tab-${target}`).classList.add('active');
+  if (sidebar) sidebar.style.display = target === 'map' ? 'flex' : 'none';
 
-      if (sidebar) {
-        sidebar.style.display = target === 'map' ? 'flex' : 'none';
-      }
+  if (target === 'dashboard' && !dashboardInitialized) {
+    initDashboard();
+    dashboardInitialized = true;
+  }
 
-      if (target === 'dashboard' && !dashboardInitialized) {
-        initDashboard();
-        dashboardInitialized = true;
-      }
+  if (target === 'adopt') {
+    if (!adoptInitialized) {
+      allAdoptData = [];
+      adoptInitialized = true;
+    }
+    loadAdoptionSection(1);
+  }
 
-      if (target === 'adopt') {
-        if (!adoptInitialized) {
-          allAdoptData = []; // 첫 진입 시 초기화
-          adoptInitialized = true;
-        }
-        loadAdoptionSection(1);
-      }
+  if (target === 'commercial' && typeof initCommercial === 'function') {
+    initCommercial();
+  }
 
-      // 펫 상권 분석 탭 초기화 (pet.js)
-      if (target === 'commercial' && typeof initCommercial === 'function') {
-        initCommercial();
-      }
+  // 브라우저 뒤로가기를 위해 pushState (같은 탭 반복 클릭이면 replace)
+  const currentHash = location.hash.slice(1);
+  if (pushHistory) {
+    if (currentHash === target) {
+      history.replaceState({ tab: target }, '', '#' + target);
+    } else {
+      history.pushState({ tab: target }, '', '#' + target);
+    }
+  }
+}
 
-      // 현재 탭을 URL hash에 저장 → 새로고침 시 복원
-      history.replaceState(null, '', '#' + target);
-    });
+function setupTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+  });
+
+  // 브라우저 뒤로가기/앞으로가기
+  window.addEventListener('popstate', (e) => {
+    const target = (e.state?.tab) || location.hash.slice(1) || 'map';
+    activateTab(target, { pushHistory: false });
   });
 }
 
@@ -1255,7 +1267,31 @@ function setupCorrectionModal() {
 
 
 // ----------------------------------------------------------------
-// 14. 탭 설정은 DOM 로드 후 바로 실행
+// 14. 멍템추천 카테고리 필터
+// ----------------------------------------------------------------
+function setupMerchFilter() {
+  const filterBtns = document.querySelectorAll('.merch-filter-btn');
+  const cards = document.querySelectorAll('.merch-card');
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.cat;
+      cards.forEach(card => {
+        if (cat === 'all' || card.dataset.cat === cat) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+    });
+  });
+}
+setupMerchFilter();
+
+// ----------------------------------------------------------------
+// 15. 탭 설정은 DOM 로드 후 바로 실행
 // ----------------------------------------------------------------
 
 setupTabs();

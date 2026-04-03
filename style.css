@@ -499,6 +499,7 @@ body {
   width: 100%;
 }
 .weather-line.hidden { display: none; }
+.weather-line.normal { color: var(--text-2); }
 .weather-line.rain   { color: #007AFF; }
 .weather-line.hot    { color: #FF3B30; }
 .weather-line.cold   { color: #5856D6; }
@@ -3520,4 +3521,172 @@ a.adoption-thumb-card--link { transition: transform 0.15s, box-shadow 0.15s; }
 .parking-lot-info .pli-label {
   color: var(--text-4);
   min-width: 44px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   멍템추천 탭
+══════════════════════════════════════════════════════════ */
+.merch-tab-section { padding: 28px 20px 48px; }
+.merch-tab-inner { max-width: 1100px; margin: 0 auto; }
+
+.merch-header {
+  margin-bottom: 24px;
+}
+.merch-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.merch-title-emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+.merch-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-1);
+  line-height: 1.2;
+}
+.merch-sub {
+  font-size: 0.82rem;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+/* 카테고리 필터 */
+.merch-filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.merch-filter-btn {
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.merch-filter-btn.active,
+.merch-filter-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* 상품 그리드 */
+.merch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+@media (max-width: 900px) {
+  .merch-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .merch-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+}
+
+/* 상품 카드 */
+.merch-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: 14px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  border: 1.5px solid var(--border);
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+.merch-card:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+.merch-card.hidden { display: none; }
+
+.merch-img-wrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #f5f5f5;
+  overflow: hidden;
+}
+.merch-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.22s;
+}
+.merch-card:hover .merch-img {
+  transform: scale(1.04);
+}
+
+.merch-info {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+.merch-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-1);
+  line-height: 1.35;
+}
+.merch-desc {
+  font-size: 0.76rem;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+
+/* 카테고리 배지 */
+.merch-cat-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  width: fit-content;
+  margin-bottom: 2px;
+}
+.merch-cat-badge.food   { background: #fff3e0; color: #e65100; }
+.merch-cat-badge.walk   { background: #e8f5e9; color: #2e7d32; }
+.merch-cat-badge.health { background: #e3f2fd; color: #1565c0; }
+.merch-cat-badge.play   { background: #fce4ec; color: #ad1457; }
+.merch-cat-badge.travel { background: #ede7f6; color: #4527a0; }
+
+/* 가격/링크 행 */
+.merch-price-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+.merch-coupang-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: #e8192c;
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.merch-link-label {
+  font-size: 0.75rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+/* 파트너스 고지 */
+.merch-disclaimer {
+  margin-top: 28px;
+  font-size: 0.72rem;
+  color: var(--text-4);
+  text-align: center;
+  line-height: 1.6;
 }
