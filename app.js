@@ -2050,6 +2050,38 @@ window.navigateToMapWithFilter = function(category, guName) {
   }, 300);
 };
 
+// AI 추천 장소명 → 댕댕지도에서 카카오 Places 검색 후 포커싱
+window.searchAndFocusPlace = function(placeName) {
+  const mapTabBtn = document.querySelector('.tab-btn[data-tab="map"]');
+  if (mapTabBtn) mapTabBtn.click();
+
+  setTimeout(() => {
+    if (map) map.relayout();
+
+    // 1순위: sidebarPlaces에서 이름 매칭
+    const found = (window.sidebarPlaces || []).find(p =>
+      p.name && (p.name.includes(placeName) || placeName.includes(p.name))
+    );
+    if (found !== undefined) {
+      window.focusMapMarker(found.markerIndex);
+      return;
+    }
+
+    // 2순위: Kakao Places 키워드 검색
+    if (!window.kakao?.maps?.services) return;
+    const ps = new kakao.maps.services.Places();
+    ps.keywordSearch(`서울 ${placeName}`, (result, status) => {
+      if (status === kakao.maps.services.Status.OK && result[0]) {
+        const { x, y } = result[0];
+        if (map) {
+          map.setCenter(new kakao.maps.LatLng(parseFloat(y), parseFloat(x)));
+          map.setLevel(4);
+        }
+      }
+    });
+  }, 300);
+};
+
 // 추천 장소 클릭 → 댕댕지도에서 해당 마커 포커싱 + 말풍선
 window.focusMapMarker = function(index) {
   const mapTabBtn = document.querySelector('.tab-btn[data-tab="map"]');

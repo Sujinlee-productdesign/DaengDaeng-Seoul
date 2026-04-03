@@ -121,9 +121,12 @@ function setupTabs() {
         dashboardInitialized = true;
       }
 
-      if (target === 'adopt' && !adoptInitialized) {
+      if (target === 'adopt') {
+        if (!adoptInitialized) {
+          allAdoptData = []; // 첫 진입 시 초기화
+          adoptInitialized = true;
+        }
         loadAdoptionSection(1);
-        adoptInitialized = true;
       }
 
       // 펫 상권 분석 탭 초기화 (pet.js)
@@ -1094,30 +1097,36 @@ function showAdoptLoading() {
     </div>`;
 }
 
-function renderAdoptPagination(currentPage, hasMore) {
+const PAGE_SIZE = 9; // 3×3 그리드
+let allAdoptData = []; // 서버에서 받은 전체 27건 캐시
+
+function renderAdoptPage(page) {
+  const listEl  = document.getElementById('adoption-list');
   const paginEl = document.getElementById('adopt-pagination');
+  if (!listEl) return;
+
+  const start   = (page - 1) * PAGE_SIZE;
+  const slice   = allAdoptData.slice(start, start + PAGE_SIZE);
+  const total   = allAdoptData.length;
+  const maxPage = Math.ceil(total / PAGE_SIZE);
+
+  listEl.innerHTML = slice.map(buildKarmaCard).join('');
+
   if (!paginEl) return;
+  if (maxPage <= 1) { paginEl.style.display = 'none'; return; }
 
-  const maxShown = 3; // 최대 페이지 버튼 수
-  let html = '';
+  let html = `<button class="adopt-page-btn" ${page <= 1 ? 'disabled' : ''}
+    onclick="renderAdoptPage(${page - 1})">‹</button>`;
 
-  // prev
-  html += `<button class="adopt-page-btn" ${currentPage <= 1 ? 'disabled' : ''}
-    onclick="loadAdoptionSection(${currentPage - 1})">‹</button>`;
-
-  // numbered pages
-  for (let p = 1; p <= maxShown; p++) {
-    if (p > currentPage && !hasMore && p > currentPage) break;
-    if (p === currentPage + 1 && !hasMore) break;
-    html += `<button class="adopt-page-btn ${p === currentPage ? 'active' : ''}"
-      onclick="loadAdoptionSection(${p})">${p}</button>`;
+  for (let p = 1; p <= maxPage; p++) {
+    html += `<button class="adopt-page-btn ${p === page ? 'active' : ''}"
+      onclick="renderAdoptPage(${p})">${p}</button>`;
   }
 
-  // next
-  html += `<button class="adopt-page-btn" ${!hasMore ? 'disabled' : ''}
-    onclick="loadAdoptionSection(${currentPage + 1})">›</button>`;
+  html += `<button class="adopt-page-btn" ${page >= maxPage ? 'disabled' : ''}
+    onclick="renderAdoptPage(${page + 1})">›</button>`;
 
-  paginEl.innerHTML  = html;
+  paginEl.innerHTML     = html;
   paginEl.style.display = 'flex';
 }
 
@@ -1125,17 +1134,22 @@ async function loadAdoptionSection(page = 1) {
   const listEl = document.getElementById('adoption-list');
   if (!listEl) return;
 
+  // 이미 데이터가 캐시된 경우 바로 렌더
+  if (allAdoptData.length > 0) {
+    renderAdoptPage(page);
+    return;
+  }
+
   showAdoptLoading();
 
   try {
-    const res  = await fetch(`/karma-animals?page=${page}`);
+    const res  = await fetch('/karma-animals');
     const data = await res.json();
-    const list = data?.animals ?? [];
+    allAdoptData = data?.animals ?? [];
 
-    if (list.length > 0) {
-      listEl.innerHTML = list.map(buildKarmaCard).join('');
-      renderAdoptPagination(page, data.hasMore === true);
-      console.log(`✅ karma p${page} ${list.length}마리`);
+    if (allAdoptData.length > 0) {
+      renderAdoptPage(page);
+      console.log(`✅ karma ${allAdoptData.length}마리 로드`);
       return;
     }
   } catch (e) {

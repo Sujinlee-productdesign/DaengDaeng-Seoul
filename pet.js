@@ -104,6 +104,9 @@ async function loadRealCommData() {
   // TOP5 갱신
   DONG_PET_DATA.sort((a, b) => b.spending - a.spending);
   TOP5 = DONG_PET_DATA.slice(0, 5);
+  // 실데이터 로드 완료 → 더미 안내 노트 숨김
+  const noteEl = document.querySelector('.comm2-data-note');
+  if (noteEl) noteEl.style.display = 'none';
   console.log('✅ 펫 상권 실데이터 로드 완료');
 }
 
@@ -394,11 +397,14 @@ function buildWalkSystemPrompt(airInfo) {
 - 소형견은 혼잡하거나 언덕이 심한 곳을 피하고, 대형견은 뛸 수 있는 넓은 공간을 선호해
 
 답변 형식 (반드시 아래 형식으로):
-1. 🗺️ **오늘의 추천 코스**: 장소명 + 이유 (2~3곳)
-2. 💡 **산책 팁**: 한 가지
-3. ⚠️ **주의사항**: 한 가지
+1. 🗺️ 오늘의 추천 코스 (2~3곳):
+   [MAP:장소명1] - 이유
+   [MAP:장소명2] - 이유
+2. 💡 산책 팁: 한 가지
+3. ⚠️ 주의사항: 한 가지
 
 규칙:
+- 장소명은 반드시 [MAP:장소명] 형식 사용 (지도 연동용)
 - 항상 한국어로, 친근하고 귀엽게
 - 이모지 적극 활용
 - 간결하게 (전체 200자 이내)`;
@@ -409,9 +415,16 @@ function showAiwResult(text, location, size, duration, place) {
   document.getElementById('aiw-loading').classList.add('hidden');
   document.getElementById('aiw-result').classList.remove('hidden');
 
+  // 1) ## 헤더 마크다운 제거
+  // 2) **bold** → <strong>
+  // 3) [MAP:장소명] → 장소명 + 인라인 지도 버튼
   const formatted = text
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^#{1,6}\s+/gm, '')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[MAP:([^\]]+)\]/g, (_, name) =>
+      `<span class="aiw-place-name">${name}</span><button class="aiw-place-btn" onclick="window.searchAndFocusPlace('${name.replace(/'/g,"\\'")}')">지도 →</button>`
+    )
     .replace(/\n/g, '<br>');
 
   const tagHtml = [

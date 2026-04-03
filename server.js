@@ -262,37 +262,31 @@ app.get('/karma-animals', async (req, res) => {
   }
 
   try {
-    // 클라이언트 page=N → karma pagenow (2N-1), (2N)
-    // page=1: karma 1,2 / page=2: karma 3,4 / page=3: karma 5,6
-    const clientPage = Math.max(1, parseInt(req.query.page) || 1);
-    const k1 = clientPage * 2 - 1;
-    const k2 = clientPage * 2;
-
+    // karma pages 1~4 병렬 fetch → 최신순 27건 확보
     const fetchKarmaPage = (p) => fetch(
       `${BASE}/human_boardA/animal_board.php?pagenow=${p}&keyfield1=1&keyfield2=0&city=0&country=&sch1=&sch2=&sch3=&bid=animal`,
       { headers: HEADERS }
     ).then(r => r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`)));
 
-    const [html1, html2] = await Promise.allSettled([fetchKarmaPage(k1), fetchKarmaPage(k2)]);
+    const results = await Promise.allSettled([
+      fetchKarmaPage(1), fetchKarmaPage(2),
+      fetchKarmaPage(3), fetchKarmaPage(4),
+    ]);
 
-    const all = [
-      ...(html1.status === 'fulfilled' ? parsePage(html1.value) : []),
-      ...(html2.status === 'fulfilled' ? parsePage(html2.value) : []),
-    ];
+    const all = results.flatMap(r => r.status === 'fulfilled' ? parsePage(r.value) : []);
 
-    // 서울 지역만 필터링, 부족하면 전체 사용
+    // 서울 지역 우선, 부족하면 전체에서 채움
     const seoulOnly = all.filter(a => a.orgNm.includes('서울'));
-    const animals   = seoulOnly.length >= 3 ? seoulOnly.slice(0, 9) : all.slice(0, 9);
-    const hasMore   = all.length >= 9; // 다음 페이지 힌트
+    const animals   = (seoulOnly.length >= 10 ? seoulOnly : all).slice(0, 27);
 
     if (animals.length === 0) {
-      return res.json({ animals: [], source: 'parse_failed', page: clientPage, hasMore: false });
+      return res.json({ animals: [], source: 'parse_failed' });
     }
 
-    res.json({ animals, source: 'karma', page: clientPage, hasMore });
+    res.json({ animals, source: 'karma' });
   } catch (err) {
     console.error('karma 스크래퍼 오류:', err.message);
-    res.json({ animals: [], source: 'error', error: err.message, page: 1, hasMore: false });
+    res.json({ animals: [], source: 'error', error: err.message });
   }
 });
 
