@@ -1075,7 +1075,9 @@ function buildKarmaCard(item) {
     <div class="karma-dates">
       ${item.rescueDate ? `<div class="karma-date-row"><span class="kd-label">구조일</span><span>${item.rescueDate}</span></div>` : ''}
       ${item.orgNm      ? `<div class="karma-date-row"><span class="kd-label">구조장소</span><span>${item.orgNm}</span></div>` : ''}
-      ${item.noticeEdt  ? `<div class="karma-date-row karma-date-row--adopt"><span class="kd-label kd-adopt-label">입양가능</span><span class="kd-adopt">${item.noticeEdt}부터</span></div>` : ''}
+      ${item.serialNo   ? `<div class="karma-date-row"><span class="kd-label">고유번호</span><span>${item.serialNo}</span></div>` : ''}
+      ${item.noticeNo   ? `<div class="karma-date-row"><span class="kd-label">공고번호</span><span>${item.noticeNo}</span></div>` : ''}
+      ${item.noticeEdt  ? `<div class="karma-date-row karma-date-row--adopt"><span class="kd-label kd-adopt-label">입양신청</span><span class="kd-adopt">${item.noticeEdt}</span></div>` : ''}
       <div class="karma-date-row"><span class="kd-label">건강</span><span class="${healthCls}">${item.health || '-'}</span></div>
     </div>`;
 

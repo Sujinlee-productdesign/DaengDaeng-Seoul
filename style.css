@@ -1069,6 +1069,40 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
+/* 카드 상단 섹션 레이블 ("미세먼지 현황") */
+.walk-card-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+
+/* 카드 하단 오늘 날씨 섹션 */
+.walk-weather-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.walk-weather-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.walk-weather-info {
+  font-size: 0.83rem;
+  color: var(--text-1);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
 .walk-index-top {
   display: flex;
   align-items: center;
@@ -1990,13 +2024,15 @@ body {
   margin-bottom: 24px;
 }
 .adopt-share-dog {
+  display: block; /* 이미지 노출 보장 */
   width: 72px;
   height: 72px;
   object-fit: contain;
   flex-shrink: 0;
 }
 .adopt-share-text {
-  font-size: 0.88rem;
+  font-size: 15px;     /* 15px 폰트 */
+  font-weight: 600;    /* semibold */
   color: var(--text-1);
   line-height: 1.65;
   word-break: keep-all;
@@ -2005,7 +2041,7 @@ body {
 @media (max-width: 520px) {
   .adopt-share-banner { padding: 16px 16px; gap: 14px; }
   .adopt-share-dog { width: 56px; height: 56px; }
-  .adopt-share-text { font-size: 0.8rem; }
+  .adopt-share-text { font-size: 13px; } /* 모바일은 조금 작게 */
   .adopt-share-br { display: none; }
 }
 .adoption-section--full {
@@ -2133,8 +2169,8 @@ body {
 }
 .karma-date-row .kd-label { flex-shrink: 0; }
 .karma-date-row--adopt { margin-top: 4px; }
-.karma-date-row .kd-adopt-label { color: #e65100; font-weight: 700; font-size: 0.78rem; }
-.karma-date-row .kd-adopt { color: #e65100; font-weight: 700; font-size: 0.82rem; }
+.karma-date-row .kd-adopt-label { color: #e65100; font-weight: 700; font-size: 15px; }
+.karma-date-row .kd-adopt { color: #e65100; font-weight: 700; font-size: 15px; }
 .karma-neuter-y { color: #2e7d32; font-weight: 600; }
 .karma-neuter-n { color: #c62828; font-weight: 600; }
 .karma-health-good { color: #2e7d32; }

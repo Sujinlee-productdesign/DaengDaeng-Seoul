@@ -771,6 +771,14 @@ function updateWeatherLine(weatherData) {
   lineEl.textContent = tip ? `${tempStr} · ${tip}` : tempStr;
   lineEl.classList.remove('hidden');
 
+  // 맞춤 추천 탭 카드 하단 '오늘 날씨' 섹션 업데이트
+  const wxSection = document.getElementById('walk-weather-section');
+  const wxInfo    = document.getElementById('walk-weather-info');
+  if (wxSection && wxInfo) {
+    wxInfo.textContent = tip ? `${tempStr} · ${tip}` : tempStr;
+    wxSection.classList.remove('hidden');
+  }
+
   // 산책 가능도 카드에도 기온 정보 반영 (경고가 있는 경우만)
   if (tip) {
     const walkSub = document.getElementById('walk-index-sub');

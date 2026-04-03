@@ -209,6 +209,14 @@ app.get('/karma-animals', async (req, res) => {
       const rescueDateRaw = fieldITag('구조일');
       const rescueDate    = rescueDateRaw.split(/\s/)[0]; // "2026-03-31"
 
+      // 고유번호: 구조일 원문에서 "(SN: 260402-0502 ...)" 패턴 추출
+      const snMatch   = rescueDateRaw.match(/\(\s*SN\s*:\s*([\w-]+)/i);
+      const serialNo  = snMatch ? snMatch[1].trim() : '';
+
+      // 공고번호: <span class="red">파주-2026-00143</span> 형식 추출
+      const noticeNoM = section.match(/<span[^>]*class=['"]red['"][^>]*>([가-힣\w]+-\d{4}-\d{5})<\/span>/);
+      const noticeNo  = noticeNoM ? noticeNoM[1].trim() : '';
+
       // 구조장소: 라벨 li 다음 li에 값
       const location  = fieldNextLi('구조장소');
 
@@ -252,6 +260,8 @@ app.get('/karma-animals', async (req, res) => {
         feature,
         orgNm:        location,
         rescueDate,
+        serialNo,   // 고유번호: SN: XXXXXX
+        noticeNo,   // 공고번호: 지역-YYYY-XXXXX
         noticeEdt:    adoptDate,
         careNm:       '카라(KARA)',
         processState: adoptOk ? '입양가능' : '공고중',
@@ -270,11 +280,20 @@ app.get('/karma-animals', async (req, res) => {
 
     // 배치 1: pages 1-5
     const batch1 = await Promise.allSettled([1,2,3,4,5].map(fetchKarmaPage));
-    await new Promise(r => setTimeout(r, 150)); // 짧은 딜레이
+    await new Promise(r => setTimeout(r, 150));
     // 배치 2: pages 6-10
     const batch2 = await Promise.allSettled([6,7,8,9,10].map(fetchKarmaPage));
+    await new Promise(r => setTimeout(r, 150));
+    // 배치 3: pages 11-15
+    const batch3 = await Promise.allSettled([11,12,13,14,15].map(fetchKarmaPage));
+    await new Promise(r => setTimeout(r, 150));
+    // 배치 4: pages 16-20
+    const batch4 = await Promise.allSettled([16,17,18,19,20].map(fetchKarmaPage));
+    await new Promise(r => setTimeout(r, 150));
+    // 배치 5: pages 21-25
+    const batch5 = await Promise.allSettled([21,22,23,24,25].map(fetchKarmaPage));
 
-    const all = [...batch1, ...batch2]
+    const all = [...batch1, ...batch2, ...batch3, ...batch4, ...batch5]
       .flatMap(r => r.status === 'fulfilled' ? parsePage(r.value) : []);
 
     // 서울 지역 우선, 부족하면 전체에서 채움 (최대 90건)

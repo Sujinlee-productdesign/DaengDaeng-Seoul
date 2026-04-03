@@ -187,6 +187,8 @@
 
           <!-- ① 산책 가능도 (컴팩트) -->
           <div class="walk-index-card" id="walk-index-card">
+            <!-- 카드 섹션 타이틀 -->
+            <div class="walk-card-label">미세먼지 현황</div>
             <div class="walk-index-top">
               <div class="walk-index-badge-wrap">
                 <span class="walk-index-badge" id="walk-index-badge">―</span>
@@ -196,6 +198,11 @@
                 <div class="walk-index-sub" id="walk-index-sub">대기질 정보를 불러오는 중...</div>
               </div>
               <div class="walk-pm10-badge" id="walk-pm10-badge"></div>
+            </div>
+            <!-- 오늘 날씨 섹션 (날씨 API 로딩 후 표시) -->
+            <div id="walk-weather-section" class="walk-weather-section hidden">
+              <div class="walk-weather-label">오늘 날씨</div>
+              <div id="walk-weather-info" class="walk-weather-info">—</div>
             </div>
           </div>
 
